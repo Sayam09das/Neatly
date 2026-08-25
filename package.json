@@ -2,6 +2,10 @@
   "name": "neatly",
   "private": true,
   "packageManager": "pnpm@11.13.1",
+  "engines": {
+    "node": ">=24.19.0",
+    "pnpm": ">=11.13.1"
+  },
   "scripts": {
     "typecheck": "pnpm -r --if-present typecheck"
   },
