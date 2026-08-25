@@ -8,11 +8,22 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./server": {
+      "types": "./src/env.server.ts",
+      "default": "./src/env.server.ts"
+    },
+    "./client": {
+      "types": "./src/env.client.ts",
+      "default": "./src/env.client.ts"
     }
   },
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:"
