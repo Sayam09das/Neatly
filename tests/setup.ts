@@ -31,6 +31,24 @@ function stubDomApis(): void {
     configurable: true,
     value: (): void => undefined,
   });
+
+  if (typeof window.matchMedia !== "function") {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: (query: string): MediaQueryList =>
+        ({
+          matches: false,
+          media: query,
+          onchange: null,
+          addEventListener: (): void => undefined,
+          removeEventListener: (): void => undefined,
+          addListener: (): void => undefined,
+          removeListener: (): void => undefined,
+          dispatchEvent: (): boolean => false,
+        }) as MediaQueryList,
+    });
+  }
 }
 
 stubDomApis();

@@ -86,3 +86,28 @@ shadcn/ui is the implementation foundation (Radix behavior, composition API). Ne
 ## Accessibility
 
 WCAG 2.1 AA: semantic HTML, 4.5:1 body contrast, 3:1 large text, visible focus, 44px touch targets, reduced motion.
+
+## Animation infrastructure
+
+Motion exists to clarify hierarchy, feedback, continuity, and spatial understanding. It must stay calm, short, and optional. It must not decorate, loop, or block interaction.
+
+Decision order:
+
+```text
+Simple hover / focus / opacity / transform  → CSS
+React presence and UI state                 → Framer Motion
+Complex timelines and scroll sequences      → GSAP
+Global smooth scrolling                     → Lenis
+SVG morph / isolated specialty work         → Anime.js (not installed until needed)
+```
+
+Implementation lives in `apps/web/src/animations/`. Import config from that tree; keep Lenis as a single root instance via `SmoothScroll` in `Providers`.
+
+- **Tokens:** `durationMs` / `durationSeconds` (`fast` 150ms, `normal` 200ms, `slow` 300ms) and `motionDuration` aliases (`micro`, `short`, `medium`) match `globals.css`. Easing uses the design-system curves (`standard`, `emphasized`, `enter`, `exit`).
+- **Reduced motion:** CSS already collapses duration tokens. JS uses `useReducedMotion()` / `getPrefersReducedMotion()`. When reduced motion is on, Lenis is not initialized, GSAP setups in `useGsap()` no-op, and scroll-linked motion stays off (`shouldEnableScrollLinkedMotion`). Content stays visible.
+- **GSAP:** scope animations to a component ref. `createGsapContext()` and `useGsap()` revert on unmount. Register plugins only through `registerGsapPlugins()` when a feature actually needs them (for example ScrollTrigger later). Do not query `document` for local effects.
+- **Lenis:** one instance, GSAP ticker RAF, destroyed on unmount. Native scroll is used when reduced motion is preferred. Future overlays can pause via `getLenis()` and `data-lenis-prevent`.
+- **Framer Motion:** generic `fade`, `fadeUp`, `fadeDown`, and `scale` variants only. Prefer CSS for hover. No route transitions yet.
+- **Anime.js:** not in the stack. Do not add it to duplicate GSAP or Motion.
+
+Animate `transform` and `opacity` only. Do not use `will-change` unless a specific animation proves it is needed.

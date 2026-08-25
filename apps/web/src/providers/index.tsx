@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import { SmoothScroll } from "@/animations/lenis/smooth-scroll";
 import { ThemeProvider } from "./theme-provider";
 
 interface ProvidersProps {
@@ -6,5 +7,9 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps): ReactElement {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <SmoothScroll>{children}</SmoothScroll>
+    </ThemeProvider>
+  );
 }
