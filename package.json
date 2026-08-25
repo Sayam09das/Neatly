@@ -8,11 +8,14 @@
     "pnpm": ">=11.13.1"
   },
   "scripts": {
+    "build": "pnpm --filter @neatly/web build",
     "check": "pnpm typecheck && pnpm lint",
+    "dev": "pnpm --filter @neatly/web dev",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome check .",
     "prepare": "husky",
+    "start": "pnpm --filter @neatly/web start",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
