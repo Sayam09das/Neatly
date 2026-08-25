@@ -1,0 +1,6 @@
+if ! pnpm exec lint-staged; then
+  echo ""
+  echo "Pre-commit checks failed."
+  echo "Fix the reported Biome/lint-staged issues and try again."
+  exit 1
+fi
