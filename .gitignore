@@ -1,4 +1,43 @@
+# Node
 node_modules/
-.DS_Store
+
+# Next.js
+.next
+.next/
+out
+out/
+
+# Build artifacts
+dist
 dist/
+build
+build/
 *.tsbuildinfo
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Testing
+coverage/
+test-results/
+playwright-report/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Secrets
+*.pem
+*.key
