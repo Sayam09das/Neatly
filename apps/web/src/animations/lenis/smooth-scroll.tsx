@@ -1,7 +1,9 @@
 "use client";
 
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { registerGsapPlugins } from "@/animations/gsap/plugins";
 import { useIsomorphicLayoutEffect } from "@/animations/hooks/use-isomorphic-layout-effect";
 import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
 import "lenis/dist/lenis.css";
@@ -54,6 +56,8 @@ export function SmoothScroll({ children }: SmoothScrollProps): ReactNode {
     });
 
     lenisInstance = lenis;
+    registerGsapPlugins(ScrollTrigger);
+    lenis.on("scroll", ScrollTrigger.update);
 
     const updateRaf = (time: number): void => {
       lenis.raf(time * 1000);
@@ -68,6 +72,7 @@ export function SmoothScroll({ children }: SmoothScrollProps): ReactNode {
         GSAP_TICKER_LAG_SMOOTHING_MS,
         GSAP_TICKER_LAG_SMOOTHING_FRAME_MS,
       );
+      lenis.off("scroll", ScrollTrigger.update);
       lenis.destroy();
       if (lenisInstance === lenis) {
         lenisInstance = null;

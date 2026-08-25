@@ -17,7 +17,7 @@ describe("isNavItemActive", (): void => {
 });
 
 describe("getPublishedPhone", (): void => {
-  it("publishes official company phone number when configured", (): void => {
-    expect(getPublishedPhone()).toBe("+1 (800) 555-6328");
+  it("hides development placeholder phone numbers from the public navbar", (): void => {
+    expect(getPublishedPhone()).toBeNull();
   });
 });

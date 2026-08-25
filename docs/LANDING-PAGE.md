@@ -1,6 +1,6 @@
 # Neatly Landing Page Architecture
 
-Scaffold for `/`. Hero media, CMS data, and remaining section motion belong to later steps. The production navbar is implemented. Copy in `apps/web/src/config/landing.ts` is temporary until site settings and CMS records exist.
+Scaffold for `/`. Remaining section motion, CMS data, and quote APIs belong to later steps. The production navbar and Hero are implemented. Copy in `apps/web/src/config/landing.ts` is temporary until site settings and CMS records exist.
 
 Composition:
 
@@ -12,7 +12,7 @@ LandingPage
 Navbar / main sections / footer
 ```
 
-`LandingPage` stays a Server Component. The navbar opens a client boundary only for scroll elevation, active route, and the mobile Sheet.
+`LandingPage` stays a Server Component. Navbar and Hero open client boundaries only at interactive leaves (Sheet, scroll elevation, Hero motion, quote form).
 
 ## Conversion sequence
 
@@ -61,12 +61,13 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Hero
 - **Purpose:** Answer what Neatly is, what it does, why it is trustworthy, and what to do next.
-- **Content:** Eyebrow, one `h1`, supporting copy, primary + secondary CTAs, qualitative trust signals, media slot.
-- **CTA:** Primary quote; secondary services.
-- **Hierarchy:** `h1` is the only page title. CTAs sit above the media slot.
-- **Responsive:** Single column. Later `lg` split (copy left, media right) without changing content order.
-- **Motion intent:** Later GSAP scroll-driven entrance (copy fade/translate, media scale). Reduced motion: static content. Future client. Tool: GSAP + Lenis scroll. Not implemented.
-- **A11y:** `section aria-labelledby="hero-heading"`. Media needs real `alt` when assets exist. No autoplay video in MVP.
+- **Content:** Eyebrow, one `h1` with a single accent phrase, supporting copy, primary quote CTA, qualitative trust signals, preview quote card, cinematic background slot.
+- **CTA:** Primary quote to `/quote`. Secondary services as a text link, not a second button.
+- **Form:** UI-only preview (name, email, service, message). Validates with Zod. Does not write to the database or show a fake success. Points visitors to `/quote`.
+- **Hierarchy:** Copy left, quote card right from `lg`. Stacked on smaller screens. Navbar overlays the top of the Hero on `/`.
+- **Media:** Four cinematic frames at `apps/web/public/images/hero/01_img.jpeg` … `04_img.jpeg` (~2752×1536). Frame 01 is the LCP image. Later frames load eagerly to avoid crossfade flashes. Decorative `alt=""`.
+- **Motion intent:** GSAP ScrollTrigger pin + scrubbed scale/crossfade timeline. Framer Motion only for the copy/form entrance. Reduced motion shows Frame 01 only, with no pin.
+- **A11y:** `section aria-labelledby="hero-heading"`. Form labels, `aria-invalid`, live unavailable message. Background photography is `aria-hidden`.
 
 ### Trust indicators
 - **Purpose:** Immediate credibility after the hero.
@@ -185,7 +186,7 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 
 ## Performance
 
-Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, future hero GSAP, work slider, testimonial carousel, newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
+Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, future work slider, testimonial carousel, newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
 
 ## SEO
 
@@ -193,4 +194,4 @@ One `h1`. Section `h2`s in document order. Layout metadata from Step 10 remains 
 
 ## What this step does not include
 
-Designed hero photography, GSAP timelines, before/after slider, live CMS queries, quote/newsletter APIs, authentication, or invented social proof.
+Approved photography, GSAP section timelines, before/after slider, live CMS queries, quote/newsletter APIs, authentication, or invented social proof.

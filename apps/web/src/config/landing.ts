@@ -44,19 +44,82 @@ export const landingNavLinks = [
 
 export const landingHero = {
   description: `${APP_NAME} is a professional residential and commercial cleaning service. Work is done by vetted, insured teams with a clear scope and a satisfaction guarantee.`,
-  eyebrow: "Professional cleaning",
+  emphasis: "Effortless living.",
+  eyebrow: "Residential and commercial cleaning",
   heading: "Pristine spaces. Effortless living.",
   headingId: "hero-heading",
-  media: {
-    alt: "Replace with a real, high-resolution photograph of a finished Neatly cleaning project.",
-    role: "hero" as const,
-  },
+  frames: [
+    {
+      height: 1536,
+      objectPositionClassName: "object-[70%_38%] lg:object-[62%_42%]",
+      src: "/images/hero/01_img.jpeg",
+      width: 2752,
+    },
+    {
+      height: 1536,
+      objectPositionClassName: "object-[32%_62%] lg:object-[38%_58%]",
+      src: "/images/hero/02_img.jpeg",
+      width: 2752,
+    },
+    {
+      height: 1536,
+      objectPositionClassName: "object-[80%_40%] lg:object-[72%_42%]",
+      src: "/images/hero/03_img.jpeg",
+      width: 2752,
+    },
+    {
+      height: 1536,
+      objectPositionClassName: "object-[42%_40%] lg:object-[48%_42%]",
+      src: "/images/hero/04_img.jpeg",
+      width: 2752,
+    },
+  ],
+  secondaryActionLabel: "Explore services",
   trustSignals: [
     "Licensed and insured",
     "Vetted professionals",
     "Satisfaction guarantee",
   ],
 };
+
+export const heroQuoteForm = {
+  description:
+    "Share a few details. A specialist will follow up with a clear scope. Payment is not part of this step.",
+  heading: "Request a quote",
+  headingId: "hero-quote-heading",
+  unavailableMessage:
+    "This preview form is not connected yet. Continue on the full quote page.",
+  fields: {
+    email: {
+      id: "hero-quote-email",
+      label: "Email",
+      placeholder: "name@example.com",
+    },
+    fullName: {
+      id: "hero-quote-name",
+      label: "Full name",
+      placeholder: "Your name",
+    },
+    message: {
+      id: "hero-quote-message",
+      label: "Message",
+      placeholder: "Property type, timing, or anything we should know",
+    },
+    service: {
+      id: "hero-quote-service",
+      label: "Service",
+      placeholder: "Choose a service",
+    },
+  },
+  submitLabel: "Submit request",
+  services: [
+    { label: "Residential cleaning", value: "residential" },
+    { label: "Deep cleaning", value: "deep" },
+    { label: "Move-in and move-out", value: "move" },
+    { label: "Commercial cleaning", value: "commercial" },
+    { label: "Recurring cleaning", value: "recurring" },
+  ],
+} as const;
 
 export const landingTrustIndicators = {
   heading: "Trust, stated plainly",
@@ -216,7 +279,7 @@ export const landingFooter = {
     address: "100 Main Street, Suite 400, New York, NY 10001",
     email: "hello@neatly.com",
     hours: "Mon – Sat: 8:00 AM – 6:00 PM",
-    phone: "+1 (800) 555-6328",
+    phone: "[Development Placeholder: Insert Real Business Phone]",
   },
 };
 
@@ -252,7 +315,7 @@ export const landingClientBoundary = {
   finalCta: "server",
   footer: "server",
   header: "client",
-  hero: "future-client",
+  hero: "client",
   howItWorks: "server",
   newsletter: "future-client",
   services: "server",

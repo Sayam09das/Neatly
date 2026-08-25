@@ -16,6 +16,10 @@
     "./client": {
       "types": "./src/env.client.ts",
       "default": "./src/env.client.ts"
+    },
+    "./zod": {
+      "types": "./src/zod.ts",
+      "default": "./src/zod.ts"
     }
   },
   "types": "./src/index.ts",

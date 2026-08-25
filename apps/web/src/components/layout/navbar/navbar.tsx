@@ -12,6 +12,7 @@ const NAVBAR_ELEVATION_SCROLL_PX = 20;
 export function Navbar(): ReactElement {
   const pathname = useActivePathname();
   const isElevated = useNavbarElevation();
+  const isHomeOverlay = pathname === "/" && !isElevated;
 
   return (
     <header
@@ -20,7 +21,9 @@ export function Navbar(): ReactElement {
         "motion-safe:transition-[background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-normal motion-safe:ease-standard",
         isElevated
           ? "border-b border-secondary-foreground/10 bg-secondary/95 shadow-sm backdrop-blur-md"
-          : "border-b border-transparent bg-secondary",
+          : isHomeOverlay
+            ? "border-b border-transparent bg-transparent"
+            : "border-b border-transparent bg-secondary",
       )}
     >
       <div className="mx-auto flex min-h-16 max-w-page items-center justify-between gap-4 px-gutter">
