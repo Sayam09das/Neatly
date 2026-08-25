@@ -7,9 +7,14 @@
     "pnpm": ">=11.13.1"
   },
   "scripts": {
+    "check": "pnpm typecheck && pnpm lint",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome check .",
     "typecheck": "pnpm -r --if-present typecheck"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.10",
     "typescript": "catalog:"
   }
 }
