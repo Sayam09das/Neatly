@@ -1,0 +1,21 @@
+{
+  "name": "@neatly/utils",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Framework-independent utilities for Neatly.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "types": "./src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
