@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import type { ReactElement, ReactNode } from "react";
 import { getSiteUrl } from "@/lib/site-url";
+import { Providers } from "@/providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,6 +35,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  colorScheme: "light dark",
 };
 
 interface RootLayoutProps {
@@ -44,9 +46,9 @@ export default function RootLayout({
   children,
 }: RootLayoutProps): ReactElement {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased overflow-x-hidden`}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
