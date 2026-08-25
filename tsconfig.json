@@ -2,7 +2,14 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
     "types": ["node"]
   },
-  "include": ["vitest.config.ts", "playwright.config.ts", "tests/**/*.ts"]
+  "include": [
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ]
 }

@@ -65,10 +65,23 @@ Interactive elements must support idle, hover, focus-visible, active, disabled, 
 
 ## Component philosophy
 
-- `packages/ui` — generic, accessible primitives (none required yet).
-- `apps/web` — Neatly-specific composition.
+Components stay typed, composable, free of business logic, and Server Components by default. Interactive overlays (`Dialog`, `Sheet`, `DropdownMenu`, `Tooltip`) are Client Components.
 
-Components stay typed, composable, free of business logic, and Server Components by default.
+## Primitive UI vs application UI
+
+Keep composition in three layers. Do not collapse them.
+
+```text
+packages/ui            → primitive UI
+apps/web/src/components → application components
+app routes / sections   → page sections
+```
+
+- **`packages/ui`** — generic, accessible primitives (Button, Input, Dialog, Sheet, and the rest of the restrained shadcn/Radix set). Import only from `@neatly/ui`. These are unopinionated building blocks styled with Neatly semantic tokens, not a visual redesign of default shadcn.
+- **`apps/web/src/components`** — Neatly-specific compositions (forms, navbar, marketing blocks, admin tables). They consume primitives; they do not live in the UI package.
+- **Page sections** — route-level layouts that assemble application components. Do not put landing sections in `packages/ui`.
+
+shadcn/ui is the implementation foundation (Radix behavior, composition API). Neatly’s design tokens in `globals.css` remain the visual language.
 
 ## Accessibility
 

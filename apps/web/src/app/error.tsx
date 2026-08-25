@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@neatly/ui";
 import type { ReactElement } from "react";
 
 interface ErrorPageProps {
@@ -16,13 +17,9 @@ export default function ErrorPage({ reset }: ErrorPageProps): ReactElement {
       <p className="mt-4 text-body text-muted-foreground">
         An unexpected error occurred. You can try again.
       </p>
-      <button
-        className="mt-8 inline-flex min-h-touch min-w-touch items-center text-button text-primary underline"
-        onClick={reset}
-        type="button"
-      >
+      <Button className="mt-8" onClick={reset} variant="link">
         Try again
-      </button>
+      </Button>
     </main>
   );
 }

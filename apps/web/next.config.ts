@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   agentRules: false,
   outputFileTracingRoot: workspaceRoot,
-  transpilePackages: ["@neatly/config"],
+  transpilePackages: ["@neatly/config", "@neatly/ui", "@neatly/utils"],
   async headers(): Promise<
     Array<{
       source: string;
