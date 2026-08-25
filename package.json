@@ -1,6 +1,7 @@
 {
   "name": "neatly",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.13.1",
   "engines": {
     "node": ">=24.19.0",
@@ -12,7 +13,10 @@
     "format:check": "biome format .",
     "lint": "biome check .",
     "prepare": "husky",
-    "typecheck": "pnpm -r --if-present typecheck"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit && pnpm -r --if-present typecheck"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,jsonc}": [
@@ -20,9 +24,14 @@
     ]
   },
   "devDependencies": {
+    "@neatly/config": "workspace:*",
     "@biomejs/biome": "2.5.10",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "^4.1.11"
   }
 }
