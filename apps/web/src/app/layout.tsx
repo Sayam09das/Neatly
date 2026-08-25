@@ -1,15 +1,10 @@
 import { APP_NAME } from "@neatly/config";
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
 import type { ReactElement, ReactNode } from "react";
+import { geistMono, geistSans } from "@/app/fonts";
 import { getSiteUrl } from "@/lib/site-url";
 import { Providers } from "@/providers";
 import "./globals.css";
-
-const geistSans = Geist({
-  subsets: ["latin"],
-  display: "swap",
-});
 
 const siteUrl = getSiteUrl();
 
@@ -46,8 +41,12 @@ export default function RootLayout({
   children,
 }: RootLayoutProps): ReactElement {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased overflow-x-hidden`}>
+    <html
+      className={`${geistSans.variable} ${geistMono.variable} light`}
+      lang="en"
+      suppressHydrationWarning
+    >
+      <body className="overflow-x-hidden bg-background font-sans text-foreground antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

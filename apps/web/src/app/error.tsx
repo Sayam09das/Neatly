@@ -9,15 +9,15 @@ interface ErrorPageProps {
 
 export default function ErrorPage({ reset }: ErrorPageProps): ReactElement {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-semibold tracking-tight">
+    <main className="mx-auto max-w-content px-gutter py-section">
+      <h1 className="text-h1 text-foreground tracking-tight">
         Something went wrong
       </h1>
-      <p className="mt-4 text-base">
+      <p className="mt-4 text-body text-muted-foreground">
         An unexpected error occurred. You can try again.
       </p>
       <button
-        className="mt-8 inline-flex min-h-11 min-w-11 items-center text-base underline"
+        className="mt-8 inline-flex min-h-touch min-w-touch items-center text-button text-primary underline"
         onClick={reset}
         type="button"
       >

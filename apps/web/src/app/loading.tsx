@@ -5,9 +5,9 @@ export default function Loading(): ReactElement {
     <main
       aria-busy="true"
       aria-live="polite"
-      className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8"
+      className="mx-auto max-w-content px-gutter py-section"
     >
-      <p className="text-base">Loading</p>
+      <p className="text-body text-muted-foreground">Loading</p>
     </main>
   );
 }

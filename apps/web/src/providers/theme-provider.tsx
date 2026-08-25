@@ -15,16 +15,14 @@ const THEME_STORAGE_KEY = "neatly-theme";
 
 export type Theme = "dark" | "light" | "system";
 
+const DEFAULT_THEME: Theme = "light";
+
 interface ThemeContextValue {
   setTheme: (theme: Theme) => void;
   theme: Theme;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-function isTheme(value: string | null): value is Theme {
-  return value === "dark" || value === "light" || value === "system";
-}
 
 function getSystemTheme(): Exclude<Theme, "system"> {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -40,7 +38,12 @@ function applyTheme(theme: Theme): void {
 
 function readStoredTheme(): Theme {
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return isTheme(stored) ? stored : "system";
+
+  if (stored === "dark" || stored === "light") {
+    return stored;
+  }
+
+  return DEFAULT_THEME;
 }
 
 interface ThemeProviderProps {
@@ -48,25 +51,12 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
 
-  useEffect((): (() => void) => {
+  useEffect((): void => {
     const initialTheme = readStoredTheme();
     setThemeState(initialTheme);
     applyTheme(initialTheme);
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onSystemThemeChange = (): void => {
-      const currentTheme = readStoredTheme();
-      if (currentTheme === "system") {
-        applyTheme("system");
-      }
-    };
-
-    media.addEventListener("change", onSystemThemeChange);
-    return (): void => {
-      media.removeEventListener("change", onSystemThemeChange);
-    };
   }, []);
 
   const setTheme = useCallback((nextTheme: Theme): void => {
