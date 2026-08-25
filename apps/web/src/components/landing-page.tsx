@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { Navbar } from "@/components/layout/navbar";
 import { BlogHighlights } from "@/components/sections/blog-highlights";
 import { FeaturedWork } from "@/components/sections/featured-work";
 import { FinalCta } from "@/components/sections/final-cta";
@@ -7,7 +8,6 @@ import { HowItWorks } from "@/components/sections/how-it-works";
 import { Newsletter } from "@/components/sections/newsletter";
 import { ServicesSummary } from "@/components/sections/services-summary";
 import { SiteFooter } from "@/components/sections/site-footer";
-import { SiteHeader } from "@/components/sections/site-header";
 import { Statistics } from "@/components/sections/statistics";
 import { Testimonials } from "@/components/sections/testimonials";
 import { TrustIndicators } from "@/components/sections/trust-indicators";
@@ -23,7 +23,7 @@ export function LandingPage(): ReactElement {
       >
         Skip to content
       </a>
-      <SiteHeader />
+      <Navbar />
       <main id="main-content">
         <p className="sr-only">{TEMPORARY_COPY_NOTE}</p>
         <Hero />

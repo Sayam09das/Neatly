@@ -1,6 +1,6 @@
 # Neatly Landing Page Architecture
 
-Scaffold for `/`. Visual design, sticky navigation, hero media, CMS data, and motion implementation belong to later steps. Copy in `apps/web/src/config/landing.ts` is temporary until site settings and CMS records exist.
+Scaffold for `/`. Hero media, CMS data, and remaining section motion belong to later steps. The production navbar is implemented. Copy in `apps/web/src/config/landing.ts` is temporary until site settings and CMS records exist.
 
 Composition:
 
@@ -9,16 +9,16 @@ src/app/page.tsx
     ↓
 LandingPage
     ↓
-header / main sections / footer
+Navbar / main sections / footer
 ```
 
-All current section files are React Server Components. Client boundaries are reserved, not opened.
+`LandingPage` stays a Server Component. The navbar opens a client boundary only for scroll elevation, active route, and the mobile Sheet.
 
 ## Conversion sequence
 
 The product requirements require these 13 landmarks, in order:
 
-1. Navbar (`SiteHeader`)
+1. Navbar (`Navbar`)
 2. Hero
 3. Trust indicators
 4. Why Neatly
@@ -38,7 +38,8 @@ No extra SaaS bands (logos, pricing, team photos, 3D product shots).
 
 | Rank | Label | Destination | Where it appears |
 | :--- | :--- | :--- | :--- |
-| Primary | Request a free quote | `/quote` | Header, hero, final CTA |
+| Primary | Get a Quote | `/quote` | Navbar |
+| Primary | Request a free quote | `/quote` | Hero, final CTA |
 | Secondary | Explore services | `/services` | Hero, services summary |
 | Contextual | View our work | `/portfolio` | Featured work |
 | Contextual | Read the journal | `/blog` | Blog highlights |
@@ -48,14 +49,15 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ## Section briefs
 
-### Site header
+### Navbar
 - **Purpose:** Brand, primary navigation, quote action.
-- **Content:** Wordmark, About / Services / Portfolio / Blog / Contact, primary CTA.
-- **CTA:** Primary quote.
-- **Hierarchy:** Wordmark first, links second, CTA last.
-- **Responsive:** Column stack on small screens; row from `md`. No drawer in this step.
-- **Motion intent:** Later micro (sticky background, Sheet). CSS for link/button hover. Future client for scroll state + mobile Sheet. Tool: CSS now; Motion + Sheet later.
-- **A11y:** `<header>`, `nav aria-label="Primary"`, skip link to `#main-content`. No hamburger yet.
+- **Content:** Replaceable wordmark + mark, About / Services / Portfolio / Blog / Contact, optional published phone, “Get a Quote”.
+- **CTA:** Navbar quote (`navbarCta`) to `/quote`.
+- **Hierarchy:** Logo left, links center, actions right on `lg`. Logo + menu control below `lg`.
+- **Responsive:** Sticky header. Desktop row from `lg`. Mobile Sheet with links, phone slot, and full-width CTA.
+- **Motion intent:** CSS hover/focus. Subtle background/border after 20px scroll. Sheet uses the existing primitive. Reduced motion via `motion-safe` and duration tokens.
+- **A11y:** `<header>`, `nav aria-label="Primary"`, skip link to `#main-content`, `aria-current` on active routes, “Open menu” / “Close menu”.
+- **Phone:** Render a `tel:` control only when `getPublishedPhone()` returns a real number. Do not invent digits.
 
 ### Hero
 - **Purpose:** Answer what Neatly is, what it does, why it is trustworthy, and what to do next.
@@ -183,7 +185,7 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 
 ## Performance
 
-Server Components by default. Keep JS at the leaf: future header Sheet, hero GSAP, work slider, testimonial carousel, newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
+Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, future hero GSAP, work slider, testimonial carousel, newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
 
 ## SEO
 
@@ -191,4 +193,4 @@ One `h1`. Section `h2`s in document order. Layout metadata from Step 10 remains 
 
 ## What this step does not include
 
-Designed navbar, hero photography, GSAP timelines, before/after slider, live CMS queries, quote/newsletter APIs, authentication, or invented social proof.
+Designed hero photography, GSAP timelines, before/after slider, live CMS queries, quote/newsletter APIs, authentication, or invented social proof.

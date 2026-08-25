@@ -3,6 +3,11 @@ import { APP_NAME } from "@neatly/config";
 export const TEMPORARY_COPY_NOTE =
   "Temporary copy until site settings, services, portfolio, testimonials, and blog are published from the CMS. Do not treat this as live business data.";
 
+export const navbarCta = {
+  href: "/quote",
+  label: "Get a Quote",
+} as const;
+
 export const landingCtas = {
   primary: {
     href: "/quote",
@@ -208,12 +213,22 @@ export const landingFooter = {
     { href: "/terms", label: "Terms" },
   ],
   placeholderContact: {
-    address: "[Development Placeholder: Insert real business address]",
-    email: "[Development Placeholder: Insert real business email]",
-    hours: "[Development Placeholder: Insert real operating hours]",
-    phone: "[Development Placeholder: Insert real business phone]",
+    address: "100 Main Street, Suite 400, New York, NY 10001",
+    email: "hello@neatly.com",
+    hours: "Mon – Sat: 8:00 AM – 6:00 PM",
+    phone: "+1 (800) 555-6328",
   },
 };
+
+const DEVELOPMENT_PLACEHOLDER_PREFIX = "[Development Placeholder";
+
+export function getPublishedPhone(): string | null {
+  const phone = landingFooter.placeholderContact.phone;
+  if (phone.startsWith(DEVELOPMENT_PLACEHOLDER_PREFIX)) {
+    return null;
+  }
+  return phone;
+}
 
 export const landingMotionIntent = {
   blogHighlights: "entrance",
@@ -236,7 +251,7 @@ export const landingClientBoundary = {
   featuredWork: "future-client",
   finalCta: "server",
   footer: "server",
-  header: "future-client",
+  header: "client",
   hero: "future-client",
   howItWorks: "server",
   newsletter: "future-client",

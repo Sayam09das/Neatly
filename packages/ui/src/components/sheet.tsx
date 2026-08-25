@@ -73,11 +73,14 @@ const sheetVariants = cva(
 
 export interface SheetContentProps
   extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  closeLabel?: string;
+}
 
 export function SheetContent({
   children,
   className,
+  closeLabel = "Close",
   side = "right",
   ...props
 }: SheetContentProps): ReactElement {
@@ -91,7 +94,7 @@ export function SheetContent({
       >
         {children}
         <DialogPrimitive.Close
-          aria-label="Close"
+          aria-label={closeLabel}
           className="absolute top-4 right-4 inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors duration-normal ease-standard hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
           <CloseIcon />
