@@ -85,7 +85,7 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **CTA:** Per-card “View {title}” icon link to `/services`. Section-level Explore services.
 - **Hierarchy:** `h2`, then `h3` per card.
 - **Responsive:** Featured full width, then 2-column secondary from `md`. Stacked on mobile.
-- **Media:** Reuses Why photography (`why_use_01`–`03`) with descriptive alt. No stock.
+- **Media:** Dedicated Services photography at `apps/web/public/images/Services/` (`01_residential`, `02_deep`, `04_commercial`). Descriptive alt. No stock. No Why or Hero frames.
 - **Motion intent:** GSAP ScrollTrigger (heading → rule → featured → secondary). Clip-path + scale image reveal; subtle parallax from `md`. Framer hover lift, image scale, arrow shift; tap scale on touch. Reduced motion skips GSAP and hover transforms. Decorative rule is GSAP `scaleX`, not Anime.js.
 - **A11y:** Section `aria-labelledby="services-heading"`. Icon links have accessible names. Curve is `aria-hidden`.
 

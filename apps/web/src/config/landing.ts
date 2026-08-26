@@ -236,11 +236,11 @@ export const landingServices = {
       description:
         "Regular maintenance for apartments and single-family homes. Recurring or one-time, with inclusions stated before you request a quote.",
       image: {
-        alt: "A vetted cleaner wearing an ID badge and apron, holding folded cloths beside a supply cart in a modern kitchen.",
-        height: 1536,
-        objectPosition: "50% 22%",
-        src: "/images/why_use/why_use_01.jpeg",
-        width: 2752,
+        alt: "A cleaner in a charcoal apron wiping a marble kitchen island in a bright apartment, with a Neatly spray bottle on the counter.",
+        height: 768,
+        objectPosition: "42% 38%",
+        src: "/images/Services/01_residential.jpeg",
+        width: 1376,
       },
     },
     {
@@ -251,11 +251,11 @@ export const landingServices = {
       description:
         "Detail work beyond a standard visit, including baseboards, interior appliances, and scrubbing where the published checklist includes them.",
       image: {
-        alt: "A Neatly cleaner wiping a marble kitchen island with a microfiber cloth.",
-        height: 1536,
-        objectPosition: "50% 32%",
-        src: "/images/why_use/why_use_02.jpeg",
-        width: 2752,
+        alt: "A Neatly cleaner kneeling to wipe light-wood kitchen cabinetry with a cloth and spray bottle.",
+        height: 768,
+        objectPosition: "38% 52%",
+        src: "/images/Services/02_deep.jpeg",
+        width: 1376,
       },
     },
     {
@@ -266,11 +266,11 @@ export const landingServices = {
       description:
         "Offices, studios, and small workplaces. Scope is set per property so expectations stay explicit.",
       image: {
-        alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows.",
-        height: 1536,
-        objectPosition: "50% 48%",
-        src: "/images/why_use/why_use_03.jpeg",
-        width: 2752,
+        alt: "A cleaner in a navy polo wiping a wooden office desk beside a monitor, notebook, and plants.",
+        height: 768,
+        objectPosition: "35% 42%",
+        src: "/images/Services/04_commercial.jpeg",
+        width: 1376,
       },
     },
   ],

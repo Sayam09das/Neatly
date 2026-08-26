@@ -25,7 +25,7 @@ describe("ServicesSection", (): void => {
       ).toBeInTheDocument();
       expect(
         screen.getByRole("img", { name: service.image.alt }),
-      ).toHaveAttribute("src", expect.stringContaining("why_use"));
+      ).toHaveAttribute("src", expect.stringContaining("Services"));
       expect(
         screen.getByRole("link", { name: `View ${service.title}` }),
       ).toHaveAttribute("href", service.href);
