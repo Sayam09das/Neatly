@@ -22,10 +22,10 @@ The product requirements require these 13 landmarks, in order:
 2. Hero
 3. Why Neatly (production; includes trust metric slots)
 4. Services (production)
-5. Trust indicators (scaffold until its production step)
-6. Featured work
-7. How it works
-8. Statistics
+5. Trust indicators (production pending figures)
+6. Featured work (production brand photography; CMS case studies later)
+7. How it works (production)
+8. Statistics (production pending figures)
 9. Testimonials
 10. Final CTA
 11. Blog highlights
@@ -90,76 +90,76 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **A11y:** Section `aria-labelledby="services-heading"`. Icon links have accessible names. Curve is `aria-hidden`.
 
 ### Trust indicators
-- **Purpose:** Immediate credibility after Why Neatly and Services (scaffold until its production step).
-- **Content:** Four slots (insured, reviews, guarantee, screening) without invented scores.
+- **Purpose:** Credibility immediately after Services, without invented scores.
+- **Content:** Eyebrow, editorial `h2`, supporting copy, four labeled pillars with pending figures (`—`).
 - **CTA:** None. Scanning only.
 - **Hierarchy:** `h2` then four `h3` items.
-- **Responsive:** 1 → 2 → 4 columns (`md`, `lg`).
-- **Motion intent:** Subtle entrance. Server. Tool: CSS or Framer later.
-- **A11y:** List of headings, not icon-only badges.
+- **Responsive:** 1 → 2 → 4 columns (`sm`, `lg`).
+- **Motion intent:** GSAP fade/rise on enter. Reversible. Reduced motion skips GSAP.
+- **A11y:** List of headings, not icon-only badges. Never imply a published count.
 
 ### Featured work
-- **Purpose:** Visual proof.
-- **Content:** Empty CMS slot. Before/after images later via `next/image`.
+- **Purpose:** Visual proof of the kinds of spaces Neatly is built for.
+- **Content:** Eyebrow, `h2`, intro, four brand-photography tiles (residential, deep, commercial, living spaces) plus the CMS empty notice. Not case studies.
 - **CTA:** View our work.
-- **Hierarchy:** `h2`, empty copy, media slot.
-- **Responsive:** Full-width slot; later side-by-side from `md`, slider interaction from `lg`.
-- **Motion intent:** Later GSAP scroll-driven / pinned before-after on large screens; stacked stills on small screens. Future client. Tool: GSAP. Reduced motion: static pair.
-- **A11y:** Slider must remain keyboard-operable; images need descriptive alt.
+- **Hierarchy:** `h2`, figcaptions, empty copy.
+- **Responsive:** 1 → 2 → 4 columns (`md`, `lg`) with a slight staggered offset from `lg`.
+- **Motion intent:** GSAP section reveal. Framer image scale on hover. Reduced motion skips both.
+- **A11y:** Meaningful alt. Decorative marquee below is `aria-hidden`.
 
 ### How it works
 - **Purpose:** Remove process ambiguity.
-- **Content:** Three steps from the PRD (quote → confirm → clean).
+- **Content:** Three PRD steps (quote → confirm → clean) on a dark photographic band. Not four invented steps.
 - **CTA:** None (quote already offered above and below).
 - **Hierarchy:** `h2`, ordered list, `h3` per step.
 - **Responsive:** 1 column, 3 from `md`.
-- **Motion intent:** Subtle entrance. Server. Tool: CSS or Framer later.
-- **A11y:** `<ol>` so sequence is announced.
+- **Motion intent:** GSAP header, rule, steps, and image settle. Reduced motion skips GSAP.
+- **A11y:** `<ol>` so sequence is announced. Background photo is `aria-hidden`.
 
 ### Statistics
 - **Purpose:** Scale proof — only with verified figures.
-- **Content:** Labels only. Values stay empty until site settings provide them.
+- **Content:** Labels and pending values. Count-up stays off until site settings provide numbers.
 - **CTA:** None.
 - **Hierarchy:** `h2`, empty notice, labeled slots.
 - **Responsive:** 1 column, 3 from `sm`.
-- **Motion intent:** Optional later count-up (Anime.js or GSAP). Disabled when reduced motion or when values are missing. Server until then.
+- **Motion intent:** GSAP reveal. No count-up while values are pending.
 - **A11y:** Never imply a number that is not in the data.
 
 ### Testimonials
 - **Purpose:** Peer proof.
-- **Content:** Empty until featured CMS reviews exist. No invented names, stars, or quotes.
+- **Content:** Atmospheric photography plus empty quote copy until featured CMS reviews exist. No invented names, stars, or quotes.
 - **CTA:** None.
-- **Hierarchy:** `h2`, empty notice. Later `article` per review with `h3` attribution.
-- **Responsive:** Stacked; carousel only if more than three published reviews (future client).
-- **Motion intent:** Entrance; carousel uses Motion. Tool: Framer Motion if a carousel is required.
-- **A11y:** Reviews as articles, not unlabeled slides.
+- **Hierarchy:** `h2`, empty notice. Later `article` per review.
+- **Responsive:** Stacked; split from `lg`.
+- **Motion intent:** GSAP reveal. Carousel waits for published reviews.
+- **A11y:** Decorative quote mark is `aria-hidden`.
 
 ### Final CTA
 - **Purpose:** Convert remaining visitors.
 - **Content:** Quote headline and short copy. No second competing primary action.
 - **CTA:** Request a free quote only.
 - **Hierarchy:** `h2`, copy, primary button.
-- **Responsive:** Full-width button on small screens (`Button` already stretches via flex parent if needed).
+- **Responsive:** Centered. Full-width button on small screens if the flex parent stretches it.
 - **Motion intent:** CSS hover/active on the button. Server. Tool: CSS.
 - **A11y:** Heading + one button. No modal.
 
 ### Blog highlights
 - **Purpose:** Authority and crawlable internal links.
-- **Content:** Empty until published posts exist. Later three latest articles.
+- **Content:** Featured reserved card plus three titled slots until published posts exist.
 - **CTA:** Read the journal.
-- **Hierarchy:** `h2`; later `h3` titles.
-- **Responsive:** 1 column, 3 from `md`.
-- **Motion intent:** Subtle entrance. Server.
-- **A11y:** Meaningful titles, not “read more”. Covers need alt.
+- **Hierarchy:** `h2`; featured `h3`; later live titles.
+- **Responsive:** Featured + stack from `lg`.
+- **Motion intent:** None yet. Server.
+- **A11y:** Meaningful titles, not “read more”.
 
 ### Newsletter
 - **Purpose:** Optional email capture. Not a quote substitute.
-- **Content:** Disabled email field and consent copy. No submit in this step.
+- **Content:** Dark photographic band, disabled email field, consent copy, explicit unavailable message. No submit in this step.
 - **CTA:** Subscribe (disabled).
 - **Hierarchy:** `h2`, copy, labeled input.
 - **Responsive:** Stacked field + button; row from `sm`.
-- **Motion intent:** CSS focus. Future client for React Hook Form + Zod. Tool: CSS now.
-- **A11y:** `label htmlFor`, consent `aria-describedby`, no posting until the API exists.
+- **Motion intent:** CSS focus. Future client for React Hook Form + Zod.
+- **A11y:** `label htmlFor`, consent and unavailable `aria-describedby`, no posting until the API exists.
 
 ### Site footer
 - **Purpose:** Contact, explore, legal.

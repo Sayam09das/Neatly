@@ -122,8 +122,12 @@ export const heroQuoteForm = {
 } as const;
 
 export const landingTrustIndicators = {
+  eyebrow: "Trust",
   heading: "Trust, stated plainly",
   headingId: "trust-heading",
+  intro:
+    "The figures that belong here will come from site settings. Until they are published, the pillars stay visible without invented counts.",
+  pendingValue: "—",
   items: [
     {
       body: "Coverage details will come from site settings. Do not invent certifications.",
@@ -277,27 +281,77 @@ export const landingServices = {
 } as const;
 
 export const landingFeaturedWork = {
+  eyebrow: "Our work",
   emptyMessage:
     "Featured before-and-after projects will appear here once published in the portfolio CMS. No stock photography.",
   heading: "Featured work",
   headingId: "work-heading",
+  intro:
+    "These frames show the kinds of spaces Neatly is built for. Specific before-and-after case studies publish from the portfolio CMS.",
   mediaRole: "product-visualization" as const,
+  tiles: [
+    {
+      alt: "A cleaner wiping a marble kitchen island in a bright apartment.",
+      height: 768,
+      label: "Residential",
+      objectPosition: "42% 38%",
+      src: "/images/Services/01_residential.jpeg",
+      width: 1376,
+    },
+    {
+      alt: "A Neatly cleaner kneeling to wipe light-wood kitchen cabinetry.",
+      height: 768,
+      label: "Deep clean",
+      objectPosition: "38% 52%",
+      src: "/images/Services/02_deep.jpeg",
+      width: 1376,
+    },
+    {
+      alt: "A cleaner wiping a wooden office desk beside a monitor and plants.",
+      height: 768,
+      label: "Commercial",
+      objectPosition: "35% 42%",
+      src: "/images/Services/04_commercial.jpeg",
+      width: 1376,
+    },
+    {
+      alt: "A tidy living room with a cleaned wood table and garden light through tall windows.",
+      height: 1536,
+      label: "Living spaces",
+      objectPosition: "50% 48%",
+      src: "/images/why_use/why_use_03.jpeg",
+      width: 2752,
+    },
+  ],
 };
 
 export const landingHowItWorks = {
+  eyebrow: "The process",
   heading: "How it works",
   headingId: "process-heading",
+  intro:
+    "Three steps from request to a finished visit. Payment is not part of the quote.",
+  image: {
+    alt: "",
+    height: 1536,
+    objectPosition: "48% 42%",
+    src: "/images/hero/03_img.jpeg",
+    width: 2752,
+  },
   steps: [
     {
       body: "Share the property type, service, and timing. No payment on this step.",
+      number: "01",
       title: "Request a quote",
     },
     {
       body: "Confirm the scope and schedule with the team.",
+      number: "02",
       title: "Confirm the visit",
     },
     {
       body: "The booked service is completed to the agreed checklist.",
+      number: "03",
       title: "Enjoy a clean space",
     },
   ],
@@ -308,10 +362,20 @@ export const landingStatistics = {
     "Operational figures will appear here only from verified site settings. Do not invent homes cleaned, ratings, or percentages.",
   heading: "By the numbers",
   headingId: "statistics-heading",
+  pendingValue: "—",
   slots: [
-    { label: "Homes cleaned" },
-    { label: "Satisfaction measure" },
-    { label: "Insured staff coverage" },
+    {
+      body: "Published from site settings when verified.",
+      label: "Homes cleaned",
+    },
+    {
+      body: "A satisfaction measure appears only from verified settings.",
+      label: "Satisfaction measure",
+    },
+    {
+      body: "Coverage language publishes from site settings.",
+      label: "Insured staff coverage",
+    },
   ],
 };
 
@@ -320,6 +384,14 @@ export const landingTestimonials = {
     "Customer reviews will appear here only after they are published and featured in the testimonials CMS. Names, ratings, and quotes will never be invented.",
   heading: "Customer reviews",
   headingId: "testimonials-heading",
+  pendingAttribution: "Featured reviews pending",
+  image: {
+    alt: "A vetted cleaner wearing an ID badge and apron beside a supply cart in a modern kitchen.",
+    height: 1536,
+    objectPosition: "50% 22%",
+    src: "/images/why_use/why_use_01.jpeg",
+    width: 2752,
+  },
 };
 
 export const landingFinalCta = {
@@ -332,18 +404,35 @@ export const landingFinalCta = {
 export const landingBlogHighlights = {
   emptyMessage:
     "The three latest published articles will appear here from the blog CMS.",
+  featuredLabel: "Featured note",
   heading: "From the journal",
   headingId: "blog-heading",
+  intro:
+    "Guides and home-care notes publish here when they are live in the journal.",
+  reservedCount: 3,
 };
 
 export const landingNewsletter = {
   consent:
     "Subscribe only if you want occasional cleaning and home-care notes. Unsubscribe will be available on every message.",
   description:
-    "The live form will post to the newsletter endpoint in a later step. This scaffold does not submit data.",
+    "The live form will post to the newsletter endpoint in a later step. This form does not submit data yet.",
   heading: "Email notes",
   headingId: "newsletter-heading",
   inputLabel: "Email address",
+  image: {
+    alt: "",
+    height: 1536,
+    objectPosition: "38% 58%",
+    src: "/images/hero/02_img.jpeg",
+    width: 2752,
+  },
+  unavailableMessage:
+    "Newsletter signup is not connected yet. No email will be stored from this form.",
+};
+
+export const landingMarquee = {
+  words: ["Vacuum", "Cleaning", "Sweeping"] as const,
 };
 
 export const landingFooter = {
@@ -374,12 +463,13 @@ export function getPublishedPhone(): string | null {
 export const landingMotionIntent = {
   blogHighlights: "entrance",
   featuredWork: "scroll-driven",
+  marquee: "scroll-driven",
   finalCta: "micro",
   footer: "none",
   header: "micro",
   hero: "scroll-driven",
-  howItWorks: "entrance",
-  newsletter: "micro",
+  howItWorks: "scroll-driven",
+  newsletter: "scroll-driven",
   services: "scroll-driven",
   statistics: "entrance",
   testimonials: "entrance",
@@ -389,16 +479,17 @@ export const landingMotionIntent = {
 
 export const landingClientBoundary = {
   blogHighlights: "server",
-  featuredWork: "future-client",
+  featuredWork: "client",
+  marquee: "client",
   finalCta: "server",
   footer: "server",
   header: "client",
   hero: "client",
-  howItWorks: "server",
-  newsletter: "future-client",
+  howItWorks: "client",
+  newsletter: "server",
   services: "client",
-  statistics: "server",
-  testimonials: "future-client",
-  trustIndicators: "server",
+  statistics: "client",
+  testimonials: "client",
+  trustIndicators: "client",
   whyNeatly: "client",
 } as const;

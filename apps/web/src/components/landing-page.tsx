@@ -1,17 +1,18 @@
 import type { ReactElement } from "react";
 import { Navbar } from "@/components/layout/navbar";
-import { BlogHighlights } from "@/components/sections/blog-highlights";
-import { FeaturedWork } from "@/components/sections/featured-work";
 import { FinalCta } from "@/components/sections/final-cta";
 import { Hero } from "@/components/sections/hero";
-import { HowItWorks } from "@/components/sections/how-it-works";
+import { BlogHighlights } from "@/components/sections/journal";
 import { Newsletter } from "@/components/sections/newsletter";
+import { HowItWorks } from "@/components/sections/process";
 import { ServicesSection } from "@/components/sections/services";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { Statistics } from "@/components/sections/statistics";
 import { Testimonials } from "@/components/sections/testimonials";
-import { TrustIndicators } from "@/components/sections/trust-indicators";
+import { TrustIndicators } from "@/components/sections/trust";
 import { WhyNeatly } from "@/components/sections/why-neatly";
+import { WordMarquee } from "@/components/sections/word-marquee";
+import { FeaturedWork } from "@/components/sections/work";
 import { TEMPORARY_COPY_NOTE } from "@/config/landing";
 
 export function LandingPage(): ReactElement {
@@ -31,6 +32,7 @@ export function LandingPage(): ReactElement {
         <ServicesSection />
         <TrustIndicators />
         <FeaturedWork />
+        <WordMarquee />
         <HowItWorks />
         <Statistics />
         <Testimonials />
