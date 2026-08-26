@@ -6,7 +6,7 @@ import { FinalCta } from "@/components/sections/final-cta";
 import { Hero } from "@/components/sections/hero";
 import { HowItWorks } from "@/components/sections/how-it-works";
 import { Newsletter } from "@/components/sections/newsletter";
-import { ServicesSummary } from "@/components/sections/services-summary";
+import { ServicesSection } from "@/components/sections/services";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { Statistics } from "@/components/sections/statistics";
 import { Testimonials } from "@/components/sections/testimonials";
@@ -28,8 +28,8 @@ export function LandingPage(): ReactElement {
         <p className="sr-only">{TEMPORARY_COPY_NOTE}</p>
         <Hero />
         <WhyNeatly />
+        <ServicesSection />
         <TrustIndicators />
-        <ServicesSummary />
         <FeaturedWork />
         <HowItWorks />
         <Statistics />

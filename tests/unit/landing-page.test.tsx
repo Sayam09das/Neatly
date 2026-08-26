@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { LandingPage } from "@/components/landing-page";
 import {
   landingHero,
+  landingServices,
   landingStatistics,
   landingTestimonials,
   landingWhyNeatly,
@@ -32,8 +33,8 @@ describe("LandingPage architecture", (): void => {
 
     expect(headings).toEqual([
       landingWhyNeatly.heading,
+      landingServices.heading,
       "Trust, stated plainly",
-      "Services",
       "Featured work",
       "How it works",
       "By the numbers",

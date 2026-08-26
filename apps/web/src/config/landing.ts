@@ -220,33 +220,61 @@ export const landingWhyNeatly = {
 } as const;
 
 export const landingServices = {
-  heading: "Services",
+  eyebrow: "Services",
+  heading: "Everything your space needs to stay Neatly.",
   headingId: "services-heading",
+  headingLead: "Everything your space",
+  headingEmphasis: "needs to stay Neatly.",
   intro:
-    "Service cards will be loaded from the CMS. These labels only reserve the architecture for the default categories in the product requirements.",
+    "Residential, deep, and commercial cleaning with a published scope. Move-in, move-out, and recurring visits are listed on the services page.",
   items: [
     {
+      number: "01",
+      featured: true,
       href: "/services",
-      name: "Residential cleaning",
-      summary: "Recurring or one-time home maintenance.",
+      title: "Residential cleaning",
+      description:
+        "Regular maintenance for apartments and single-family homes. Recurring or one-time, with inclusions stated before you request a quote.",
+      image: {
+        alt: "A vetted cleaner wearing an ID badge and apron, holding folded cloths beside a supply cart in a modern kitchen.",
+        height: 1536,
+        objectPosition: "50% 22%",
+        src: "/images/why_use/why_use_01.jpeg",
+        width: 2752,
+      },
     },
     {
+      number: "02",
+      featured: false,
       href: "/services",
-      name: "Deep cleaning",
-      summary: "Detail work beyond a standard visit.",
+      title: "Deep cleaning",
+      description:
+        "Detail work beyond a standard visit, including baseboards, interior appliances, and scrubbing where the published checklist includes them.",
+      image: {
+        alt: "A Neatly cleaner wiping a marble kitchen island with a microfiber cloth.",
+        height: 1536,
+        objectPosition: "50% 32%",
+        src: "/images/why_use/why_use_02.jpeg",
+        width: 2752,
+      },
     },
     {
+      number: "03",
+      featured: false,
       href: "/services",
-      name: "Move-in and move-out",
-      summary: "Turnover cleaning for property transitions.",
-    },
-    {
-      href: "/services",
-      name: "Commercial cleaning",
-      summary: "Offices, studios, and small workplaces.",
+      title: "Commercial cleaning",
+      description:
+        "Offices, studios, and small workplaces. Scope is set per property so expectations stay explicit.",
+      image: {
+        alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows.",
+        height: 1536,
+        objectPosition: "50% 48%",
+        src: "/images/why_use/why_use_03.jpeg",
+        width: 2752,
+      },
     },
   ],
-};
+} as const;
 
 export const landingFeaturedWork = {
   emptyMessage:
@@ -352,7 +380,7 @@ export const landingMotionIntent = {
   hero: "scroll-driven",
   howItWorks: "entrance",
   newsletter: "micro",
-  services: "entrance",
+  services: "scroll-driven",
   statistics: "entrance",
   testimonials: "entrance",
   trustIndicators: "entrance",
@@ -368,7 +396,7 @@ export const landingClientBoundary = {
   hero: "client",
   howItWorks: "server",
   newsletter: "future-client",
-  services: "server",
+  services: "client",
   statistics: "server",
   testimonials: "future-client",
   trustIndicators: "server",

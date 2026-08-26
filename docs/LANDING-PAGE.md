@@ -21,8 +21,8 @@ The product requirements require these 13 landmarks, in order:
 1. Navbar (`Navbar`)
 2. Hero
 3. Why Neatly (production; includes trust metric slots)
-4. Trust indicators (scaffold until its production step)
-5. Services summary
+4. Services (production)
+5. Trust indicators (scaffold until its production step)
 6. Featured work
 7. How it works
 8. Statistics
@@ -40,7 +40,7 @@ No extra SaaS bands (logos, pricing, team photos, 3D product shots).
 | :--- | :--- | :--- | :--- |
 | Primary | Get a Quote | `/quote` | Navbar |
 | Primary | Request a free quote | `/quote` | Hero, final CTA |
-| Secondary | Explore services | `/services` | Hero, services summary |
+| Secondary | Explore services | `/services` | Hero, services |
 | Contextual | View our work | `/portfolio` | Featured work |
 | Contextual | Read the journal | `/blog` | Blog highlights |
 | Capture | Subscribe | none yet | Newsletter (disabled) |
@@ -79,23 +79,24 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **Motion intent:** One GSAP ScrollTrigger timeline (heading → staggered cards + image settle → metrics). Reversible on scroll up. Subtle image parallax from `md`. Framer hover lift + image scale, tap scale on touch. Reduced motion skips GSAP and hover transforms. No count-up until real figures exist.
 - **A11y:** Section `aria-labelledby="why-heading"`. Meaningful image alt. Decorative SVG hidden.
 
+### Services
+- **Purpose:** Show the main PRD service categories immediately after Why Neatly.
+- **Content:** Eyebrow, editorial `h2` with a single accent, supporting copy, one featured photographic card (residential), two secondary cards (deep, commercial). Move-in/recurring remain on `/services`.
+- **CTA:** Per-card “View {title}” icon link to `/services`. Section-level Explore services.
+- **Hierarchy:** `h2`, then `h3` per card.
+- **Responsive:** Featured full width, then 2-column secondary from `md`. Stacked on mobile.
+- **Media:** Reuses Why photography (`why_use_01`–`03`) with descriptive alt. No stock.
+- **Motion intent:** GSAP ScrollTrigger (heading → rule → featured → secondary). Clip-path + scale image reveal; subtle parallax from `md`. Framer hover lift, image scale, arrow shift; tap scale on touch. Reduced motion skips GSAP and hover transforms. Decorative rule is GSAP `scaleX`, not Anime.js.
+- **A11y:** Section `aria-labelledby="services-heading"`. Icon links have accessible names. Curve is `aria-hidden`.
+
 ### Trust indicators
-- **Purpose:** Immediate credibility after the hero.
+- **Purpose:** Immediate credibility after Why Neatly and Services (scaffold until its production step).
 - **Content:** Four slots (insured, reviews, guarantee, screening) without invented scores.
 - **CTA:** None. Scanning only.
 - **Hierarchy:** `h2` then four `h3` items.
 - **Responsive:** 1 → 2 → 4 columns (`md`, `lg`).
 - **Motion intent:** Subtle entrance. Server. Tool: CSS or Framer later.
 - **A11y:** List of headings, not icon-only badges.
-
-### Services summary
-- **Purpose:** Route visitors into the service they need.
-- **Content:** Temporary category labels only. Live cards come from the services CMS.
-- **CTA:** “View services” per card; section-level Explore services.
-- **Hierarchy:** `h2`, intro, `h3` cards.
-- **Responsive:** 1 column, 2 from `md`.
-- **Motion intent:** Subtle entrance. Server until filtering exists.
-- **A11y:** Cards are list items with text links, not clickable whole-card divs.
 
 ### Featured work
 - **Purpose:** Visual proof.
