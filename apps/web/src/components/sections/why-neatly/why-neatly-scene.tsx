@@ -39,7 +39,10 @@ export function WhyNeatlyScene(): ReactElement {
         {landingWhyNeatly.intro}
       </p>
       <BenefitCards />
-      <div className="mt-section border-t border-border pt-section">
+      <div
+        className="mt-section border-t border-border pt-section"
+        data-why-metrics-band
+      >
         <TrustMetrics />
       </div>
     </div>

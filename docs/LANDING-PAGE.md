@@ -26,7 +26,7 @@ The product requirements require these landmarks, in order:
 6. Featured work (production brand photography; CMS case studies later)
 7. How it works (production)
 8. Trust / proof (production)
-9. Statistics (production pending figures)
+9. Statistics (production)
 10. Testimonials
 11. Final CTA
 12. Blog highlights
@@ -77,7 +77,7 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **Hierarchy:** `h2`, then `h3` per card. Metrics use labeled values, not extra headings.
 - **Responsive:** Cards stack, then 2 columns from `md`, 3 from `lg`. Metrics 2×2, then 4 from `lg`.
 - **Media:** Dedicated Why photography at `apps/web/public/images/why_use/why_use_01.jpeg` … `03.jpeg`. No stock. No Hero frames.
-- **Motion intent:** One GSAP ScrollTrigger timeline (heading → staggered cards + image settle → metrics). Reversible on scroll up. Subtle image parallax from `md`. Framer hover lift + image scale, tap scale on touch. Reduced motion skips GSAP and hover transforms. No count-up until real figures exist.
+- **Motion intent:** Two GSAP ScrollTrigger stories: heading → staggered cards + image settle on the section; a second trigger on the metrics band (staggered items + accent `scaleX`). Reversible on scroll up. Subtle image parallax from `md`. Framer hover lift + image scale on cards, hover lift on metric tiles, tap scale on touch. Count-up is wired on metric figures and runs only when a published value exists. Reduced motion skips GSAP and hover transforms. No invented counts.
 - **A11y:** Section `aria-labelledby="why-heading"`. Meaningful image alt. Decorative SVG hidden.
 
 ### Services
@@ -92,11 +92,11 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Trust indicators
 - **Purpose:** Credibility immediately after Services, without invented scores.
-- **Content:** Eyebrow, editorial `h2`, supporting copy, four labeled pillars with pending figures (`—`).
+- **Content:** Eyebrow, editorial `h2`, supporting copy, four labeled pillars. Figure slots are `null` until site settings publish verified counts. Count-up runs only when a value exists.
 - **CTA:** None. Scanning only.
 - **Hierarchy:** `h2` then four `h3` items.
-- **Responsive:** 1 → 2 → 4 columns (`sm`, `lg`).
-- **Motion intent:** GSAP fade/rise on enter. Reversible. Reduced motion skips GSAP.
+- **Responsive:** 1 column, 2×2 from `sm`.
+- **Motion intent:** GSAP ScrollTrigger (header → staggered pillars, accent bars via `scaleX`). Framer hover lift. Isolated count-up when a figure is published. Lenis remains the global scroller. Reduced motion skips choreography and jumps to the final figure. No pinning. No invented counts.
 - **A11y:** List of headings, not icon-only badges. Never imply a published count.
 
 ### Featured work
@@ -129,16 +129,16 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **A11y:** Section `aria-labelledby="proof-heading"`. Meaningful alt. Decorative rules `aria-hidden`.
 
 ### Statistics
-- **Purpose:** Scale proof — only with verified figures.
-- **Content:** Labels and pending values. Count-up stays off until site settings provide numbers.
+- **Purpose:** Scale proof immediately after rational trust.
+- **Content:** Editorial `h2`, supporting copy, three labeled counters (homes cleaned, satisfaction, insured coverage). Count-up runs when a slot value exists.
 - **CTA:** None.
-- **Hierarchy:** `h2`, empty notice, labeled slots.
+- **Hierarchy:** `h2`, then `h3` per slot.
 - **Responsive:** 1 column, 3 from `sm`.
-- **Motion intent:** GSAP reveal. No count-up while values are pending.
-- **A11y:** Never imply a number that is not in the data.
+- **Motion intent:** GSAP ScrollTrigger (heading → intro → staggered slots, accent bars via `scaleX`). Framer hover lift. Isolated count-up on published figures. Reduced motion skips choreography and jumps to the final figure. No pinning.
+- **A11y:** List of headings, not icon-only badges. Screen readers hear the figure, not a pending dash, once a value is published.
 
 ### Testimonials
-- **Purpose:** Peer proof after rational trust and pending statistics—without invented names, stars, or quotes.
+- **Purpose:** Peer proof after rational trust and statistics—without invented names, stars, or quotes.
 - **Content:** Eyebrow, editorial `h2`, supporting copy. Featured story layout (image slot + quote) is content-ready. Production currently renders the empty/content-ready state because no featured CMS reviews exist. Reserved 01–03 indexes mark future stories. No fabricated customers.
 - **CTA:** None. Final CTA follows.
 - **Hierarchy:** `h2`. Live reviews use `blockquote` + `cite`, not extra headings.
@@ -158,30 +158,32 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Blog highlights
 - **Purpose:** Authority and crawlable internal links.
-- **Content:** Featured reserved card plus three titled slots until published posts exist.
+- **Content:** Editorial `h2` with a single accent on “journal”, featured campaign still, three reserved thumbnail rows. Titles stay pending until the blog CMS publishes posts. No invented articles.
 - **CTA:** Read the journal.
-- **Hierarchy:** `h2`; featured `h3`; later live titles.
-- **Responsive:** Featured + stack from `lg`.
-- **Motion intent:** None yet. Server.
-- **A11y:** Meaningful titles, not “read more”.
+- **Hierarchy:** `h2`; featured `h3`; reserved slot copy until live titles exist.
+- **Responsive:** Featured + stack from `lg`. Thumbnails stay square; copy wraps rather than compressing.
+- **Media:** `apps/web/public/images/journal/01_featured.jpeg` plus `02_slot`–`04_slot.jpeg`. Descriptive alt. Not published covers. No stock. No Hero frames.
+- **Motion intent:** GSAP ScrollTrigger story (header → featured wipe → slots). Clip-path + scale image reveal; subtle featured parallax from `md`. Framer hover lift on slot rows and image scale on the featured still. GSAP draws the heading underline stroke when the path enters view. Lenis remains the global scroller (`getLenis()` / existing `SmoothScroll`). Reduced motion skips choreography. No pinning.
+- **A11y:** Section `aria-labelledby="blog-heading"`. Meaningful alt. Decorative underline is `aria-hidden`. CTA is “Read the journal”, not a generic “read more”.
 
 ### Newsletter
 - **Purpose:** Optional email capture. Not a quote substitute.
-- **Content:** Dark photographic band, disabled email field, consent copy, explicit unavailable message. No submit in this step.
+- **Content:** Dark photographic band, nested email field with Subscribe, consent copy, explicit unavailable message. No submit in this step.
 - **CTA:** Subscribe (disabled).
-- **Hierarchy:** `h2`, copy, labeled input.
-- **Responsive:** Stacked field + button; row from `sm`.
-- **Motion intent:** CSS focus. Future client for React Hook Form + Zod.
+- **Hierarchy:** `h2` with accent on “notes”, copy, labeled input.
+- **Responsive:** Stacked field + button; nested row from `sm`.
+- **Media:** `apps/web/public/images/newsletter/01_notes.jpeg`. Decorative `alt=""`. Overlay keeps type readable.
+- **Motion intent:** GSAP ScrollTrigger (copy + form, image scale settle). Subtle background parallax from `md`. GSAP heading underline stroke. Form stays disabled—no Motion hover that implies it submits. Reduced motion skips choreography. No pinning. No second Lenis instance.
 - **A11y:** `label htmlFor`, consent and unavailable `aria-describedby`, no posting until the API exists.
 
 ### Site footer
-- **Purpose:** Contact, explore, legal.
-- **Content:** Development placeholders for address, phone, email, hours. Nav + privacy/terms.
+- **Purpose:** Contact, explore, services, legal.
+- **Content:** Brand + existing service promise, Explore from primary nav, Services from published landing categories, Get in touch from placeholder contact. Privacy/terms in the bottom bar. No invented social URLs.
 - **CTA:** None (links only).
-- **Hierarchy:** `h2` brand, `h3` Explore / Legal.
-- **Responsive:** 1 column, 3 from `md`.
-- **Motion intent:** None.
-- **A11y:** `<footer>`, labeled navs. Replace placeholders before launch.
+- **Hierarchy:** `h2` brand, `h3` Explore / Services / Get in touch. Legal heading is visually hidden for the bottom links.
+- **Responsive:** 1 column, 2 from `md`, 4 from `lg`.
+- **Motion intent:** GSAP section reveal on columns. CSS hover/focus on links. Reduced motion skips GSAP.
+- **A11y:** `<footer>`, labeled navs. Render a `tel:` control only when `getPublishedPhone()` returns a real number. Replace placeholders before launch.
 
 ## Layout and spacing
 
@@ -195,13 +197,14 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 | :--- | :--- | :--- |
 | Hero media | hero / content | `next/image` with `priority`, explicit size, descriptive alt. No stock, no base64. |
 | Featured work | product visualization | Lazy `next/image` before/after pair. |
-| Blog covers | content | Lazy `next/image`. |
+| Blog covers | content | Lazy `next/image`. Journal empty state uses dedicated stills at `images/journal/`. |
+| Newsletter band | decorative | Lazy `next/image`, `alt=""`, `aria-hidden` parent. |
 | Trust/why icons | decorative | Inline SVG later, `aria-hidden`. |
 | Video | — | Not in the MVP homepage. If added later: muted, no autoplay when reduced motion, poster image, mobile still fallback. |
 
 ## Performance
 
-Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, future work slider, testimonial carousel (only when two or more published reviews exist), newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
+Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, section GSAP/Motion scenes, future work slider, testimonial carousel (only when two or more published reviews exist), newsletter form chrome. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. Do not construct a second `Lenis()` instance. No database or API calls on `/` in this step.
 
 ## SEO
 
@@ -209,4 +212,4 @@ One `h1`. Section `h2`s in document order. Layout metadata from Step 10 remains 
 
 ## What this step does not include
 
-Approved photography, GSAP section timelines, before/after slider, live CMS queries, quote/newsletter APIs, authentication, or invented social proof.
+Live CMS queries, quote/newsletter APIs, authentication, or invented social proof. Newsletter remains disabled until the subscribe endpoint exists.

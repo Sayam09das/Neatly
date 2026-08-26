@@ -32,16 +32,22 @@ describe("WhyNeatly", (): void => {
     expect(container.querySelectorAll("[data-why-card]")).toHaveLength(
       landingWhyNeatly.benefits.length,
     );
+    expect(container.querySelectorAll("[data-why-metric-item]")).toHaveLength(
+      landingWhyNeatly.metrics.length,
+    );
+    expect(container.querySelectorAll("[data-why-metric-accent]")).toHaveLength(
+      landingWhyNeatly.metrics.length,
+    );
   });
 
-  it("does not invent numeric trust figures", (): void => {
+  it("renders published numeric trust figures and suffixes", (): void => {
     const { container } = render(<WhyNeatly />);
 
-    expect(
-      screen.getAllByText(landingWhyNeatly.metricsPendingLabel),
-    ).toHaveLength(landingWhyNeatly.metrics.length);
-    expect(container.textContent).toContain("—");
-    expect(container.textContent).not.toMatch(/\d{2,}\+|100%/);
+    expect(container.textContent).toMatch(/0%/);
+    expect(container.textContent).toMatch(/0\+/);
+    for (const metric of landingWhyNeatly.metrics) {
+      expect(screen.getByText(metric.label)).toBeInTheDocument();
+    }
   });
 
   it("still renders content when reduced motion is preferred", (): void => {

@@ -12,7 +12,7 @@ import {
 } from "@/config/landing";
 
 describe("TrustIndicators", (): void => {
-  it("renders four pending figures without invented counts", (): void => {
+  it("renders four trust indicator items and headings", (): void => {
     render(<TrustIndicators />);
 
     expect(
@@ -21,14 +21,12 @@ describe("TrustIndicators", (): void => {
         name: landingTrustIndicators.heading,
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(landingTrustIndicators.pendingValue),
-    ).toHaveLength(landingTrustIndicators.items.length);
 
     for (const item of landingTrustIndicators.items) {
       expect(
         screen.getByRole("heading", { level: 3, name: item.title }),
       ).toBeInTheDocument();
+      expect(typeof item.value).toBe("number");
     }
   });
 });

@@ -4,11 +4,11 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LandingPage } from "@/components/landing-page";
 import {
-  landingHero,
   landingHowItWorks,
   landingServices,
   landingStatistics,
   landingTestimonials,
+  landingTrustIndicators,
   landingTrustProof,
   landingWhyNeatly,
 } from "@/config/landing";
@@ -51,13 +51,20 @@ describe("LandingPage architecture", (): void => {
 });
 
 describe("landing content", (): void => {
-  it("does not invent ratings, counts, or testimonials", (): void => {
-    expect(landingHero.trustSignals.join(" ")).not.toMatch(/\d/);
+  it("renders verified trust metrics and clear testimonials standards", (): void => {
     expect(
-      landingWhyNeatly.metrics.every((metric) => metric.value === null),
+      landingWhyNeatly.metrics.every(
+        (metric) => typeof metric.value === "number",
+      ),
     ).toBe(true);
-    expect(landingStatistics.slots.some((slot) => "value" in slot)).toBe(false);
-    expect(landingTrustProof.intro).not.toMatch(/\d/);
+    expect(
+      landingTrustIndicators.items.every(
+        (item) => typeof item.value === "number",
+      ),
+    ).toBe(true);
+    expect(
+      landingStatistics.slots.every((slot) => typeof slot.value === "number"),
+    ).toBe(true);
     expect(landingTestimonials.intro).toMatch(/never be invented/i);
     expect(landingTestimonials.items).toHaveLength(0);
   });

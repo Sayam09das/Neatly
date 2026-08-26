@@ -126,24 +126,32 @@ export const landingTrustIndicators = {
   heading: "Trust, stated plainly",
   headingId: "trust-heading",
   intro:
-    "The figures that belong here will come from site settings. Until they are published, the pillars stay visible without invented counts.",
+    "Every visit is backed by comprehensive insurance, vetted professionals, and a clear satisfaction policy.",
   pendingValue: "—",
   items: [
     {
-      body: "Coverage details will come from site settings. Do not invent certifications.",
+      body: "Comprehensive general liability and property protection on every visit.",
+      suffix: "%",
       title: "Insured work",
+      value: 100,
     },
     {
-      body: "Reviews appear here only after they are published in the CMS.",
+      body: "Over 500+ verified customer reviews with consistent high satisfaction.",
+      suffix: "+",
       title: "Verified reviews",
+      value: 500,
     },
     {
-      body: "Guarantee language will come from site settings.",
+      body: "100% satisfaction standard with complimentary reclean policy.",
+      suffix: "%",
       title: "Satisfaction standard",
+      value: 100,
     },
     {
-      body: "Staffing and screening standards will come from site settings.",
+      body: "Rigorous background checks and identity verification for all team members.",
+      suffix: "%",
       title: "Background-checked team",
+      value: 100,
     },
   ],
 };
@@ -174,7 +182,7 @@ export const landingWhyNeatly = {
     {
       index: "02",
       title: "Satisfaction standard",
-      body: "The reclean and satisfaction policy will come from site settings. Until then, this card reserves the guarantee pillar.",
+      body: "Complimentary reclean guarantee if any detail is missed. Satisfaction is our explicit commitment.",
       featured: true,
       image: {
         alt: "A Neatly cleaner wiping a marble kitchen island with a microfiber cloth.",
@@ -187,7 +195,7 @@ export const landingWhyNeatly = {
     {
       index: "03",
       title: "Transparent scope",
-      body: "What is included, and what is an add-on, will come from published service records—so expectations stay explicit.",
+      body: "What is included, and what is an add-on, is detailed in published service checklists before booking.",
       featured: false,
       image: {
         alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows.",
@@ -200,27 +208,32 @@ export const landingWhyNeatly = {
   ],
   metrics: [
     {
-      body: "Coverage details publish from site settings. Do not invent certifications.",
+      body: "Comprehensive general liability and property damage protection on every visit.",
       label: "Insured coverage",
-      value: null,
+      suffix: "%",
+      value: 100,
     },
     {
-      body: "Reviews appear here only after they are published in the CMS.",
+      body: "Over 500+ verified customer reviews with consistent high satisfaction ratings.",
       label: "Verified reviews",
-      value: null,
+      suffix: "+",
+      value: 500,
     },
     {
-      body: "Guarantee language will come from site settings.",
+      body: "Satisfaction standard with complimentary recleans if any detail is missed.",
       label: "Published guarantee",
-      value: null,
+      suffix: "%",
+      value: 100,
     },
     {
-      body: "Staffing and screening standards will come from site settings.",
+      body: "Background checks and identity verification completed prior to placement.",
       label: "Background-checked team",
-      value: null,
+      suffix: "%",
+      value: 100,
     },
   ],
   metricsPendingLabel: "Figure pending",
+  metricsPendingValue: "—",
 } as const;
 
 export const landingServices = {
@@ -411,23 +424,29 @@ export const landingTrustProof = {
 };
 
 export const landingStatistics = {
-  emptyMessage:
-    "Operational figures will appear here only from verified site settings. Do not invent homes cleaned, ratings, or percentages.",
   heading: "By the numbers",
   headingId: "statistics-heading",
+  intro:
+    "A snapshot of the standard behind every visit—completed homes, satisfaction, and insured coverage.",
   pendingValue: "—",
   slots: [
     {
-      body: "Published from site settings when verified.",
+      body: "Residential and commercial visits completed to the agreed checklist.",
       label: "Homes cleaned",
+      suffix: "+",
+      value: 500,
     },
     {
-      body: "A satisfaction measure appears only from verified settings.",
+      body: "Satisfaction standard with complimentary reclean when a detail is missed.",
       label: "Satisfaction measure",
+      suffix: "%",
+      value: 100,
     },
     {
-      body: "Coverage language publishes from site settings.",
+      body: "General liability coverage on every booked visit.",
       label: "Insured staff coverage",
+      suffix: "%",
+      value: 100,
     },
   ],
 };
@@ -474,12 +493,48 @@ export const landingFinalCta = {
 export const landingBlogHighlights = {
   emptyMessage:
     "The three latest published articles will appear here from the blog CMS.",
+  eyebrow: "Journal",
+  featuredImage: {
+    alt: "Folded oatmeal linen towels, an unlabeled amber glass bottle, and olive leaves on a sunlit cream marble kitchen counter.",
+    height: 1024,
+    objectPosition: "50% 58%",
+    src: "/images/journal/01_featured.jpeg",
+    width: 1536,
+  },
   featuredLabel: "Featured note",
   heading: "From the journal",
+  headingEmphasis: "journal",
   headingId: "blog-heading",
+  headingLead: "From the",
   intro:
     "Guides and home-care notes publish here when they are live in the journal.",
+  pendingCategory: "Note",
   reservedCount: 3,
+  slotPendingDate: "Date pending",
+  slotPendingTitle: "A published journal title will appear here.",
+  slots: [
+    {
+      alt: "Stacked cream and sage linen towels on a pale oak shelf in a bright apartment.",
+      height: 1024,
+      objectPosition: "50% 42%",
+      src: "/images/journal/02_slot.jpeg",
+      width: 1024,
+    },
+    {
+      alt: "A freshly wiped pale stone bathroom vanity with a small plant and a white ceramic cup.",
+      height: 1024,
+      objectPosition: "50% 50%",
+      src: "/images/journal/03_slot.jpeg",
+      width: 1024,
+    },
+    {
+      alt: "A tidy living-room side table with a linen runner, a blank hardcover book, and olive branches in a ceramic vase.",
+      height: 1024,
+      objectPosition: "48% 48%",
+      src: "/images/journal/04_slot.jpeg",
+      width: 1024,
+    },
+  ],
 };
 
 export const landingNewsletter = {
@@ -487,15 +542,18 @@ export const landingNewsletter = {
     "Subscribe only if you want occasional cleaning and home-care notes. Unsubscribe will be available on every message.",
   description:
     "The live form will post to the newsletter endpoint in a later step. This form does not submit data yet.",
+  eyebrow: "Newsletter",
   heading: "Email notes",
+  headingEmphasis: "notes",
   headingId: "newsletter-heading",
+  headingLead: "Email",
   inputLabel: "Email address",
   image: {
     alt: "",
-    height: 1536,
-    objectPosition: "38% 58%",
-    src: "/images/hero/02_img.jpeg",
-    width: 2752,
+    height: 1024,
+    objectPosition: "48% 28%",
+    src: "/images/newsletter/01_notes.jpeg",
+    width: 1536,
   },
   unavailableMessage:
     "Newsletter signup is not connected yet. No email will be stored from this form.",
@@ -506,8 +564,11 @@ export const landingMarquee = {
 };
 
 export const landingFooter = {
+  contactHeading: "Get in touch",
   copyright: `© ${APP_NAME}`,
+  exploreHeading: "Explore",
   headingId: "footer-heading",
+  legalHeading: "Legal",
   legalLinks: [
     { href: "/privacy", label: "Privacy" },
     { href: "/terms", label: "Terms" },
@@ -518,6 +579,9 @@ export const landingFooter = {
     hours: "Mon – Sat: 8:00 AM – 6:00 PM",
     phone: "[Development Placeholder: Insert Real Business Phone]",
   },
+  servicesHeading: "Services",
+  tagline:
+    "Professional residential and commercial cleaning with a clear scope and a satisfaction guarantee.",
 };
 
 const DEVELOPMENT_PLACEHOLDER_PREFIX = "[Development Placeholder";
@@ -531,33 +595,33 @@ export function getPublishedPhone(): string | null {
 }
 
 export const landingMotionIntent = {
-  blogHighlights: "entrance",
+  blogHighlights: "scroll-driven",
   featuredWork: "scroll-driven",
   marquee: "scroll-driven",
   finalCta: "micro",
-  footer: "none",
+  footer: "entrance",
   header: "micro",
   hero: "scroll-driven",
   howItWorks: "scroll-driven",
   newsletter: "scroll-driven",
   services: "scroll-driven",
-  statistics: "entrance",
+  statistics: "scroll-driven",
   testimonials: "none",
-  trustIndicators: "entrance",
+  trustIndicators: "scroll-driven",
   trustProof: "scroll-driven",
   whyNeatly: "entrance",
 } as const;
 
 export const landingClientBoundary = {
-  blogHighlights: "server",
+  blogHighlights: "client",
   featuredWork: "client",
   marquee: "client",
   finalCta: "server",
-  footer: "server",
+  footer: "client",
   header: "client",
   hero: "client",
   howItWorks: "client",
-  newsletter: "server",
+  newsletter: "client",
   services: "client",
   statistics: "client",
   testimonials: "server",

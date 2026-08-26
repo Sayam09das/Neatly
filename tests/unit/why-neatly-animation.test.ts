@@ -3,9 +3,11 @@
 import { describe, expect, it } from "vitest";
 import { gsap } from "@/animations";
 import {
+  createWhyMetricsAnimation,
   createWhyNeatlyAnimation,
   WHY_CARD_COUNT,
   WHY_CARD_SCALE_FROM,
+  WHY_METRIC_COUNT,
 } from "@/components/sections/why-neatly/why-neatly-animation";
 
 function createWhyMarkup(): HTMLElement {
@@ -32,9 +34,23 @@ function createWhyMarkup(): HTMLElement {
     root.append(card);
   }
 
+  const band = document.createElement("div");
+  band.setAttribute("data-why-metrics-band", "");
+
   const metrics = document.createElement("ul");
   metrics.setAttribute("data-why-metrics", "");
-  root.append(metrics);
+
+  for (let index = 0; index < WHY_METRIC_COUNT; index += 1) {
+    const item = document.createElement("li");
+    item.setAttribute("data-why-metric-item", "");
+    const accent = document.createElement("div");
+    accent.setAttribute("data-why-metric-accent", "");
+    item.append(accent);
+    metrics.append(item);
+  }
+
+  band.append(metrics);
+  root.append(band);
   document.body.append(root);
 
   return root;
@@ -48,8 +64,22 @@ describe("createWhyNeatlyAnimation", (): void => {
     const firstImage = root.querySelector<HTMLElement>(
       "[data-why-image-reveal]",
     );
+    const firstMetric = root.querySelector<HTMLElement>(
+      "[data-why-metric-item]",
+    );
+    const lastMetric = root.querySelectorAll<HTMLElement>(
+      "[data-why-metric-item]",
+    )[3];
+    const accent = root.querySelector<HTMLElement>("[data-why-metric-accent]");
 
-    if (firstCard === null || lastCard === undefined || firstImage === null) {
+    if (
+      firstCard === null ||
+      lastCard === undefined ||
+      firstImage === null ||
+      firstMetric === null ||
+      lastMetric === undefined ||
+      accent === null
+    ) {
       throw new Error("Why Neatly animation fixtures were not created.");
     }
 
@@ -64,15 +94,62 @@ describe("createWhyNeatlyAnimation", (): void => {
       WHY_CARD_SCALE_FROM,
     );
     expect(Number(gsap.getProperty(firstImage, "scale"))).toBeGreaterThan(1);
+    expect(Number(gsap.getProperty(firstMetric, "opacity"))).toBe(0);
+    expect(Number(gsap.getProperty(accent, "scaleX"))).toBe(0);
 
     timeline.progress(1);
     expect(Number(gsap.getProperty(firstCard, "opacity"))).toBe(1);
     expect(Number(gsap.getProperty(lastCard, "opacity"))).toBe(1);
     expect(Number(gsap.getProperty(firstImage, "scale"))).toBe(1);
+    expect(Number(gsap.getProperty(firstMetric, "opacity"))).toBe(1);
+    expect(Number(gsap.getProperty(lastMetric, "opacity"))).toBe(1);
+    expect(Number(gsap.getProperty(accent, "scaleX"))).toBe(1);
 
     timeline.progress(0);
     expect(Number(gsap.getProperty(firstCard, "opacity"))).toBe(0);
     expect(Number(gsap.getProperty(lastCard, "opacity"))).toBe(0);
+    expect(Number(gsap.getProperty(lastMetric, "opacity"))).toBe(0);
+
+    timeline.kill();
+    root.remove();
+  });
+});
+
+describe("createWhyMetricsAnimation", (): void => {
+  it("staggers metric items and draws accent bars", (): void => {
+    const root = createWhyMarkup();
+    const band = root.querySelector<HTMLElement>("[data-why-metrics-band]");
+    const firstItem = root.querySelector<HTMLElement>("[data-why-metric-item]");
+    const lastItem = root.querySelectorAll<HTMLElement>(
+      "[data-why-metric-item]",
+    )[3];
+    const accent = root.querySelector<HTMLElement>("[data-why-metric-accent]");
+
+    if (
+      band === null ||
+      firstItem === null ||
+      lastItem === undefined ||
+      accent === null
+    ) {
+      throw new Error("Why metrics animation fixtures were not created.");
+    }
+
+    const { timeline } = createWhyMetricsAnimation(band, {
+      compact: false,
+      enableScrollTrigger: false,
+    });
+
+    expect(Number(gsap.getProperty(firstItem, "opacity"))).toBe(0);
+    expect(Number(gsap.getProperty(accent, "scaleX"))).toBe(0);
+
+    timeline.progress(1);
+    expect(Number(gsap.getProperty(firstItem, "opacity"))).toBe(1);
+    expect(Number(gsap.getProperty(lastItem, "opacity"))).toBe(1);
+    expect(Number(gsap.getProperty(accent, "scaleX"))).toBe(1);
+
+    timeline.progress(0);
+    expect(Number(gsap.getProperty(firstItem, "opacity"))).toBe(0);
+    expect(Number(gsap.getProperty(accent, "scaleX"))).toBe(0);
 
     timeline.kill();
     root.remove();

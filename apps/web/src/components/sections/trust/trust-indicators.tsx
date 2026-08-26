@@ -6,7 +6,7 @@ export function TrustIndicators(): ReactElement {
   return (
     <section
       aria-labelledby={landingTrustIndicators.headingId}
-      className="mx-auto w-full max-w-page px-gutter py-section"
+      className="bg-muted/40"
       id="trust"
     >
       <TrustScene />
