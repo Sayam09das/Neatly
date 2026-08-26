@@ -5,6 +5,7 @@ import { Hero } from "@/components/sections/hero";
 import { BlogHighlights } from "@/components/sections/journal";
 import { Newsletter } from "@/components/sections/newsletter";
 import { HowItWorks } from "@/components/sections/process";
+import { TrustSection } from "@/components/sections/proof";
 import { ServicesSection } from "@/components/sections/services";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { Statistics } from "@/components/sections/statistics";
@@ -34,6 +35,7 @@ export function LandingPage(): ReactElement {
         <FeaturedWork />
         <WordMarquee />
         <HowItWorks />
+        <TrustSection />
         <Statistics />
         <Testimonials />
         <FinalCta />

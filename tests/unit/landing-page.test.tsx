@@ -5,9 +5,11 @@ import { describe, expect, it } from "vitest";
 import { LandingPage } from "@/components/landing-page";
 import {
   landingHero,
+  landingHowItWorks,
   landingServices,
   landingStatistics,
   landingTestimonials,
+  landingTrustProof,
   landingWhyNeatly,
 } from "@/config/landing";
 
@@ -36,9 +38,10 @@ describe("LandingPage architecture", (): void => {
       landingServices.heading,
       "Trust, stated plainly",
       "Featured work",
-      "How it works",
+      landingHowItWorks.heading,
+      landingTrustProof.heading,
       "By the numbers",
-      "Customer reviews",
+      landingTestimonials.heading,
       "Ready for a clear quote?",
       "From the journal",
       "Email notes",
@@ -54,6 +57,8 @@ describe("landing content", (): void => {
       landingWhyNeatly.metrics.every((metric) => metric.value === null),
     ).toBe(true);
     expect(landingStatistics.slots.some((slot) => "value" in slot)).toBe(false);
-    expect(landingTestimonials.emptyMessage).toMatch(/never be invented/i);
+    expect(landingTrustProof.intro).not.toMatch(/\d/);
+    expect(landingTestimonials.intro).toMatch(/never be invented/i);
+    expect(landingTestimonials.items).toHaveLength(0);
   });
 });

@@ -371,6 +371,45 @@ export const landingHowItWorks = {
   ],
 };
 
+export const landingTrustProof = {
+  eyebrow: "Trust",
+  heading: "A professional standard you can count on.",
+  headingId: "proof-heading",
+  headingLead: "A professional standard",
+  headingTail: "you can count on.",
+  intro:
+    "The visit is only as trustworthy as the people and the scope behind it. Who enters, what is included, and how the work is finished are stated before you request a quote.",
+  image: {
+    alt: "A Neatly cleaner smoothing a linen pillow on a made bed in a sunlit bedroom.",
+    height: 1536,
+    objectPosition: "46% 38%",
+    src: "/images/trust/01_standard.jpeg",
+    width: 1024,
+  },
+  items: [
+    {
+      body: "Who enters a property, and how they are screened, is part of the standard—not an afterthought.",
+      number: "01",
+      title: "Vetted professionals",
+    },
+    {
+      body: "What is included is stated before you request a quote. Payment is not part of that step.",
+      number: "02",
+      title: "Clear expectations",
+    },
+    {
+      body: "The booked visit is completed to the agreed checklist.",
+      number: "03",
+      title: "Consistent service",
+    },
+    {
+      body: "Considered materials and care for the spaces people live and work in.",
+      number: "04",
+      title: "Thoughtful care",
+    },
+  ],
+};
+
 export const landingStatistics = {
   emptyMessage:
     "Operational figures will appear here only from verified site settings. Do not invent homes cleaned, ratings, or percentages.",
@@ -393,19 +432,36 @@ export const landingStatistics = {
   ],
 };
 
+export interface LandingTestimonialImage {
+  alt: string;
+  height: number;
+  objectPosition: string;
+  src: string;
+  width: number;
+}
+
+export interface LandingTestimonial {
+  id: string;
+  name: string;
+  quote: string;
+  date?: string;
+  image?: LandingTestimonialImage;
+  location?: string;
+  service?: string;
+}
+
 export const landingTestimonials = {
-  emptyMessage:
-    "Customer reviews will appear here only after they are published and featured in the testimonials CMS. Names, ratings, and quotes will never be invented.",
-  heading: "Customer reviews",
+  emptyAttribution: "Featured reviews pending",
+  emptyMediaLabel:
+    "A customer photograph will appear here when a review is published.",
+  emptyMessage: "Real experiences from Neatly customers will appear here.",
+  eyebrow: "Customer stories",
+  heading: "Experiences from Neatly customers.",
   headingId: "testimonials-heading",
-  pendingAttribution: "Featured reviews pending",
-  image: {
-    alt: "A vetted cleaner wearing an ID badge and apron beside a supply cart in a modern kitchen.",
-    height: 1536,
-    objectPosition: "50% 22%",
-    src: "/images/why_use/why_use_01.jpeg",
-    width: 2752,
-  },
+  intro:
+    "Featured reviews appear here after they are published in the testimonials CMS. Names, ratings, and quotes will never be invented.",
+  items: [] satisfies Array<LandingTestimonial>,
+  reservedCount: 3,
 };
 
 export const landingFinalCta = {
@@ -486,8 +542,9 @@ export const landingMotionIntent = {
   newsletter: "scroll-driven",
   services: "scroll-driven",
   statistics: "entrance",
-  testimonials: "entrance",
+  testimonials: "none",
   trustIndicators: "entrance",
+  trustProof: "scroll-driven",
   whyNeatly: "entrance",
 } as const;
 
@@ -503,7 +560,8 @@ export const landingClientBoundary = {
   newsletter: "server",
   services: "client",
   statistics: "client",
-  testimonials: "client",
+  testimonials: "server",
   trustIndicators: "client",
+  trustProof: "client",
   whyNeatly: "client",
 } as const;

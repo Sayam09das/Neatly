@@ -16,7 +16,7 @@ Navbar / main sections / footer
 
 ## Conversion sequence
 
-The product requirements require these 13 landmarks, in order:
+The product requirements require these landmarks, in order:
 
 1. Navbar (`Navbar`)
 2. Hero
@@ -25,12 +25,13 @@ The product requirements require these 13 landmarks, in order:
 5. Trust indicators (production pending figures)
 6. Featured work (production brand photography; CMS case studies later)
 7. How it works (production)
-8. Statistics (production pending figures)
-9. Testimonials
-10. Final CTA
-11. Blog highlights
-12. Newsletter
-13. Footer (`SiteFooter`)
+8. Trust / proof (production)
+9. Statistics (production pending figures)
+10. Testimonials
+11. Final CTA
+12. Blog highlights
+13. Newsletter
+14. Footer (`SiteFooter`)
 
 No extra SaaS bands (logos, pricing, team photos, 3D product shots).
 
@@ -117,6 +118,16 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **Motion intent:** GSAP ScrollTrigger story (header, 01→02→03, clip-path image reveal, progress line). Subtle image parallax from `md`. Framer hover/tap on cards. Reduced motion skips motion. No pinning.
 - **A11y:** `<ol>` so sequence is announced. Meaningful image alt.
 
+### Trust / proof
+- **Purpose:** Answer why a visitor should trust Neatly after seeing the process—without invented scores.
+- **Content:** Eyebrow, editorial `h2`, supporting copy, one campaign photograph, four PRD-backed principles (vetted people, explicit scope, completed checklist, considered materials). No ratings, counts, or certifications.
+- **CTA:** None. Testimonials follow.
+- **Hierarchy:** `h2`, ordered list, `h3` per principle.
+- **Responsive:** Copy → image → principles on small screens. Image left / copy+list right from `lg` (~7/5).
+- **Media:** `apps/web/public/images/trust/01_standard.jpeg`. Descriptive alt. Not a kitchen-wipe repeat of Services/Why frames.
+- **Motion intent:** GSAP ScrollTrigger story (eyebrow → heading clip → intro → image wipe → 01–04). Subtle image parallax and active-item opacity from `lg`. Framer hover/tap on principles. Reduced motion skips motion. No pinning. No Anime.js.
+- **A11y:** Section `aria-labelledby="proof-heading"`. Meaningful alt. Decorative rules `aria-hidden`.
+
 ### Statistics
 - **Purpose:** Scale proof — only with verified figures.
 - **Content:** Labels and pending values. Count-up stays off until site settings provide numbers.
@@ -127,13 +138,14 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **A11y:** Never imply a number that is not in the data.
 
 ### Testimonials
-- **Purpose:** Peer proof.
-- **Content:** Atmospheric photography plus empty quote copy until featured CMS reviews exist. No invented names, stars, or quotes.
-- **CTA:** None.
-- **Hierarchy:** `h2`, empty notice. Later `article` per review.
-- **Responsive:** Stacked; split from `lg`.
-- **Motion intent:** GSAP reveal. Carousel waits for published reviews.
-- **A11y:** Decorative quote mark is `aria-hidden`.
+- **Purpose:** Peer proof after rational trust and pending statistics—without invented names, stars, or quotes.
+- **Content:** Eyebrow, editorial `h2`, supporting copy. Featured story layout (image slot + quote) is content-ready. Production currently renders the empty/content-ready state because no featured CMS reviews exist. Reserved 01–03 indexes mark future stories. No fabricated customers.
+- **CTA:** None. Final CTA follows.
+- **Hierarchy:** `h2`. Live reviews use `blockquote` + `cite`, not extra headings.
+- **Responsive:** Copy, then image, then quote on small screens. Image left / quote right from `lg` (~7/5). Stack rather than compress on tablet.
+- **Media:** Customer photograph only when a published review includes one. Empty state uses a reserved slot, not a fake portrait. Next/Image when an asset exists.
+- **Motion intent:** None in this step. Navigation (previous / next / index) waits until two or more published reviews exist.
+- **A11y:** Section `aria-labelledby="testimonials-heading"`. Meaningful alt when an image exists. Previous/Next have accessible names. Empty photograph slot is announced to screen readers.
 
 ### Final CTA
 - **Purpose:** Convert remaining visitors.
@@ -189,7 +201,7 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 
 ## Performance
 
-Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, future work slider, testimonial carousel, newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
+Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, future work slider, testimonial carousel (only when two or more published reviews exist), newsletter form. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. No database or API calls on `/` in this step.
 
 ## SEO
 
