@@ -109,12 +109,13 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### How it works
 - **Purpose:** Remove process ambiguity.
-- **Content:** Three PRD steps (quote → confirm → clean) on a dark photographic band. Not four invented steps.
+- **Content:** Three PRD steps (request → quote → finished visit) with dedicated campaign photography. Not four invented steps.
 - **CTA:** None (quote already offered above and below).
 - **Hierarchy:** `h2`, ordered list, `h3` per step.
 - **Responsive:** 1 column, 3 from `md`.
-- **Motion intent:** GSAP header, rule, steps, and image settle. Reduced motion skips GSAP.
-- **A11y:** `<ol>` so sequence is announced. Background photo is `aria-hidden`.
+- **Media:** `apps/web/public/images/how_it_works/01_request.jpeg`, `02_quote.jpeg`, `03_result.jpeg` (1536×864, 16:9). Descriptive alt. No fake UI or prices in frame.
+- **Motion intent:** GSAP ScrollTrigger story (header, 01→02→03, clip-path image reveal, progress line). Subtle image parallax from `md`. Framer hover/tap on cards. Reduced motion skips motion. No pinning.
+- **A11y:** `<ol>` so sequence is announced. Meaningful image alt.
 
 ### Statistics
 - **Purpose:** Scale proof — only with verified figures.

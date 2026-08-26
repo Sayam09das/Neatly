@@ -331,28 +331,42 @@ export const landingHowItWorks = {
   headingId: "process-heading",
   intro:
     "Three steps from request to a finished visit. Payment is not part of the quote.",
-  image: {
-    alt: "",
-    height: 1536,
-    objectPosition: "48% 42%",
-    src: "/images/hero/03_img.jpeg",
-    width: 2752,
-  },
   steps: [
     {
       body: "Share the property type, service, and timing. No payment on this step.",
+      image: {
+        alt: "A customer in a sunlit modern kitchen looking at a phone, with a cleaner working softly in the background.",
+        height: 864,
+        objectPosition: "42% 40%",
+        src: "/images/how_it_works/01_request.jpeg",
+        width: 1536,
+      },
       number: "01",
-      title: "Request a quote",
+      title: "Tell us what you need",
     },
     {
-      body: "Confirm the scope and schedule with the team.",
+      body: "Confirm the scope and schedule with the team. The quote stays a conversation, not a checkout.",
+      image: {
+        alt: "A cleaner in a sage apron speaking with a customer at a marble kitchen island in a bright apartment.",
+        height: 864,
+        objectPosition: "48% 38%",
+        src: "/images/how_it_works/02_quote.jpeg",
+        width: 1536,
+      },
       number: "02",
-      title: "Confirm the visit",
+      title: "Get your quote",
     },
     {
       body: "The booked service is completed to the agreed checklist.",
+      image: {
+        alt: "A woman relaxing on a beige sofa in a freshly cleaned sunlit living room with a tidy kitchen beyond.",
+        height: 864,
+        objectPosition: "55% 42%",
+        src: "/images/how_it_works/03_result.jpeg",
+        width: 1536,
+      },
       number: "03",
-      title: "Enjoy a clean space",
+      title: "Enjoy a cleaner space",
     },
   ],
 };

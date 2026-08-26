@@ -70,6 +70,48 @@ describe("HowItWorks", (): void => {
       expect(
         screen.getByRole("heading", { level: 3, name: step.title }),
       ).toBeInTheDocument();
+      expect(
+        screen.getByRole("img", { name: step.image.alt }),
+      ).toBeInTheDocument();
     }
+  });
+
+  it("still renders the process when reduced motion is preferred", (): void => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: (query: string): MediaQueryList =>
+        ({
+          matches: query.includes("prefers-reduced-motion: reduce"),
+          media: query,
+          onchange: null,
+          addEventListener: (): void => undefined,
+          removeEventListener: (): void => undefined,
+          addListener: (): void => undefined,
+          removeListener: (): void => undefined,
+          dispatchEvent: (): boolean => false,
+        }) as MediaQueryList,
+    });
+
+    const firstStep = landingHowItWorks.steps[0];
+
+    if (firstStep === undefined) {
+      throw new Error("How it works steps are missing.");
+    }
+
+    render(<HowItWorks />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: landingHowItWorks.heading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: firstStep.title,
+      }),
+    ).toBeInTheDocument();
   });
 });
