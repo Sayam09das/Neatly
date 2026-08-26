@@ -7,6 +7,7 @@ import {
   landingHero,
   landingStatistics,
   landingTestimonials,
+  landingWhyNeatly,
 } from "@/config/landing";
 
 describe("LandingPage architecture", (): void => {
@@ -30,8 +31,8 @@ describe("LandingPage architecture", (): void => {
       .map((heading) => heading.textContent);
 
     expect(headings).toEqual([
+      landingWhyNeatly.heading,
       "Trust, stated plainly",
-      "Why Neatly",
       "Services",
       "Featured work",
       "How it works",
@@ -48,6 +49,9 @@ describe("LandingPage architecture", (): void => {
 describe("landing content", (): void => {
   it("does not invent ratings, counts, or testimonials", (): void => {
     expect(landingHero.trustSignals.join(" ")).not.toMatch(/\d/);
+    expect(
+      landingWhyNeatly.metrics.every((metric) => metric.value === null),
+    ).toBe(true);
     expect(landingStatistics.slots.some((slot) => "value" in slot)).toBe(false);
     expect(landingTestimonials.emptyMessage).toMatch(/never be invented/i);
   });

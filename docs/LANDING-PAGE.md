@@ -20,8 +20,8 @@ The product requirements require these 13 landmarks, in order:
 
 1. Navbar (`Navbar`)
 2. Hero
-3. Trust indicators
-4. Why Neatly
+3. Why Neatly (production; includes trust metric slots)
+4. Trust indicators (scaffold until its production step)
 5. Services summary
 6. Featured work
 7. How it works
@@ -69,6 +69,16 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **Motion intent:** GSAP ScrollTrigger pin + scrubbed scale/crossfade timeline. Framer Motion only for the copy/form entrance. Reduced motion shows Frame 01 only, with no pin.
 - **A11y:** `section aria-labelledby="hero-heading"`. Form labels, `aria-invalid`, live unavailable message. Background photography is `aria-hidden`.
 
+### Why Neatly
+- **Purpose:** Differentiate immediately after the Hero: quality, professionals, and a clear satisfaction standard.
+- **Content:** Eyebrow, editorial `h2` with a single accent on “Neatly”, supporting copy, three photographic benefit cards (vetting, satisfaction standard, transparent scope), four metric slots without invented numbers. Decorative line-art is `aria-hidden`.
+- **CTA:** None. Scanning only.
+- **Hierarchy:** `h2`, then `h3` per card. Metrics use labeled values, not extra headings.
+- **Responsive:** Cards stack, then 2 columns from `md`, 3 from `lg`. Metrics 2×2, then 4 from `lg`.
+- **Media:** Dedicated Why photography at `apps/web/public/images/why_use/why_use_01.jpeg` … `03.jpeg`. No stock. No Hero frames.
+- **Motion intent:** One GSAP ScrollTrigger timeline (heading → staggered cards + image settle → metrics). Reversible on scroll up. Subtle image parallax from `md`. Framer hover lift + image scale, tap scale on touch. Reduced motion skips GSAP and hover transforms. No count-up until real figures exist.
+- **A11y:** Section `aria-labelledby="why-heading"`. Meaningful image alt. Decorative SVG hidden.
+
 ### Trust indicators
 - **Purpose:** Immediate credibility after the hero.
 - **Content:** Four slots (insured, reviews, guarantee, screening) without invented scores.
@@ -77,15 +87,6 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 - **Responsive:** 1 → 2 → 4 columns (`md`, `lg`).
 - **Motion intent:** Subtle entrance. Server. Tool: CSS or Framer later.
 - **A11y:** List of headings, not icon-only badges.
-
-### Why Neatly
-- **Purpose:** Differentiate before service cards.
-- **Content:** Four pillars from the PRD (vetting, materials, guarantee, scope).
-- **CTA:** None.
-- **Hierarchy:** `h2`, intro, `h3` pillars.
-- **Responsive:** 1 column, 2 from `md`.
-- **Motion intent:** Subtle entrance. Server. Tool: CSS or Framer later.
-- **A11y:** Readable text; icons later are decorative.
 
 ### Services summary
 - **Purpose:** Route visitors into the service they need.

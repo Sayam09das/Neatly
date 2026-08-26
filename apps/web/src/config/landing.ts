@@ -145,29 +145,79 @@ export const landingTrustIndicators = {
 };
 
 export const landingWhyNeatly = {
-  heading: `Why ${APP_NAME}`,
+  eyebrow: "Why Neatly",
+  heading: "Why you'll choose Neatly for your space",
   headingId: "why-heading",
+  headingLead: "Why you'll choose",
+  emphasis: "Neatly",
+  headingTail: "for your space",
   intro:
-    "Cleaning requires access to a home or workplace. The homepage should explain standards before asking for a quote.",
-  pillars: [
+    "Cleaning means letting a team into a home or workplace. Neatly is built around vetted professionals, a clear scope, considered materials, and a satisfaction standard—stated before you request a quote.",
+  benefits: [
     {
-      body: "Who enters a property, and how they are screened, will be described from approved business copy.",
+      index: "01",
       title: "Rigorous vetting",
+      body: "Who enters a property, and how they are screened, is part of the standard—not an afterthought.",
+      featured: false,
+      image: {
+        alt: "A vetted cleaner wearing an ID badge and apron, holding folded cloths beside a supply cart in a modern kitchen.",
+        height: 1536,
+        objectPosition: "50% 22%",
+        src: "/images/why_use/why_use_01.jpeg",
+        width: 2752,
+      },
     },
     {
-      body: "Product and process standards will be described from approved business copy.",
-      title: "Considered materials",
+      index: "02",
+      title: "Satisfaction standard",
+      body: "The reclean and satisfaction policy will come from site settings. Until then, this card reserves the guarantee pillar.",
+      featured: true,
+      image: {
+        alt: "A Neatly cleaner wiping a marble kitchen island with a microfiber cloth.",
+        height: 1536,
+        objectPosition: "50% 32%",
+        src: "/images/why_use/why_use_02.jpeg",
+        width: 2752,
+      },
     },
     {
-      body: "The reclean or satisfaction policy will be described from site settings.",
-      title: "Clear guarantee",
-    },
-    {
-      body: "What is included, and what is an add-on, will come from service records.",
+      index: "03",
       title: "Transparent scope",
+      body: "What is included, and what is an add-on, will come from published service records—so expectations stay explicit.",
+      featured: false,
+      image: {
+        alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows.",
+        height: 1536,
+        objectPosition: "50% 48%",
+        src: "/images/why_use/why_use_03.jpeg",
+        width: 2752,
+      },
     },
   ],
-};
+  metrics: [
+    {
+      body: "Coverage details publish from site settings. Do not invent certifications.",
+      label: "Insured coverage",
+      value: null,
+    },
+    {
+      body: "Reviews appear here only after they are published in the CMS.",
+      label: "Verified reviews",
+      value: null,
+    },
+    {
+      body: "Guarantee language will come from site settings.",
+      label: "Published guarantee",
+      value: null,
+    },
+    {
+      body: "Staffing and screening standards will come from site settings.",
+      label: "Background-checked team",
+      value: null,
+    },
+  ],
+  metricsPendingLabel: "Figure pending",
+} as const;
 
 export const landingServices = {
   heading: "Services",
@@ -322,5 +372,5 @@ export const landingClientBoundary = {
   statistics: "server",
   testimonials: "future-client",
   trustIndicators: "server",
-  whyNeatly: "server",
+  whyNeatly: "client",
 } as const;

@@ -27,8 +27,8 @@ export function LandingPage(): ReactElement {
       <main id="main-content">
         <p className="sr-only">{TEMPORARY_COPY_NOTE}</p>
         <Hero />
-        <TrustIndicators />
         <WhyNeatly />
+        <TrustIndicators />
         <ServicesSummary />
         <FeaturedWork />
         <HowItWorks />
