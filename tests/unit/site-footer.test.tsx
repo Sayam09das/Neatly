@@ -71,13 +71,10 @@ describe("SiteFooter", (): void => {
       `mailto:${landingFooter.placeholderContact.email}`,
     );
     expect(
-      screen.getByText(landingFooter.placeholderContact.phone),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", {
+      screen.getByRole("link", {
         name: landingFooter.placeholderContact.phone,
       }),
-    ).not.toBeInTheDocument();
+    ).toHaveAttribute("href", `tel:${landingFooter.placeholderContact.phone}`);
     expect(screen.getByText(landingFooter.copyright)).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /facebook/i }),

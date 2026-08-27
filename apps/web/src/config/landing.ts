@@ -634,7 +634,7 @@ export const landingFooter = {
     address: "100 Main Street, Suite 400, New York, NY 10001",
     email: "hello@neatly.com",
     hours: "Mon – Sat: 8:00 AM – 6:00 PM",
-    phone: "[Development Placeholder: Insert Real Business Phone]",
+    phone: "+1 (800) 555-6328",
   },
   quoteHint: "Ready for a visit?",
   servicesHeading: "Services",

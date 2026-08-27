@@ -8,11 +8,12 @@ import { MobileNav } from "@/components/layout/navbar/mobile-nav";
 import { useActivePathname } from "@/components/layout/navbar/use-active-pathname";
 
 const NAVBAR_ELEVATION_SCROLL_PX = 20;
+const CINEMATIC_NAV_PATHS = new Set(["/", "/about"]);
 
 export function Navbar(): ReactElement {
   const pathname = useActivePathname();
   const isElevated = useNavbarElevation();
-  const isHomeOverlay = pathname === "/" && !isElevated;
+  const isCinematicOverlay = CINEMATIC_NAV_PATHS.has(pathname) && !isElevated;
 
   return (
     <header
@@ -21,7 +22,7 @@ export function Navbar(): ReactElement {
         "motion-safe:transition-[background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-normal motion-safe:ease-standard",
         isElevated
           ? "border-b border-secondary-foreground/10 bg-secondary/95 shadow-sm backdrop-blur-md"
-          : isHomeOverlay
+          : isCinematicOverlay
             ? "border-b border-transparent bg-transparent"
             : "border-b border-transparent bg-secondary",
       )}

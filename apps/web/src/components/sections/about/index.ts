@@ -1,0 +1,10 @@
+export { AboutCta } from "./about-cta";
+export { AboutHero } from "./about-hero";
+export { AboutProcess } from "./about-process";
+export { AboutTeam } from "./about-team";
+export { AboutTrust } from "./about-trust";
+export { AboutWhy } from "./about-why";
+export { OurCommitment } from "./our-commitment";
+export { OurStandard } from "./our-standard";
+export { OurStory } from "./our-story";
+export { QualityDetails } from "./quality-details";
