@@ -258,6 +258,7 @@ CSS Transitions        -> Simple hover states, color changes, focus rings.
 ```
 
 * **Tool Selection Rule:** NEVER use GSAP for a simple hover effect. NEVER use CSS transitions for complex scroll-driven timeline reveals.
+* **Scoped exception:** The landing Featured Work gallery may use Swiper.js for the centered horizontal track, including autoplay. Lenis stays vertical. Do not add another carousel library.
 
 ---
 

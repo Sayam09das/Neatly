@@ -37,7 +37,6 @@ export function useWorkAnimation({ rootRef }: UseWorkAnimationOptions): void {
 
       createWorkAnimation(root, {
         compact: isCompact,
-        enableParallax: !isCompact,
         enableScrollTrigger: true,
       });
 

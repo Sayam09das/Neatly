@@ -859,6 +859,7 @@ Next.js Cache Invalidated -> Public /services displays updated service details i
 * **Reason:** Provides a world-class, fluid animation experience matching the high-trust, calm brand positioning.
 * **Alternatives Considered:** Pure CSS animations only.
 * **Why Rejected:** CSS alone cannot handle complex scroll-linked timelines or smooth scroll normalization effectively.
+* **Scoped exception:** The landing Featured Work gallery uses Swiper.js for centered drag/swipe slides with autoplay. Lenis remains the page scroller (`data-lenis-prevent` on the carousel). GSAP does not drive Swiper. Do not add a second carousel library.
 
 ---
 

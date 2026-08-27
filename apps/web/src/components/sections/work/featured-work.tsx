@@ -6,7 +6,7 @@ export function FeaturedWork(): ReactElement {
   return (
     <section
       aria-labelledby={landingFeaturedWork.headingId}
-      className="mx-auto w-full max-w-page px-gutter py-section"
+      className="w-full overflow-x-hidden py-section"
       id="work"
     >
       <WorkScene />

@@ -101,13 +101,13 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Featured work
 - **Purpose:** Visual proof of the kinds of spaces Neatly is built for.
-- **Content:** Eyebrow, `h2`, intro, six brand-photography tiles (residential, deep, commercial, living spaces, bedrooms, after a visit) plus the CMS empty notice. Not case studies.
+- **Content:** Eyebrow, `h2`, intro, seven brand-photography slides (kitchen, office, floors, bathroom, carpet, windows, living room) plus the CMS empty notice. Not case studies.
 - **CTA:** View our work.
 - **Hierarchy:** `h2`, figcaptions, empty copy.
-- **Responsive:** Motion card track (peek 1 → 2 → ~2.4). Horizontal swipe on the track; Lenis stays the global scroller (`data-lenis-prevent`). Previous/Next for keyboard and pointer.
-- **Media:** Existing campaign stills at `images/Services/`, `images/why_use/why_use_03.jpeg`, `images/trust/01_standard.jpeg`, and `images/how_it_works/03_result.jpeg`. Descriptive alt. No stock. No invented case studies.
-- **Motion intent:** GSAP ScrollTrigger story (header → rule `scaleX` → staggered tiles). Clip-path + scale image reveal; subtle parallax from `md`. Motion owns card hover/tap and a slight inactive-card scale on the track. Horizontal swipe uses native snap on the track with `data-lenis-prevent` so Lenis stays the page scroller. Previous/Next move the track. Reduced motion skips GSAP, hover transforms, and smooth scroll. No pinning. No Swiper—Lenis + GSAP + Motion per ADR-05.
-- **A11y:** Meaningful alt. Decorative rule and marquee below are `aria-hidden`.
+- **Responsive:** Centered Swiper track (about 1.2 → 2.2 → 2.7 slides). Side slides peek and clip at the viewport. Previous/Next plus `01 / 07`.
+- **Media:** `images/work/01_kitchen.jpeg` through `07_spotless.jpeg` (896×1200). Descriptive alt. No invented case studies.
+- **Motion intent:** GSAP ScrollTrigger on header, rule, empty copy, and CTA only. Swiper owns horizontal slide transitions (`centeredSlides`, loop, drag/swipe, keyboard, autoplay ~3.5s). Autoplay resumes after swipe and pauses on Previous/Next hover or focus, not on the photograph. Lenis stays the page scroller (`data-lenis-prevent`). Reduced motion sets Swiper speed to 0, skips autoplay, and skips inactive-slide scale. No pinning. No mousewheel hijack.
+- **A11y:** Meaningful alt. Decorative rule is `aria-hidden`. Carousel region label plus previous/next.
 
 ### How it works
 - **Purpose:** Remove process ambiguity.
@@ -199,7 +199,7 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 | Slot | Role | Strategy |
 | :--- | :--- | :--- |
 | Hero media | hero / content | `next/image` with `priority`, explicit size, descriptive alt. No stock, no base64. |
-| Featured work | product visualization | Lazy `next/image` stills in a Motion card track. CMS before/afters later. |
+| Featured work | product visualization | Lazy `next/image` stills in a Swiper gallery. CMS before/afters later. |
 | Blog covers | content | Lazy `next/image`. Journal empty state uses dedicated stills at `images/journal/`. |
 | Closing band (newsletter + footer) | decorative | One lazy `next/image` (`01_notes.jpeg`), `alt=""`, `aria-hidden` parent spanning both sections. |
 | Trust/why icons | decorative | Inline SVG later, `aria-hidden`. |
@@ -207,7 +207,7 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 
 ## Performance
 
-Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, section GSAP/Motion scenes, future work slider, testimonial carousel (only when two or more published reviews exist), newsletter form chrome. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. Do not construct a second `Lenis()` instance. No database or API calls on `/` in this step.
+Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, section GSAP/Motion scenes, Featured Work Swiper gallery, testimonial carousel (only when two or more published reviews exist), newsletter form chrome. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. Do not construct a second `Lenis()` instance. No database or API calls on `/` in this step.
 
 ## SEO
 
