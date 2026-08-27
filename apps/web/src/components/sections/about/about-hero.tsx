@@ -54,8 +54,8 @@ export function AboutHero(): ReactElement {
               </div>
             </div>
           </div>
-          <div className="absolute inset-0 bg-secondary/40" />
-          <div className="absolute inset-0 bg-gradient-to-r from-secondary/85 via-secondary/50 to-secondary/20" />
+          <div className="absolute inset-0 bg-secondary/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-secondary/80 via-secondary/45 to-secondary/20" />
         </div>
         <div className="relative z-base mx-auto flex min-h-svh max-w-page flex-col justify-end px-gutter pt-28 pb-28 md:justify-center md:pt-32 md:pb-32 lg:pb-36">
           <div className="max-w-2xl">
