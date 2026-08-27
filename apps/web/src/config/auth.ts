@@ -9,6 +9,7 @@ export const AUTH_TOKEN_BYTES = 32;
 export const AUTH_PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 export const AUTH_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+export const AUTH_ADMIN_HOME_PATH = "/admin";
 export const AUTH_ADMIN_LOGIN_PATH = "/admin/login";
 export const AUTH_ADMIN_FORGOT_PASSWORD_PATH = "/admin/forgot-password";
 export const AUTH_ADMIN_RESET_PASSWORD_PATH = "/admin/reset-password";

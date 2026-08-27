@@ -455,7 +455,9 @@ Application Exception Occurs
 * **Email Verification:** Not part of the MVP. Admin identities are created by seed / internal `AuthService.registerUser()`, not public self-registration.
 * **Account Enumeration:** Forgot-password always returns: "If an account exists for this email, instructions have been sent."
 * **Rate Limiting:** Maximum 5 login, forgot-password, and reset-password attempts per IP per 15 minutes (in-process limiter; Redis is out of MVP scope).
-* **Authorization Boundary:** `getCurrentUser()`, `requireAuth()`, `requireRole()`, and `requirePermission()` are the reusable server-side checks. Middleware only gates `/admin/*` page routes (except login / forgot-password / reset-password) by cookie presence; API routes must call `requireAuth()`.
+* **Authorization Boundary:** The server session cookie is the source of truth. `getSession()` / `getCurrentUser()` resolve the admin in Server Components (request-deduped, dynamic, never cached). `requireAuth()` throws for API handlers. `requireAdminPage()` redirects unauthenticated visitors to `/admin/login`. `requireRole()` / `requirePermission()` enforce RBAC. There is no client `AuthProvider` and no JWT refresh flow.
+* **Route Protection:** Middleware only checks cookie presence on `/admin/*` (except login / forgot-password / reset-password). The `app/admin/(app)` layout validates the session in the database and redirects if it is missing or expired. The `app/admin/(session)` layout sends an already-authenticated admin to `/admin`. Public marketing routes are never gated.
+* **Authenticated API Client:** Same-origin `adminRequest()` sends the session cookie (`credentials: "same-origin"`, `cache: "no-store"`). HTTP 401 is unauthorized / session invalid. HTTP 403 is authenticated-but-forbidden and must not log the user out. There is no retry or token-refresh loop.
 
 ### Auth API Contract
 

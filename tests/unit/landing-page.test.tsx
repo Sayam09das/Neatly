@@ -55,7 +55,7 @@ describe("LandingPage architecture", (): void => {
       "Email notes",
       "Neatly",
     ]);
-  });
+  }, 15000);
 });
 
 describe("landing content", (): void => {

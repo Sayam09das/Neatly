@@ -15,6 +15,10 @@ export interface AuthUser {
   lastLoginAt: Date | null;
 }
 
+export type AuthSession =
+  | { status: "authenticated"; user: AuthUser }
+  | { status: "unauthenticated"; user: null };
+
 export interface RegisterUserInput {
   name: string;
   email: string;

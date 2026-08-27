@@ -1,17 +1,44 @@
 import { cookies } from "next/headers";
-import { AUTH_SESSION_COOKIE_NAME } from "@/config/auth";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import {
+  AUTH_ADMIN_HOME_PATH,
+  AUTH_ADMIN_LOGIN_PATH,
+  AUTH_SESSION_COOKIE_NAME,
+} from "@/config/auth";
 import { requireRole } from "@/lib/auth/authorization";
+import { createClearedSessionCookie } from "@/lib/auth/cookies";
 import { AUTH_ERROR_MESSAGES, AuthError } from "@/lib/auth/errors";
 import { getAuthService } from "@/lib/auth/runtime";
-import type { AuthUser, AuthUserRole } from "@/types/auth";
+import { toAuthSession } from "@/lib/auth/session-state";
+import type { AuthSession, AuthUser, AuthUserRole } from "@/types/auth";
 
 export { requireRole } from "@/lib/auth/authorization";
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
+async function readSessionToken(): Promise<string | undefined> {
   const jar = await cookies();
   const sessionToken = jar.get(AUTH_SESSION_COOKIE_NAME)?.value;
 
+  if (sessionToken === undefined || sessionToken.trim() === "") {
+    return undefined;
+  }
+
+  return sessionToken;
+}
+
+export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
+  const sessionToken = await readSessionToken();
+
+  if (sessionToken === undefined) {
+    return null;
+  }
+
   return getAuthService().resolveSession(sessionToken);
+});
+
+export async function getSession(): Promise<AuthSession> {
+  const user = await getCurrentUser();
+  return toAuthSession(user);
 }
 
 export async function requireAuth(): Promise<AuthUser> {
@@ -24,7 +51,32 @@ export async function requireAuth(): Promise<AuthUser> {
   return user;
 }
 
+export async function requireAdminPage(): Promise<AuthUser> {
+  const user = await getCurrentUser();
+
+  if (user === null) {
+    redirect(AUTH_ADMIN_LOGIN_PATH);
+  }
+
+  return user;
+}
+
+export async function redirectAuthenticatedAdmin(): Promise<void> {
+  const user = await getCurrentUser();
+
+  if (user !== null) {
+    redirect(AUTH_ADMIN_HOME_PATH);
+  }
+}
+
 export async function requirePermission(role: AuthUserRole): Promise<AuthUser> {
   const user = await requireAuth();
   return requireRole(user, role);
+}
+
+export async function logoutCurrentSession(): Promise<void> {
+  const jar = await cookies();
+  const sessionToken = jar.get(AUTH_SESSION_COOKIE_NAME)?.value;
+  await getAuthService().logout(sessionToken);
+  jar.set(createClearedSessionCookie());
 }
