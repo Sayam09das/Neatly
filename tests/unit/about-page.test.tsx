@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { AboutPage } from "@/components/about-page";
 import {
@@ -12,6 +12,7 @@ import {
   aboutStandard,
   aboutStory,
   aboutTeam,
+  aboutTrust,
   aboutWhy,
 } from "@/config/about";
 import { landingTestimonials } from "@/config/landing";
@@ -75,7 +76,7 @@ describe("AboutPage architecture", (): void => {
       aboutCommitment.heading,
       aboutQuality.heading,
       aboutWhy.heading,
-      landingTestimonials.heading,
+      aboutTrust.heading,
       aboutCta.heading,
       "Email notes",
       "Neatly",
@@ -135,5 +136,65 @@ describe("AboutPage architecture", (): void => {
 
     expect(screen.queryByText(/years of experience/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/certified/i)).not.toBeInTheDocument();
+  });
+
+  it("renders why neatly differentiators as editorial rows from approved copy", (): void => {
+    render(<AboutPage />);
+
+    expect(screen.getByText(aboutWhy.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutWhy.heading }),
+    ).toBeInTheDocument();
+
+    const why = document.querySelector("#why");
+
+    expect(why).not.toBeNull();
+
+    for (const item of aboutWhy.items) {
+      expect(
+        screen.getByRole("heading", { level: 3, name: item.title }),
+      ).toBeInTheDocument();
+      expect(why).toHaveTextContent(item.number);
+      expect(screen.getByText(item.body)).toBeInTheDocument();
+    }
+  });
+
+  it("renders customer trust as brand principles without invented reviews", (): void => {
+    render(<AboutPage />);
+
+    expect(screen.getByText(aboutTrust.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutTrust.heading }),
+    ).toBeInTheDocument();
+
+    const trust = document.querySelector("#trust");
+
+    expect(trust).not.toBeNull();
+
+    for (const item of aboutTrust.items) {
+      expect(
+        screen.getByRole("heading", { level: 3, name: item.title }),
+      ).toBeInTheDocument();
+      expect(trust).toHaveTextContent(item.number);
+      expect(screen.getByText(item.body)).toBeInTheDocument();
+    }
+  });
+
+  it("renders the final quote CTA with existing routes", (): void => {
+    render(<AboutPage />);
+
+    expect(screen.getByText(aboutCta.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutCta.heading }),
+    ).toBeInTheDocument();
+
+    const cta = screen.getByRole("region", { name: aboutCta.heading });
+
+    expect(
+      within(cta).getByRole("link", { name: aboutCta.primaryLabel }),
+    ).toHaveAttribute("href", aboutCta.primaryHref);
+    expect(
+      within(cta).getByRole("link", { name: aboutCta.secondaryLabel }),
+    ).toHaveAttribute("href", aboutCta.secondaryHref);
   });
 });

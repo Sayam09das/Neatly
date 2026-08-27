@@ -1,138 +1,90 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { type ReactElement, useCallback, useRef, useState } from "react";
-import { durationSeconds } from "@/animations/config/durations";
-import { easings } from "@/animations/config/easings";
-import { useIsomorphicLayoutEffect } from "@/animations/hooks/use-isomorphic-layout-effect";
-import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
-import { type AboutDifferentiator, aboutWhy } from "@/config/about";
-import {
-  ABOUT_WHY_FINE_POINTER_QUERY,
-  ABOUT_WHY_HOVER_LIFT_PX,
-  ABOUT_WHY_HOVER_SCALE,
-  createAboutWhyAnimation,
-} from "./about-why-animation";
-import { useAboutSectionAnimation } from "./use-about-section-animation";
-
-const hoverTransition = {
-  duration: durationSeconds.normal,
-  ease: easings.standard.framer,
-} as const;
+import { cn } from "@neatly/utils";
+import type { ReactElement } from "react";
+import { aboutWhy } from "@/config/about";
 
 export function AboutWhy(): ReactElement {
-  const rootRef = useRef<HTMLElement>(null);
-  const create = useCallback(
-    (root: HTMLElement, options: { compact: boolean }): void => {
-      createAboutWhyAnimation(root, {
-        compact: options.compact,
-        enableScrollTrigger: true,
-      });
-    },
-    [],
-  );
-
-  useAboutSectionAnimation({ create, rootRef });
-
   return (
     <section
       aria-labelledby={aboutWhy.headingId}
-      className="bg-background text-foreground"
+      className="about-why bg-muted text-foreground"
+      data-why-neatly
       id="why"
-      ref={rootRef}
     >
       <div className="mx-auto max-w-page px-gutter py-section">
         <div className="max-w-2xl">
           <p
-            className="text-label text-primary uppercase"
+            className="about-why-eyebrow text-label text-primary uppercase"
             data-about-why-header
+            data-why-neatly-eyebrow
           >
             {aboutWhy.eyebrow}
           </p>
           <h2
-            className="mt-4 text-display tracking-tight"
+            aria-label={aboutWhy.heading}
+            className="about-why-heading mt-4 text-display tracking-tight"
             data-about-why-header
+            data-why-neatly-heading
             id={aboutWhy.headingId}
           >
-            {aboutWhy.heading}
+            {aboutWhy.headingLines.map((line, index) => {
+              const isAccent = index === aboutWhy.headingLines.length - 1;
+
+              return (
+                <span
+                  aria-hidden="true"
+                  className={cn("block", isAccent && "text-primary")}
+                  key={line}
+                >
+                  {line}
+                </span>
+              );
+            })}
           </h2>
           <p
-            className="mt-6 max-w-xl text-body text-muted-foreground"
+            className="about-why-copy mt-6 max-w-xl text-body text-muted-foreground"
             data-about-why-header
+            data-why-neatly-copy
           >
             {aboutWhy.intro}
           </p>
         </div>
-        <ul className="mt-16 space-y-6">
+        <ol className="mt-16 border-b border-border md:mt-20">
           {aboutWhy.items.map((item) => (
-            <li data-about-why-item key={item.title}>
-              <WhyItem item={item} />
+            <li
+              className="about-why-item group"
+              data-about-why-item
+              data-why-neatly-item
+              key={item.number}
+            >
+              <div
+                aria-hidden="true"
+                className="about-why-divider h-px bg-border motion-safe:transition-colors motion-safe:duration-normal motion-safe:ease-standard group-hover:bg-foreground/25"
+                data-why-neatly-divider
+              />
+              <div className="py-8 md:grid md:grid-cols-12 md:items-baseline md:gap-x-6 md:py-10 lg:gap-x-12 lg:py-12">
+                <p
+                  className="about-why-number font-mono text-label text-primary uppercase md:col-span-2"
+                  data-why-neatly-number
+                >
+                  {item.number}
+                </p>
+                <h3
+                  className="about-why-title mt-4 text-h2 tracking-tight motion-safe:transition-colors motion-safe:duration-normal motion-safe:ease-standard group-hover:text-primary md:col-span-4 md:col-start-3 md:mt-0 lg:col-span-4"
+                  data-why-neatly-title
+                >
+                  {item.title}
+                </h3>
+                <p
+                  className="about-why-description mt-3 max-w-xl text-body text-muted-foreground md:col-span-6 md:col-start-7 md:mt-0 md:max-w-none lg:col-span-6 lg:col-start-7"
+                  data-why-neatly-description
+                >
+                  {item.body}
+                </p>
+              </div>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
     </section>
   );
-}
-
-function WhyItem({ item }: { item: AboutDifferentiator }): ReactElement {
-  const prefersReducedMotion = useReducedMotion();
-  const hoverEnabled = useFinePointer() && !prefersReducedMotion;
-  const body = (
-    <article className="rounded-xl border border-border bg-background p-6 md:p-8">
-      <h3 className="text-h3 tracking-tight">{item.title}</h3>
-      <div className="mt-6 grid gap-6 md:grid-cols-2 md:gap-10">
-        <p className="text-body-small text-muted-foreground">
-          <span className="mb-2 block text-label text-muted-foreground uppercase">
-            {aboutWhy.expectationLabel}
-          </span>
-          {item.expectation}
-        </p>
-        <p className="text-body-small text-foreground">
-          <span className="mb-2 block text-label text-primary uppercase">
-            {aboutWhy.neatlyLabel}
-          </span>
-          {item.neatly}
-        </p>
-      </div>
-    </article>
-  );
-
-  if (prefersReducedMotion) {
-    return body;
-  }
-
-  return (
-    <motion.div
-      initial="rest"
-      transition={hoverTransition}
-      variants={{
-        hover: { scale: ABOUT_WHY_HOVER_SCALE, y: -ABOUT_WHY_HOVER_LIFT_PX },
-        rest: { scale: 1, y: 0 },
-      }}
-      whileHover={hoverEnabled ? "hover" : undefined}
-    >
-      {body}
-    </motion.div>
-  );
-}
-
-function useFinePointer(): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useIsomorphicLayoutEffect((): (() => void) => {
-    const media = window.matchMedia(ABOUT_WHY_FINE_POINTER_QUERY);
-    const sync = (): void => {
-      setMatches(media.matches);
-    };
-
-    sync();
-    media.addEventListener("change", sync);
-
-    return (): void => {
-      media.removeEventListener("change", sync);
-    };
-  }, []);
-
-  return matches;
 }

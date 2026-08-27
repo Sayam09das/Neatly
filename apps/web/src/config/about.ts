@@ -254,63 +254,85 @@ export const aboutQuality = {
 } as const;
 
 export interface AboutDifferentiator {
-  expectation: string;
-  neatly: string;
+  body: string;
+  number: string;
   title: string;
 }
 
 export const aboutWhy = {
   eyebrow: "Why Neatly",
-  expectationLabel: "A common experience",
   heading: "A calmer way to request professional cleaning",
   headingId: "about-why-heading",
+  headingLines: [
+    "A calmer way",
+    "to request",
+    "professional cleaning",
+  ] as const,
   intro:
     "The difference is not a slogan about being the only option. It is a clearer standard for scope, people, and what happens after the visit.",
-  neatlyLabel: "The Neatly approach",
   items: [
     {
-      expectation:
-        "The visit is described in general terms, so inclusions stay ambiguous until someone is already in the space.",
-      neatly:
-        "What is included, and what is an add-on, is detailed in published service checklists before booking.",
-      title: "Scope",
+      body: "What is included, and what is an add-on, is detailed in published service checklists before booking.",
+      number: "01",
+      title: "Clear expectations",
     },
     {
-      expectation:
-        "Who arrives can feel like an unknown, even when the work itself is ordinary.",
-      neatly:
-        "Who enters a property, and how they are screened, is part of the standard—not an afterthought.",
-      title: "People",
+      body: "Who enters a property, and how they are screened, is part of the standard—not an afterthought.",
+      number: "02",
+      title: "Who enters",
     },
     {
-      expectation:
-        "If a detail is missed, there is no stated path back to a finished visit.",
-      neatly:
-        "Complimentary reclean if any detail is missed. Satisfaction is an explicit commitment.",
-      title: "Finish",
+      body: "Complimentary reclean if any detail is missed. Satisfaction is an explicit commitment.",
+      number: "03",
+      title: "A finished visit",
     },
     {
-      expectation:
-        "Getting a price can mean a long call or a form that asks more than it needs.",
-      neatly:
-        "A quote request asks for essential property details. Payment is not part of that step.",
-      title: "Quote",
+      body: "A quote request asks for essential property details. Payment is not part of that step.",
+      number: "04",
+      title: "A simpler quote",
     },
   ] satisfies ReadonlyArray<AboutDifferentiator>,
+} as const;
+
+export interface AboutTrustItem {
+  body: string;
+  number: string;
+  title: string;
+}
+
+export const aboutTrust = {
+  eyebrow: "Customer trust",
+  heading: "Confidence comes with clarity.",
+  headingId: "about-trust-heading",
+  headingLines: ["Confidence comes", "with clarity."] as const,
+  intro:
+    "Trust is built on what is stated before anyone arrives: who enters, what is included, and what happens if a detail is missed.",
+  items: [
+    {
+      body: "Vetted professionals, background checks, and insured coverage are stated before a visit is booked.",
+      number: "01",
+      title: "Screening is explicit",
+    },
+    {
+      body: "Homes and workplaces are entered with care. Property is treated as if it were our own, with considered materials and a finished checklist.",
+      number: "02",
+      title: "The space is respected",
+    },
+    {
+      body: "If a detail is missed, a complimentary reclean is the published satisfaction standard—not an unstated hope.",
+      number: "03",
+      title: "The finish is inspectable",
+    },
+  ] satisfies ReadonlyArray<AboutTrustItem>,
 } as const;
 
 export const aboutCta = {
   description:
     "Share the property type, service, and timing. A specialist will follow up with a clear scope. Payment is not part of this step.",
+  eyebrow: "Ready",
   heading: "A cleaner space starts with Neatly.",
   headingId: "about-cta-heading",
-  image: {
-    alt: "",
-    height: 1536,
-    objectPosition: "48% 42%",
-    src: "/images/hero/04_img.jpeg",
-    width: 2752,
-  },
+  headingLines: ["A cleaner space", "starts with Neatly."] as const,
   primaryHref: landingCtas.primary.href,
   primaryLabel: landingCtas.primary.label,
   secondaryHref: landingCtas.secondary.href,
