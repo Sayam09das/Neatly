@@ -32,6 +32,7 @@ const nextConfig: NextConfig = {
   agentRules: false,
   outputFileTracingRoot: workspaceRoot,
   transpilePackages: ["@neatly/config", "@neatly/ui", "@neatly/utils"],
+  serverExternalPackages: ["@prisma/client", "bcrypt"],
   async headers(): Promise<
     Array<{
       source: string;

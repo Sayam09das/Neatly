@@ -71,6 +71,8 @@
 | Entity Name | Database Table Name | Primary Purpose | MVP Scope |
 | :--- | :--- | :--- | :--- |
 | `User` | `users` | Admin identities, password hashes, and session references | Yes (Single Admin) |
+| `Session` | `sessions` | Hashed admin session tokens and expiry timestamps | Yes |
+| `PasswordResetToken` | `password_reset_tokens` | Hashed single-use password reset tokens | Yes |
 | `Service` | `services` | Cleaning service catalog, package inclusions, and descriptions | Yes |
 | `QuoteRequest` | `quote_requests` | Lead capture records from the interactive quote form | Yes |
 | `ContactMessage` | `contact_messages` | Inquiries submitted through the general contact form | Yes |
@@ -106,6 +108,31 @@ Stores administrative user accounts for dashboard access and content authorship.
 ### 5.2 Roles & Enums
 * `UserRole`: `ADMIN` (MVP). Reserved future values: `SUPER_ADMIN`, `CONTENT_MANAGER`, `STAFF`.
 * `UserStatus`: `ACTIVE`, `INACTIVE`, `SUSPENDED`.
+
+### 5.3 Session Model (`Session`)
+
+Server-side admin session records. Raw session tokens are never stored. The cookie value is hashed with `HMAC-SHA256(SESSION_SECRET)` before persistence.
+
+| Field Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | String (CUID) | Primary Key, Default: Auto | Unique identifier |
+| `userId` | String | NOT NULL, FK (`User`) | Owning admin user |
+| `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the session token |
+| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (7 days from issue) |
+| `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
+
+### 5.4 Password Reset Token (`PasswordResetToken`)
+
+Single-use password reset tokens. Raw tokens are never stored. Tokens expire 60 minutes after issue and are invalidated after a successful reset.
+
+| Field Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | String (CUID) | Primary Key, Default: Auto | Unique identifier |
+| `userId` | String | NOT NULL, FK (`User`) | Owning admin user |
+| `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the reset token |
+| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (60 minutes from issue) |
+| `usedAt` | DateTime | NULLABLE | Set when the token is consumed |
+| `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
 
 ---
 
@@ -366,6 +393,8 @@ Central registry tracking uploaded image assets stored in cloud object storage.
 | `PortfolioImage` | Many-to-One | `PortfolioProject` | `portfolioProjectId` | `CASCADE` |
 | `PortfolioImage` | Many-to-One | `MediaAsset` | `mediaAssetId` | `RESTRICT` |
 | `BlogPost` | Many-to-One | `User` (Author) | `authorId` | `RESTRICT` |
+| `Session` | Many-to-One | `User` | `userId` | `CASCADE` |
+| `PasswordResetToken` | Many-to-One | `User` | `userId` | `CASCADE` |
 | `BlogPost` | Many-to-One (Optional)| `BlogCategory` | `categoryId` | `SET NULL` |
 | `BlogPost` | Many-to-One (Optional)| `MediaAsset` | `coverMediaId` | `SET NULL` |
 | `Service` | Many-to-One (Optional)| `MediaAsset` | `coverMediaId` | `SET NULL` |
@@ -571,6 +600,16 @@ To preserve query latency targets (< 15ms database responses), explicit indexes 
 User:
   - UNIQUE INDEX (email)
 
+Session:
+  - UNIQUE INDEX (tokenHash)
+  - INDEX (userId)
+  - INDEX (expiresAt)
+
+PasswordResetToken:
+  - UNIQUE INDEX (tokenHash)
+  - INDEX (userId)
+  - INDEX (expiresAt)
+
 Service:
   - UNIQUE INDEX (slug)
   - INDEX (isActive, sortOrder)
@@ -616,6 +655,8 @@ The database strictly enforces uniqueness across six business columns:
 6. `NewsletterSubscriber.email`: Prevents duplicate email marketing subscriptions.
 7. `MediaAsset.storageKey`: Prevents duplicate storage asset references.
 8. `SiteSettings.id`: Enforces singleton settings pattern (ID must equal 1).
+9. `Session.tokenHash`: Prevents duplicate session token hashes.
+10. `PasswordResetToken.tokenHash`: Prevents duplicate reset token hashes.
 
 ---
 

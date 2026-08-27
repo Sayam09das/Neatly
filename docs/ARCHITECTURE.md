@@ -319,6 +319,8 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
 ### 11.3 Protected Admin API Endpoints (`/api/admin/*`)
 * `POST /api/admin/auth/login` — Authenticate admin credentials and set session cookie.
 * `POST /api/admin/auth/logout` — Invalidate session and clear session cookie.
+* `POST /api/admin/auth/forgot-password` — Request a password reset email. Always returns a generic success payload.
+* `POST /api/admin/auth/reset-password` — Consume a single-use reset token and set a new password hash.
 * `GET  /api/admin/quotes` — List quotes with status filtering.
 * `PATCH /api/admin/quotes/[id]` — Update quote status or append internal notes.
 * `GET  /api/admin/contacts` — List contact inbox submissions.
@@ -441,12 +443,32 @@ Application Exception Occurs
 
 ### Technical Controls
 * **Password Hashing:** `bcrypt` with a minimum cost factor of 12.
+* **Session Strategy:** Crypto-random 256-bit session tokens stored in an `HttpOnly` cookie. The raw token is hashed with `HMAC-SHA256(SESSION_SECRET)` before it is written to the `sessions` table. There are no JWT access or refresh tokens.
 * **Session Cookie Configuration:**
   * `HttpOnly: true` (Prevents client-side JavaScript access via `document.cookie`).
-  * `Secure: true` (Mandates HTTPS transport in production).
-  * `SameSite: Strict` (Protects against CSRF attacks).
+  * `Secure: true` in production (Mandates HTTPS transport). `Secure` is disabled on local HTTP development.
+  * `SameSite: Strict` (First CSRF control: cross-site browsers will not attach the cookie).
   * `Path: /`
   * `Max-Age: 604800` (7-day session validity).
+* **CSRF:** Cookie-authenticated auth mutations also require a matching `Origin`, `Referer`, or `Host` against `NEXT_PUBLIC_SITE_URL`.
+* **Password Reset:** Hashed, single-use tokens expire after 60 minutes. A successful reset rehashes the password and deletes all sessions for that admin.
+* **Email Verification:** Not part of the MVP. Admin identities are created by seed / internal `AuthService.registerUser()`, not public self-registration.
+* **Account Enumeration:** Forgot-password always returns: "If an account exists for this email, instructions have been sent."
+* **Rate Limiting:** Maximum 5 login, forgot-password, and reset-password attempts per IP per 15 minutes (in-process limiter; Redis is out of MVP scope).
+* **Authorization Boundary:** `getCurrentUser()`, `requireAuth()`, `requireRole()`, and `requirePermission()` are the reusable server-side checks. Middleware only gates `/admin/*` page routes (except login / forgot-password / reset-password) by cookie presence; API routes must call `requireAuth()`.
+
+### Auth API Contract
+
+All auth routes return the standard `{ success, data, error, timestamp }` envelope and `Cache-Control: no-store`.
+
+| Route | Auth required | Request body | Success `data` | Error codes |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST /api/admin/auth/login` | No | `{ email, password }` | `{ user, expiresAt }` | `INVALID_INPUT`, `INVALID_CREDENTIALS`, `RATE_LIMITED`, `FORBIDDEN` |
+| `POST /api/admin/auth/logout` | No | none | `{ signedOut: true }` | `FORBIDDEN` |
+| `POST /api/admin/auth/forgot-password` | No | `{ email }` | `{ message }` | `INVALID_INPUT`, `RATE_LIMITED`, `FORBIDDEN` |
+| `POST /api/admin/auth/reset-password` | No | `{ token, password }` | `{ user: { id, email } }` | `INVALID_INPUT`, `TOKEN_INVALID`, `TOKEN_EXPIRED`, `RATE_LIMITED`, `FORBIDDEN` |
+
+`user` never includes `passwordHash` or tokens. `FORBIDDEN` is returned when the CSRF origin check fails.
 
 ---
 
