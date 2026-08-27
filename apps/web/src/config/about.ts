@@ -1,5 +1,5 @@
 import { APP_NAME } from "@neatly/config";
-import { landingCtas, landingHero } from "@/config/landing";
+import { landingCtas } from "@/config/landing";
 
 export const aboutMetadata = {
   description: `${APP_NAME} is a professional residential and commercial cleaning service. This page covers who we are, how a visit is delivered, and the standard behind the work.`,
@@ -7,34 +7,32 @@ export const aboutMetadata = {
 } as const;
 
 export const aboutHero = {
-  ctaLabel: landingCtas.primary.label,
   ctaHref: landingCtas.primary.href,
-  description: landingHero.description,
+  ctaLabel: landingCtas.primary.label,
+  description:
+    "Cleaning means letting a team into a home or workplace. Neatly is built so that decision feels calm, explicit, and dependable.",
   eyebrow: "About Neatly",
-  heading: "Cleaning should feel simple, thoughtful, and dependable.",
-  headingEmphasis: "simple, thoughtful,",
+  heading: "A cleaner space starts with something more.",
   headingId: "about-hero-heading",
-  headingLead: "Cleaning should feel",
-  headingTail: "and dependable.",
+  headingLines: ["A cleaner space", "starts with", "something more."] as const,
   image: {
-    alt: "",
+    alt: "A Neatly cleaner wiping a marble kitchen island with a microfiber cloth.",
     height: 1536,
-    objectPosition: "72% 42%",
-    src: "/images/hero/03_img.jpeg",
+    objectPosition: "50% 32%",
+    src: "/images/why_use/why_use_02.jpeg",
     width: 2752,
   },
-  secondaryHref: landingCtas.secondary.href,
-  secondaryLabel: landingCtas.secondary.label,
 } as const;
 
 export const aboutStory = {
   eyebrow: "Our story",
-  heading: "Why Neatly exists",
+  heading: "Neatly exists as a clear front door.",
   headingId: "about-story-heading",
+  headingLines: ["Neatly exists as", "a clear front door."] as const,
   intro:
     "Cleaning means letting a team into a home or workplace. That decision should feel calm, explicit, and safe—not vague.",
   narrative:
-    "Professional cleaning often arrives with fragmented branding, opaque scope, and contact methods that ask more of the customer than they should. Neatly exists as a clear front door for residential and commercial cleaning: vetted people, a published checklist, and a satisfaction standard, stated before you request a quote.",
+    "Professional cleaning often arrives with fragmented branding, opaque scope, and contact methods that ask more of the customer than they should. Neatly is the clearer path: vetted people, a published checklist, and a satisfaction standard, stated before you request a quote.",
   image: {
     alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows.",
     height: 1536,
@@ -62,6 +60,7 @@ export const aboutStandard = {
   eyebrow: "Our standard",
   heading: "What quality means here",
   headingId: "about-standard-heading",
+  headingLines: ["What quality", "means here."] as const,
   intro:
     "Neatly is built around execution you can inspect: who enters, what is included, how the work is finished, and what happens if a detail is missed.",
   principles: [
@@ -105,6 +104,7 @@ export const aboutProcess = {
   eyebrow: "How we work",
   heading: "A visit, explained with care",
   headingId: "about-process-heading",
+  headingLines: ["A visit,", "explained", "with care."] as const,
   intro:
     "The quote path is simple. This is the deeper standard for how the work itself is understood, prepared, delivered, and reviewed.",
   steps: [
@@ -162,9 +162,10 @@ export const aboutProcess = {
 export const aboutTeam = {
   emptyMessage:
     "Named team profiles will appear here when they are published. Names, titles, and credentials will never be invented.",
-  eyebrow: "The people behind Neatly",
+  eyebrow: "The people behind the clean",
   heading: "Who enters the space is part of the standard",
   headingId: "about-team-heading",
+  headingLines: ["Who enters the space", "is part of the standard."] as const,
   intro:
     "Cleaning requires physical access to a home or workplace. Neatly treats that as a trust decision: vetted professionals, background checks, and insured coverage—stated before a visit is booked.",
   image: {
@@ -178,6 +179,7 @@ export const aboutTeam = {
 
 export interface AboutCommitmentItem {
   body: string;
+  number: string;
   title: string;
 }
 
@@ -185,23 +187,33 @@ export const aboutCommitment = {
   eyebrow: "Our commitment",
   heading: "A clean space should give you one less thing to worry about.",
   headingId: "about-commitment-heading",
+  headingLines: [
+    "A clean space",
+    "should give you",
+    "one less thing",
+    "to worry about.",
+  ] as const,
   intro:
     "Neatly promises reliable cleaning execution backed by professional staff, transparent communication, uncompromising quality standards, and respect for customer property.",
   items: [
     {
       body: "Homes and offices are entered with care. Property is treated as if it were our own, with considered materials and a finished checklist.",
+      number: "01",
       title: "Respect your space",
     },
     {
       body: "What is included is stated before you request a quote. The conversation stays explicit. Payment is not part of that step.",
+      number: "02",
       title: "Clear communication",
     },
     {
       body: "The work is human: courteous, calm, and precise. Scope is followed so the visit feels thoughtful rather than rushed or vague.",
+      number: "03",
       title: "Thoughtful service",
     },
     {
       body: "The same standard applies across residential and commercial visits. Consistency is how trust is earned after the first booking.",
+      number: "04",
       title: "Consistent standards",
     },
   ] satisfies ReadonlyArray<AboutCommitmentItem>,

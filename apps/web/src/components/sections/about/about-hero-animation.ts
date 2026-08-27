@@ -4,22 +4,37 @@ import { easings } from "@/animations/config/easings";
 import { registerGsapPlugins } from "@/animations/gsap/plugins";
 
 export const ABOUT_HERO_EYEBROW_Y_PX = 20;
-export const ABOUT_HERO_HEADING_Y_PX = 40;
+export const ABOUT_HERO_EYEBROW_Y_PX_COMPACT = 12;
 export const ABOUT_HERO_COPY_Y_PX = 25;
+export const ABOUT_HERO_COPY_Y_PX_COMPACT = 16;
 export const ABOUT_HERO_CTA_Y_PX = 20;
-export const ABOUT_HERO_IMAGE_SCALE_FROM = 1.08;
-export const ABOUT_HERO_IMAGE_SCALE_MOBILE = 1.04;
-export const ABOUT_HERO_DURATION = 0.8;
-export const ABOUT_HERO_DURATION_MOBILE = 0.55;
-export const ABOUT_HERO_STAGGER = 0.1;
-export const ABOUT_HERO_PARALLAX_Y_PERCENT = 6;
+export const ABOUT_HERO_CTA_Y_PX_COMPACT = 12;
+export const ABOUT_HERO_LINE_Y_PERCENT = 100;
+export const ABOUT_HERO_IMAGE_SCALE_FROM = 1.06;
+export const ABOUT_HERO_IMAGE_SCALE_MOBILE = 1.03;
+export const ABOUT_HERO_EYEBROW_DURATION = 0.5;
+export const ABOUT_HERO_HEADING_DURATION = 0.8;
+export const ABOUT_HERO_HEADING_DURATION_COMPACT = 0.6;
+export const ABOUT_HERO_COPY_DURATION = 0.5;
+export const ABOUT_HERO_CTA_DURATION = 0.4;
+export const ABOUT_HERO_IMAGE_DURATION = 1;
+export const ABOUT_HERO_IMAGE_DURATION_COMPACT = 0.8;
+export const ABOUT_HERO_LINE_STAGGER = 0.08;
+export const ABOUT_HERO_LINE_STAGGER_COMPACT = 0.05;
+export const ABOUT_HERO_PARALLAX_Y_PERCENT = 5;
 export const ABOUT_HERO_PARALLAX_SCRUB = 0.6;
 export const ABOUT_HERO_CLIP_HIDDEN = "inset(0 0 100% 0)";
 export const ABOUT_HERO_CLIP_VISIBLE = "inset(0 0 0% 0)";
-export const ABOUT_HERO_SCROLL_START = "top 88%";
+export const ABOUT_HERO_SCROLL_START = "top 92%";
+export const ABOUT_HERO_EYEBROW_AT = 0;
+export const ABOUT_HERO_HEADING_AT = 0.18;
+export const ABOUT_HERO_COPY_AT = 0.48;
+export const ABOUT_HERO_CTA_AT = 0.72;
+export const ABOUT_HERO_IMAGE_AT = 0.82;
 
 export interface AboutHeroAnimationOptions {
   compact?: boolean;
+  enableClipPath?: boolean;
   enableParallax?: boolean;
   enableScrollTrigger?: boolean;
 }
@@ -32,10 +47,14 @@ interface AboutHeroTargets {
   copy: HTMLElement | null;
   cta: HTMLElement | null;
   eyebrow: HTMLElement | null;
-  heading: HTMLElement | null;
-  headingMask: HTMLElement | null;
   image: HTMLElement | null;
+  lines: Array<HTMLElement>;
+  mask: HTMLElement | null;
   parallax: HTMLElement | null;
+}
+
+function queryAll(root: HTMLElement, selector: string): Array<HTMLElement> {
+  return Array.from(root.querySelectorAll<HTMLElement>(selector));
 }
 
 function collectTargets(root: HTMLElement): AboutHeroTargets {
@@ -43,11 +62,9 @@ function collectTargets(root: HTMLElement): AboutHeroTargets {
     copy: root.querySelector<HTMLElement>("[data-about-hero-copy]"),
     cta: root.querySelector<HTMLElement>("[data-about-hero-cta]"),
     eyebrow: root.querySelector<HTMLElement>("[data-about-hero-eyebrow]"),
-    heading: root.querySelector<HTMLElement>("[data-about-hero-heading]"),
-    headingMask: root.querySelector<HTMLElement>(
-      "[data-about-hero-heading-mask]",
-    ),
     image: root.querySelector<HTMLElement>("[data-about-hero-image]"),
+    lines: queryAll(root, "[data-about-hero-line]"),
+    mask: root.querySelector<HTMLElement>("[data-about-hero-mask]"),
     parallax: root.querySelector<HTMLElement>("[data-about-hero-parallax]"),
   };
 }
@@ -58,31 +75,42 @@ export function createAboutHeroAnimation(
 ): AboutHeroAnimationResult {
   const compact = options.compact ?? false;
   const enableScrollTrigger = options.enableScrollTrigger ?? true;
+  const enableClipPath = options.enableClipPath ?? true;
   const enableParallax = options.enableParallax ?? !compact;
-  const duration = compact ? ABOUT_HERO_DURATION_MOBILE : ABOUT_HERO_DURATION;
   const imageScale = compact
     ? ABOUT_HERO_IMAGE_SCALE_MOBILE
     : ABOUT_HERO_IMAGE_SCALE_FROM;
+  const eyebrowY = compact
+    ? ABOUT_HERO_EYEBROW_Y_PX_COMPACT
+    : ABOUT_HERO_EYEBROW_Y_PX;
+  const copyY = compact ? ABOUT_HERO_COPY_Y_PX_COMPACT : ABOUT_HERO_COPY_Y_PX;
+  const ctaY = compact ? ABOUT_HERO_CTA_Y_PX_COMPACT : ABOUT_HERO_CTA_Y_PX;
+  const headingDuration = compact
+    ? ABOUT_HERO_HEADING_DURATION_COMPACT
+    : ABOUT_HERO_HEADING_DURATION;
+  const imageDuration = compact
+    ? ABOUT_HERO_IMAGE_DURATION_COMPACT
+    : ABOUT_HERO_IMAGE_DURATION;
+  const lineStagger = compact
+    ? ABOUT_HERO_LINE_STAGGER_COMPACT
+    : ABOUT_HERO_LINE_STAGGER;
   const targets = collectTargets(root);
 
   if (targets.eyebrow !== null) {
-    gsap.set(targets.eyebrow, { opacity: 0, y: ABOUT_HERO_EYEBROW_Y_PX });
+    gsap.set(targets.eyebrow, { opacity: 0, y: eyebrowY });
   }
 
-  if (targets.heading !== null) {
-    gsap.set(targets.heading, { opacity: 0, y: ABOUT_HERO_HEADING_Y_PX });
-  }
-
-  if (targets.headingMask !== null && !compact) {
-    gsap.set(targets.headingMask, { clipPath: ABOUT_HERO_CLIP_HIDDEN });
-  }
+  gsap.set(targets.lines, {
+    opacity: 0,
+    yPercent: ABOUT_HERO_LINE_Y_PERCENT,
+  });
 
   if (targets.copy !== null) {
-    gsap.set(targets.copy, { opacity: 0, y: ABOUT_HERO_COPY_Y_PX });
+    gsap.set(targets.copy, { opacity: 0, y: copyY });
   }
 
   if (targets.cta !== null) {
-    gsap.set(targets.cta, { opacity: 0, y: ABOUT_HERO_CTA_Y_PX });
+    gsap.set(targets.cta, { opacity: 0, y: ctaY });
   }
 
   if (targets.image !== null) {
@@ -93,47 +121,90 @@ export function createAboutHeroAnimation(
     });
   }
 
+  if (targets.mask !== null && enableClipPath) {
+    gsap.set(targets.mask, { clipPath: ABOUT_HERO_CLIP_HIDDEN });
+  }
+
   if (enableScrollTrigger) {
     registerGsapPlugins(ScrollTrigger);
   }
 
   const timeline = gsap.timeline({
     defaults: {
-      duration,
       ease: easings.enter.gsap,
     },
     paused: true,
   });
 
   if (targets.eyebrow !== null) {
-    timeline.to(targets.eyebrow, { opacity: 1, y: 0 }, 0);
-  }
-
-  if (targets.heading !== null) {
-    timeline.to(targets.heading, { opacity: 1, y: 0 }, ABOUT_HERO_STAGGER);
-  }
-
-  if (targets.headingMask !== null && !compact) {
     timeline.to(
-      targets.headingMask,
-      { clipPath: ABOUT_HERO_CLIP_VISIBLE },
-      ABOUT_HERO_STAGGER,
+      targets.eyebrow,
+      {
+        duration: ABOUT_HERO_EYEBROW_DURATION,
+        opacity: 1,
+        y: 0,
+      },
+      ABOUT_HERO_EYEBROW_AT,
+    );
+  }
+
+  if (targets.lines.length > 0) {
+    timeline.to(
+      targets.lines,
+      {
+        duration: headingDuration,
+        opacity: 1,
+        stagger: lineStagger,
+        yPercent: 0,
+      },
+      ABOUT_HERO_HEADING_AT,
     );
   }
 
   if (targets.copy !== null) {
-    timeline.to(targets.copy, { opacity: 1, y: 0 }, ABOUT_HERO_STAGGER * 2);
+    timeline.to(
+      targets.copy,
+      {
+        duration: ABOUT_HERO_COPY_DURATION,
+        opacity: 1,
+        y: 0,
+      },
+      ABOUT_HERO_COPY_AT,
+    );
   }
 
   if (targets.cta !== null) {
-    timeline.to(targets.cta, { opacity: 1, y: 0 }, ABOUT_HERO_STAGGER * 3);
+    timeline.to(
+      targets.cta,
+      {
+        duration: ABOUT_HERO_CTA_DURATION,
+        opacity: 1,
+        y: 0,
+      },
+      ABOUT_HERO_CTA_AT,
+    );
+  }
+
+  if (targets.mask !== null && enableClipPath) {
+    timeline.to(
+      targets.mask,
+      {
+        clipPath: ABOUT_HERO_CLIP_VISIBLE,
+        duration: imageDuration,
+      },
+      ABOUT_HERO_IMAGE_AT,
+    );
   }
 
   if (targets.image !== null) {
     timeline.to(
       targets.image,
-      { opacity: 1, scale: 1 },
-      ABOUT_HERO_STAGGER * 4,
+      {
+        duration: imageDuration,
+        opacity: 1,
+        scale: 1,
+      },
+      ABOUT_HERO_IMAGE_AT,
     );
   }
 
@@ -162,7 +233,7 @@ export function createAboutHeroAnimation(
           invalidateOnRefresh: true,
           scrub: ABOUT_HERO_PARALLAX_SCRUB,
           start: "top bottom",
-          trigger: root,
+          trigger: targets.parallax,
         },
         yPercent: ABOUT_HERO_PARALLAX_Y_PERCENT,
       },

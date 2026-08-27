@@ -24,6 +24,32 @@ describe("AboutPage architecture", (): void => {
     expect(
       screen.getByRole("heading", { level: 1, name: aboutHero.heading }),
     ).toBeInTheDocument();
+    expect(screen.getByText(aboutHero.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: aboutHero.image.alt }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutStory.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(aboutStory.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: aboutStory.image.alt }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutStandard.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(aboutStandard.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutProcess.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(aboutProcess.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: aboutTeam.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(aboutTeam.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: aboutTeam.image.alt }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
@@ -37,7 +63,9 @@ describe("AboutPage architecture", (): void => {
 
     const headings = screen
       .getAllByRole("heading", { level: 2 })
-      .map((heading) => heading.textContent);
+      .map(
+        (heading) => heading.getAttribute("aria-label") ?? heading.textContent,
+      );
 
     expect(headings).toEqual([
       aboutStory.heading,
@@ -79,5 +107,33 @@ describe("AboutPage architecture", (): void => {
         screen.getByRole("heading", { level: 3, name: principle.title }),
       ).toBeInTheDocument();
     }
+  });
+
+  it("renders commitment principles from approved copy without invented claims", (): void => {
+    render(<AboutPage />);
+
+    expect(screen.getByText(aboutCommitment.eyebrow)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: aboutCommitment.heading,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(aboutCommitment.intro)).toBeInTheDocument();
+
+    const commitment = document.querySelector("#commitment");
+
+    expect(commitment).not.toBeNull();
+
+    for (const item of aboutCommitment.items) {
+      expect(
+        screen.getByRole("heading", { level: 3, name: item.title }),
+      ).toBeInTheDocument();
+      expect(commitment).toHaveTextContent(item.number);
+      expect(screen.getByText(item.body)).toBeInTheDocument();
+    }
+
+    expect(screen.queryByText(/years of experience/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/certified/i)).not.toBeInTheDocument();
   });
 });

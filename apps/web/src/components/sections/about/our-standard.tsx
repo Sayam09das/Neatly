@@ -1,82 +1,84 @@
-"use client";
-
-import { type ReactElement, useCallback, useRef } from "react";
+import { cn } from "@neatly/utils";
+import type { ReactElement } from "react";
 import { BandCurve } from "@/components/sections/band-curve";
 import { aboutStandard } from "@/config/about";
-import { createAboutStandardAnimation } from "./our-standard-animation";
-import { useAboutSectionAnimation } from "./use-about-section-animation";
 
 export function OurStandard(): ReactElement {
-  const rootRef = useRef<HTMLElement>(null);
-  const create = useCallback(
-    (root: HTMLElement, options: { compact: boolean }): void => {
-      createAboutStandardAnimation(root, {
-        compact: options.compact,
-        enableScrollTrigger: true,
-      });
-    },
-    [],
-  );
-
-  useAboutSectionAnimation({ create, rootRef });
-
   return (
     <section
       aria-labelledby={aboutStandard.headingId}
-      className="relative overflow-x-hidden bg-secondary text-secondary-foreground"
+      className="about-standard relative overflow-x-hidden bg-secondary text-secondary-foreground"
       id="standard"
-      ref={rootRef}
     >
       <BandCurve />
       <div className="h-16 md:h-24 lg:h-28" />
       <div className="mx-auto max-w-page px-gutter py-section">
-        <div className="max-w-2xl" data-about-standard-header-block>
+        <div>
           <p
-            className="text-label text-accent uppercase"
-            data-about-standard-header
+            className="about-standard-eyebrow text-label text-accent uppercase"
+            data-about-standard-eyebrow
           >
             {aboutStandard.eyebrow}
           </p>
           <h2
-            className="mt-4 text-display tracking-tight"
-            data-about-standard-header
+            aria-label={aboutStandard.heading}
+            className="about-standard-heading mt-4 text-display tracking-tight"
+            data-about-standard-heading
             id={aboutStandard.headingId}
           >
-            {aboutStandard.heading}
+            {aboutStandard.headingLines.map((line, index) => {
+              const isAccent = index === aboutStandard.headingLines.length - 1;
+
+              return (
+                <span
+                  aria-hidden="true"
+                  className={cn("block", isAccent && "text-accent")}
+                  key={line}
+                >
+                  {line}
+                </span>
+              );
+            })}
           </h2>
           <p
-            className="mt-6 max-w-xl text-body text-secondary-foreground/80"
-            data-about-standard-header
+            className="about-standard-description mt-6 max-w-xl text-body text-secondary-foreground/80"
+            data-about-standard-description
           >
             {aboutStandard.intro}
           </p>
         </div>
-        <ol className="mt-16 space-y-10 md:space-y-12">
+        <ol className="mt-16 border-b border-secondary-foreground/12 md:mt-20">
           {aboutStandard.principles.map((principle) => (
-            <li data-about-standard-item key={principle.number}>
-              <p
-                className="text-label text-accent uppercase"
-                data-about-standard-number
-              >
-                {principle.number}
-              </p>
+            <li
+              className="about-standard-item group"
+              data-about-standard-item
+              key={principle.number}
+            >
               <div
                 aria-hidden="true"
-                className="mt-4 h-px w-16 origin-left bg-accent/70"
-                data-about-standard-rule
+                className="about-standard-divider h-px bg-secondary-foreground/12 motion-safe:transition-colors motion-safe:duration-normal motion-safe:ease-standard group-hover:bg-secondary-foreground/25"
+                data-about-standard-divider
               />
-              <h3
-                className="mt-4 text-h2 uppercase tracking-tight"
-                data-about-standard-title
-              >
-                {principle.title}
-              </h3>
-              <p
-                className="mt-3 max-w-2xl text-body text-secondary-foreground/80"
-                data-about-standard-body
-              >
-                {principle.body}
-              </p>
+              <div className="py-8 md:grid md:grid-cols-12 md:items-baseline md:gap-x-6 md:py-10 lg:gap-x-12 lg:py-12">
+                <p
+                  className="about-standard-number font-mono text-label text-accent uppercase md:col-span-2"
+                  data-about-standard-number
+                >
+                  {principle.number}
+                </p>
+                <h3
+                  className="about-standard-title mt-4 text-h2 tracking-tight motion-safe:transition-colors motion-safe:duration-normal motion-safe:ease-standard group-hover:text-accent md:col-span-4 md:col-start-3 md:mt-0 lg:col-span-5"
+                  data-about-standard-title
+                >
+                  {principle.title}
+                </h3>
+                <p
+                  className="about-standard-copy mt-3 max-w-xl text-body text-secondary-foreground/80 md:col-span-6 md:col-start-7 md:mt-0 md:max-w-none lg:col-span-5 lg:col-start-8"
+                  data-about-standard-copy
+                >
+                  {principle.body}
+                </p>
+              </div>
             </li>
           ))}
         </ol>

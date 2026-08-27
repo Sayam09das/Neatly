@@ -8,7 +8,7 @@ import { MobileNav } from "@/components/layout/navbar/mobile-nav";
 import { useActivePathname } from "@/components/layout/navbar/use-active-pathname";
 
 const NAVBAR_ELEVATION_SCROLL_PX = 20;
-const CINEMATIC_NAV_PATHS = new Set(["/", "/about"]);
+const CINEMATIC_NAV_PATHS = new Set(["/"]);
 
 export function Navbar(): ReactElement {
   const pathname = useActivePathname();
