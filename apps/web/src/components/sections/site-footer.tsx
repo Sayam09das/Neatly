@@ -1,9 +1,21 @@
+import { cn } from "@neatly/utils";
 import type { ReactElement } from "react";
 import { FooterScene } from "@/components/sections/footer-scene";
 
-export function SiteFooter(): ReactElement {
+interface SiteFooterProps {
+  surface?: "photo" | "solid";
+}
+
+export function SiteFooter({
+  surface = "solid",
+}: SiteFooterProps): ReactElement {
   return (
-    <footer className="border-t border-border bg-background">
+    <footer
+      className={cn(
+        "text-secondary-foreground",
+        surface === "solid" ? "bg-secondary" : "bg-transparent",
+      )}
+    >
       <FooterScene />
     </footer>
   );

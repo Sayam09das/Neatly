@@ -8,9 +8,13 @@ import { formatTestimonialIndex } from "./testimonial-index";
 interface TestimonialNavigationProps {
   activeIndex: number;
   count: number;
+  getSelectLabel?: (label: string, paddedCount: string) => string;
+  nextLabel?: string;
   onNext: () => void;
   onPrevious: () => void;
   onSelect: (index: number) => void;
+  previousLabel?: string;
+  regionLabel?: string;
 }
 
 function NavArrow({
@@ -36,27 +40,35 @@ function NavArrow({
 export function TestimonialNavigation({
   activeIndex,
   count,
+  getSelectLabel,
+  nextLabel = "Next testimonial",
   onNext,
   onPrevious,
   onSelect,
+  previousLabel = "Previous testimonial",
+  regionLabel = "Customer stories",
 }: TestimonialNavigationProps): ReactElement {
   const indexes = Array.from({ length: count }, (_, index) => index);
+  const paddedCount = String(count).padStart(2, "0");
 
   return (
     <nav
-      aria-label="Customer stories"
+      aria-label={regionLabel}
       className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between"
     >
       <ol className="flex min-w-0 flex-1 items-center gap-3">
         {indexes.map((index) => {
           const isActive = index === activeIndex;
           const label = formatTestimonialIndex(index);
+          const selectLabel =
+            getSelectLabel?.(label, paddedCount) ??
+            `Show story ${label} of ${paddedCount}`;
 
           return (
             <li className="flex min-w-0 flex-1 items-center gap-3" key={label}>
               <button
                 aria-current={isActive ? "true" : undefined}
-                aria-label={`Show story ${label} of ${String(count).padStart(2, "0")}`}
+                aria-label={selectLabel}
                 className={cn(
                   "text-label uppercase transition-colors duration-normal ease-standard",
                   "min-h-touch min-w-touch rounded-sm",
@@ -84,7 +96,7 @@ export function TestimonialNavigation({
       </ol>
       <div className="flex items-center gap-3">
         <Button
-          aria-label="Previous testimonial"
+          aria-label={previousLabel}
           onClick={onPrevious}
           type="button"
           variant="outline"
@@ -93,7 +105,7 @@ export function TestimonialNavigation({
           Previous
         </Button>
         <Button
-          aria-label="Next testimonial"
+          aria-label={nextLabel}
           onClick={onNext}
           type="button"
           variant="outline"

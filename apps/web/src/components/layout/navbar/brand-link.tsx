@@ -33,7 +33,7 @@ export const BrandLink = forwardRef<HTMLAnchorElement, BrandLinkProps>(
   },
 );
 
-function BrandMark(): ReactElement {
+export function BrandMark(): ReactElement {
   return (
     <svg
       aria-hidden="true"

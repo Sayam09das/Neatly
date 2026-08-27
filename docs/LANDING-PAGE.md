@@ -9,7 +9,7 @@ src/app/page.tsx
     ↓
 LandingPage
     ↓
-Navbar / main sections / footer
+Navbar / main sections / ClosingBand (newsletter + footer)
 ```
 
 `LandingPage` stays a Server Component. Navbar and Hero open client boundaries only at interactive leaves (Sheet, scroll elevation, Hero motion, quote form).
@@ -30,8 +30,8 @@ The product requirements require these landmarks, in order:
 10. Testimonials
 11. Final CTA
 12. Blog highlights
-13. Newsletter
-14. Footer (`SiteFooter`)
+13. Newsletter (shares `ClosingBand` photograph with the footer)
+14. Footer (`SiteFooter`, same photograph as Newsletter)
 
 No extra SaaS bands (logos, pricing, team photos, 3D product shots).
 
@@ -101,12 +101,13 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Featured work
 - **Purpose:** Visual proof of the kinds of spaces Neatly is built for.
-- **Content:** Eyebrow, `h2`, intro, four brand-photography tiles (residential, deep, commercial, living spaces) plus the CMS empty notice. Not case studies.
+- **Content:** Eyebrow, `h2`, intro, six brand-photography tiles (residential, deep, commercial, living spaces, bedrooms, after a visit) plus the CMS empty notice. Not case studies.
 - **CTA:** View our work.
 - **Hierarchy:** `h2`, figcaptions, empty copy.
-- **Responsive:** 1 → 2 → 4 columns (`md`, `lg`) with a slight staggered offset from `lg`.
-- **Motion intent:** GSAP section reveal. Framer image scale on hover. Reduced motion skips both.
-- **A11y:** Meaningful alt. Decorative marquee below is `aria-hidden`.
+- **Responsive:** Motion card track (peek 1 → 2 → ~2.4). Horizontal swipe on the track; Lenis stays the global scroller (`data-lenis-prevent`). Previous/Next for keyboard and pointer.
+- **Media:** Existing campaign stills at `images/Services/`, `images/why_use/why_use_03.jpeg`, `images/trust/01_standard.jpeg`, and `images/how_it_works/03_result.jpeg`. Descriptive alt. No stock. No invented case studies.
+- **Motion intent:** GSAP ScrollTrigger story (header → rule `scaleX` → staggered tiles). Clip-path + scale image reveal; subtle parallax from `md`. Motion owns card hover/tap and a slight inactive-card scale on the track. Horizontal swipe uses native snap on the track with `data-lenis-prevent` so Lenis stays the page scroller. Previous/Next move the track. Reduced motion skips GSAP, hover transforms, and smooth scroll. No pinning. No Swiper—Lenis + GSAP + Motion per ADR-05.
+- **A11y:** Meaningful alt. Decorative rule and marquee below are `aria-hidden`.
 
 ### How it works
 - **Purpose:** Remove process ambiguity.
@@ -139,13 +140,14 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Testimonials
 - **Purpose:** Peer proof after rational trust and statistics—without invented names, stars, or quotes.
-- **Content:** Eyebrow, editorial `h2`, supporting copy. Featured story layout (image slot + quote) is content-ready. Production currently renders the empty/content-ready state because no featured CMS reviews exist. Reserved 01–03 indexes mark future stories. No fabricated customers.
+- **Content:** Eyebrow, editorial `h2`, supporting copy. Featured story layout (photograph + quote) is content-ready. Production currently renders the empty/content-ready quote because no featured CMS reviews exist. Clickable 01–03 indexes plus previous/next switch reserved brand photographs—not fabricated customers. Live previous/next for reviews appears only when two or more published reviews exist.
 - **CTA:** None. Final CTA follows.
 - **Hierarchy:** `h2`. Live reviews use `blockquote` + `cite`, not extra headings.
 - **Responsive:** Copy, then image, then quote on small screens. Image left / quote right from `lg` (~7/5). Stack rather than compress on tablet.
-- **Media:** Customer photograph only when a published review includes one. Empty state uses a reserved slot, not a fake portrait. Next/Image when an asset exists.
-- **Motion intent:** None in this step. Navigation (previous / next / index) waits until two or more published reviews exist.
-- **A11y:** Section `aria-labelledby="testimonials-heading"`. Meaningful alt when an image exists. Previous/Next have accessible names. Empty photograph slot is announced to screen readers.
+- **Media:** Reserved brand stills at `apps/web/public/images/testimonials/01_slot.jpeg`–`03_slot.jpeg` until a published review includes a photograph. Descriptive alt. Not fake customer portraits. Next/Image. No stock. No Hero frames.
+- **Motion intent:** GSAP section reveal on the heading and gallery. Motion fade-and-slide between the three reserved stills, with autoplay (~3.5s). Autoplay pauses on control hover/focus, not on the photograph (so looking at the image does not stop the slider). Horizontal swipe on the figure changes slides; Lenis stays the global scroller (`data-lenis-prevent` on the figure). Reduced motion swaps instantly and skips autoplay. Live review previous/next remains when two or more published reviews exist. No pinning. No Swiper—Motion owns this carousel per ADR-05.
+- **A11y:** Section `aria-labelledby="testimonials-heading"`. Only the active reserved photograph keeps a meaningful alt; inactive frames are `aria-hidden`. Photograph previous/next/index have accessible names. The reserved media label is announced to screen readers.
+- **A11y:** Section `aria-labelledby="testimonials-heading"`. Only the active reserved photograph keeps a meaningful alt; inactive frames are `aria-hidden`. Photograph previous/next/index have accessible names. The reserved media label is announced to screen readers.
 
 ### Final CTA
 - **Purpose:** Convert remaining visitors.
@@ -168,22 +170,23 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Newsletter
 - **Purpose:** Optional email capture. Not a quote substitute.
-- **Content:** Dark photographic band, nested email field with Subscribe, consent copy, explicit unavailable message. No submit in this step.
+- **Content:** Nested email field with Subscribe, consent copy, explicit unavailable message. No submit in this step.
 - **CTA:** Subscribe (disabled).
 - **Hierarchy:** `h2` with accent on “notes”, copy, labeled input.
 - **Responsive:** Stacked field + button; nested row from `sm`.
-- **Media:** `apps/web/public/images/newsletter/01_notes.jpeg`. Decorative `alt=""`. Overlay keeps type readable.
-- **Motion intent:** GSAP ScrollTrigger (copy + form, image scale settle). Subtle background parallax from `md`. GSAP heading underline stroke. Form stays disabled—no Motion hover that implies it submits. Reduced motion skips choreography. No pinning. No second Lenis instance.
+- **Media:** One decorative still, `apps/web/public/images/newsletter/01_notes.jpeg`, on `ClosingBand` — the same photograph continues under the footer. Do not duplicate the JPEG. Overlay `bg-secondary/80` keeps type readable. `BandCurve` is top-only so the photo is not cut before the footer.
+- **Motion intent:** GSAP ScrollTrigger on the form copy. Image scale settle and subtle parallax from `md` belong to `ClosingBand` so they cover newsletter + footer as one surface. Form stays disabled—no Motion hover that implies it submits. Reduced motion skips choreography. No pinning. No second Lenis instance.
 - **A11y:** `label htmlFor`, consent and unavailable `aria-describedby`, no posting until the API exists.
 
 ### Site footer
-- **Purpose:** Contact, explore, services, legal.
-- **Content:** Brand + existing service promise, Explore from primary nav, Services from published landing categories, Get in touch from placeholder contact. Privacy/terms in the bottom bar. No invented social URLs.
-- **CTA:** None (links only).
-- **Hierarchy:** `h2` brand, `h3` Explore / Services / Get in touch. Legal heading is visually hidden for the bottom links.
-- **Responsive:** 1 column, 2 from `md`, 4 from `lg`.
-- **Motion intent:** GSAP section reveal on columns. CSS hover/focus on links. Reduced motion skips GSAP.
-- **A11y:** `<footer>`, labeled navs. Render a `tel:` control only when `getPublishedPhone()` returns a real number. Replace placeholders before launch.
+- **Purpose:** Contact, explore, services, legal—the last utility surface after the newsletter.
+- **Content:** Brand mark + promise, Explore from primary nav, Services from published landing categories, Get in touch as labeled email / phone / hours / address. Quote text link. Social stays pending until real profile URLs exist in site settings. Privacy/terms in the bottom bar. No invented social URLs. Phone is not a `tel:` link until `getPublishedPhone()` returns a real number.
+- **CTA:** Text link to Request a free quote. Not a second banner.
+- **Hierarchy:** `h2` brand (visually the logo lockup), `h3` Explore / Services / Get in touch. Legal heading is visually hidden for the bottom links.
+- **Responsive:** Brand stack, then 1 → 2 → 3 utility columns (`sm`, `lg`). Bottom bar stacks, then splits from `sm`.
+- **Media:** Transparent over `ClosingBand`. Same `01_notes.jpeg` as Email notes — not a second image and not a solid `bg-secondary` slab.
+- **Motion intent:** GSAP ScrollTrigger story (brand → rule `scaleX` → staggered columns → legal bar). CSS hover color + slight translate on links. Reduced motion skips GSAP. Lenis remains the global scroller. No pinning. No Swiper. No invented social icons.
+- **A11y:** `<footer>` landmark (inside `<main>` so one photograph can span both sections). Labeled navs. Render a `tel:` control only when `getPublishedPhone()` returns a real number. Replace placeholders before launch.
 
 ## Layout and spacing
 
@@ -196,9 +199,9 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 | Slot | Role | Strategy |
 | :--- | :--- | :--- |
 | Hero media | hero / content | `next/image` with `priority`, explicit size, descriptive alt. No stock, no base64. |
-| Featured work | product visualization | Lazy `next/image` before/after pair. |
+| Featured work | product visualization | Lazy `next/image` stills in a Motion card track. CMS before/afters later. |
 | Blog covers | content | Lazy `next/image`. Journal empty state uses dedicated stills at `images/journal/`. |
-| Newsletter band | decorative | Lazy `next/image`, `alt=""`, `aria-hidden` parent. |
+| Closing band (newsletter + footer) | decorative | One lazy `next/image` (`01_notes.jpeg`), `alt=""`, `aria-hidden` parent spanning both sections. |
 | Trust/why icons | decorative | Inline SVG later, `aria-hidden`. |
 | Video | — | Not in the MVP homepage. If added later: muted, no autoplay when reduced motion, poster image, mobile still fallback. |
 

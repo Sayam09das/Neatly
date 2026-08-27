@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Navbar } from "@/components/layout/navbar";
+import { ClosingBand } from "@/components/sections/closing-band";
 import { FinalCta } from "@/components/sections/final-cta";
 import { Hero } from "@/components/sections/hero";
 import { BlogHighlights } from "@/components/sections/journal";
@@ -40,9 +41,11 @@ export function LandingPage(): ReactElement {
         <Testimonials />
         <FinalCta />
         <BlogHighlights />
-        <Newsletter />
+        <ClosingBand>
+          <Newsletter />
+          <SiteFooter surface="photo" />
+        </ClosingBand>
       </main>
-      <SiteFooter />
     </>
   );
 }

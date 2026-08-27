@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { HowItWorks } from "@/components/sections/process";
 import { TrustIndicators } from "@/components/sections/trust";
 import { FeaturedWork } from "@/components/sections/work";
@@ -33,7 +33,7 @@ describe("TrustIndicators", (): void => {
 
 describe("FeaturedWork", (): void => {
   it("renders brand photography tiles and the CMS empty notice", (): void => {
-    render(<FeaturedWork />);
+    const { container } = render(<FeaturedWork />);
 
     expect(
       screen.getByRole("heading", {
@@ -49,6 +49,104 @@ describe("FeaturedWork", (): void => {
       expect(screen.getByRole("img", { name: tile.alt })).toBeInTheDocument();
       expect(screen.getByText(tile.label)).toBeInTheDocument();
     }
+
+    expect(container.querySelectorAll("[data-work-tile]")).toHaveLength(
+      landingFeaturedWork.tiles.length,
+    );
+    expect(
+      screen.getByRole("region", { name: "Featured work photographs" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Next work photograph" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Previous work photograph" }),
+    ).toBeDisabled();
+  });
+
+  it("scrolls the photograph track when Next is pressed", (): void => {
+    const { container } = render(<FeaturedWork />);
+    const gallery = container.querySelector("[data-work-gallery]");
+
+    expect(gallery).toBeInstanceOf(HTMLElement);
+
+    if (!(gallery instanceof HTMLElement)) {
+      return;
+    }
+
+    Object.defineProperty(gallery, "clientWidth", {
+      configurable: true,
+      value: 800,
+    });
+    Object.defineProperty(gallery, "scrollWidth", {
+      configurable: true,
+      value: 2400,
+    });
+    Object.defineProperty(gallery, "scrollLeft", {
+      configurable: true,
+      value: 0,
+      writable: true,
+    });
+
+    const firstItem = gallery.querySelector("li");
+
+    if (firstItem instanceof HTMLElement) {
+      firstItem.getBoundingClientRect = (): DOMRect =>
+        ({
+          bottom: 200,
+          height: 200,
+          left: 0,
+          right: 400,
+          toJSON: (): string => "",
+          top: 0,
+          width: 400,
+          x: 0,
+          y: 0,
+        }) as DOMRect;
+    }
+
+    const scrollTo = vi.fn();
+    gallery.scrollTo = scrollTo as typeof gallery.scrollTo;
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Next work photograph" }),
+    );
+
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ left: expect.any(Number) }),
+    );
+    const options = scrollTo.mock.calls[0]?.[0] as { left: number } | undefined;
+    expect(options?.left).toBeGreaterThan(0);
+  });
+
+  it("still renders the gallery when reduced motion is preferred", (): void => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: (query: string): MediaQueryList =>
+        ({
+          matches: query.includes("prefers-reduced-motion: reduce"),
+          media: query,
+          onchange: null,
+          addEventListener: (): void => undefined,
+          removeEventListener: (): void => undefined,
+          addListener: (): void => undefined,
+          removeListener: (): void => undefined,
+          dispatchEvent: (): boolean => false,
+        }) as MediaQueryList,
+    });
+
+    render(<FeaturedWork />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: landingFeaturedWork.heading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: landingFeaturedWork.tiles[0]?.alt }),
+    ).toBeInTheDocument();
   });
 });
 

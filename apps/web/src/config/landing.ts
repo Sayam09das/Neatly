@@ -335,6 +335,22 @@ export const landingFeaturedWork = {
       src: "/images/why_use/why_use_03.jpeg",
       width: 2752,
     },
+    {
+      alt: "A Neatly cleaner smoothing a linen pillow on a made bed in a sunlit bedroom.",
+      height: 1536,
+      label: "Bedrooms",
+      objectPosition: "46% 38%",
+      src: "/images/trust/01_standard.jpeg",
+      width: 1024,
+    },
+    {
+      alt: "A woman relaxing on a beige sofa in a freshly cleaned sunlit living room with a tidy kitchen beyond.",
+      height: 864,
+      label: "After a visit",
+      objectPosition: "55% 42%",
+      src: "/images/how_it_works/03_result.jpeg",
+      width: 1536,
+    },
   ],
 };
 
@@ -472,15 +488,37 @@ export interface LandingTestimonial {
 export const landingTestimonials = {
   emptyAttribution: "Featured reviews pending",
   emptyMediaLabel:
-    "A customer photograph will appear here when a review is published.",
+    "Reserved brand photographs. A customer photograph will appear here when a review is published.",
   emptyMessage: "Real experiences from Neatly customers will appear here.",
+  emptySlots: [
+    {
+      alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows. Reserved story photograph 01.",
+      height: 1536,
+      objectPosition: "50% 48%",
+      src: "/images/testimonials/01_slot.jpeg",
+      width: 2752,
+    },
+    {
+      alt: "Stacked cream and sage linen towels on a pale oak shelf in a bright apartment. Reserved story photograph 02.",
+      height: 1024,
+      objectPosition: "50% 42%",
+      src: "/images/testimonials/02_slot.jpeg",
+      width: 1024,
+    },
+    {
+      alt: "A freshly wiped pale stone bathroom vanity with a small plant and a white ceramic cup. Reserved story photograph 03.",
+      height: 1024,
+      objectPosition: "50% 50%",
+      src: "/images/testimonials/03_slot.jpeg",
+      width: 1024,
+    },
+  ],
   eyebrow: "Customer stories",
   heading: "Experiences from Neatly customers.",
   headingId: "testimonials-heading",
   intro:
     "Featured reviews appear here after they are published in the testimonials CMS. Names, ratings, and quotes will never be invented.",
   items: [] satisfies Array<LandingTestimonial>,
-  reservedCount: 3,
 };
 
 export const landingFinalCta = {
@@ -564,22 +602,29 @@ export const landingMarquee = {
 };
 
 export const landingFooter = {
+  addressLabel: "Address",
   contactHeading: "Get in touch",
-  copyright: `© ${APP_NAME}`,
+  copyright: `© 2026 ${APP_NAME}`,
+  emailLabel: "Email",
   exploreHeading: "Explore",
   headingId: "footer-heading",
+  hoursLabel: "Hours",
   legalHeading: "Legal",
   legalLinks: [
     { href: "/privacy", label: "Privacy" },
     { href: "/terms", label: "Terms" },
   ],
+  phoneLabel: "Phone",
   placeholderContact: {
     address: "100 Main Street, Suite 400, New York, NY 10001",
     email: "hello@neatly.com",
     hours: "Mon – Sat: 8:00 AM – 6:00 PM",
     phone: "[Development Placeholder: Insert Real Business Phone]",
   },
+  quoteHint: "Ready for a visit?",
   servicesHeading: "Services",
+  socialPending:
+    "Social profiles appear here after they are published in site settings.",
   tagline:
     "Professional residential and commercial cleaning with a clear scope and a satisfaction guarantee.",
 };
@@ -599,14 +644,14 @@ export const landingMotionIntent = {
   featuredWork: "scroll-driven",
   marquee: "scroll-driven",
   finalCta: "micro",
-  footer: "entrance",
+  footer: "scroll-driven",
   header: "micro",
   hero: "scroll-driven",
   howItWorks: "scroll-driven",
   newsletter: "scroll-driven",
   services: "scroll-driven",
   statistics: "scroll-driven",
-  testimonials: "none",
+  testimonials: "micro",
   trustIndicators: "scroll-driven",
   trustProof: "scroll-driven",
   whyNeatly: "entrance",
@@ -624,7 +669,7 @@ export const landingClientBoundary = {
   newsletter: "client",
   services: "client",
   statistics: "client",
-  testimonials: "server",
+  testimonials: "client",
   trustIndicators: "client",
   trustProof: "client",
   whyNeatly: "client",

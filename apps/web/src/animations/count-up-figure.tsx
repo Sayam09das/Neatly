@@ -64,6 +64,23 @@ export function CountUpFigure({
       });
     };
 
+    const playIfVisible = (): void => {
+      const node = rootRef.current;
+
+      if (node === null) {
+        return;
+      }
+
+      const rect = node.getBoundingClientRect();
+      const height = Math.max(rect.height, 1);
+      const visible =
+        Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+
+      if (visible / height >= COUNT_UP_THRESHOLD) {
+        play();
+      }
+    };
+
     const observer = new IntersectionObserver(
       (entries): void => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -71,14 +88,20 @@ export function CountUpFigure({
           observer.disconnect();
         }
       },
-      { threshold: COUNT_UP_THRESHOLD },
+      { threshold: 0 },
     );
 
     observer.observe(root);
+    playIfVisible();
+
+    window.addEventListener("scroll", playIfVisible, { passive: true });
+    const retry = window.setTimeout(playIfVisible, 100);
 
     return (): void => {
       observer.disconnect();
       playback?.pause();
+      window.removeEventListener("scroll", playIfVisible);
+      window.clearTimeout(retry);
     };
   }, [pendingValue, prefersReducedMotion, suffix, value]);
 

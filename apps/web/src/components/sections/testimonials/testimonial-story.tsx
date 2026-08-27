@@ -10,26 +10,30 @@ interface TestimonialStoryProps {
 export function TestimonialStory({
   testimonial,
 }: TestimonialStoryProps): ReactElement {
-  const image = testimonial?.image;
+  const image = testimonial?.image ?? landingTestimonials.emptySlots[0];
+  const isReservedPhoto = testimonial?.image === undefined;
+
+  if (image === undefined) {
+    throw new Error("Testimonials empty slots are missing.");
+  }
 
   return (
     <article className="grid items-center gap-10 lg:grid-cols-12 lg:gap-16">
       <div className="w-full lg:col-span-7">
-        <figure className="relative m-0 aspect-[3/4] w-full overflow-hidden rounded-xl bg-background">
-          {image === undefined ? (
-            <span className="sr-only">
+        <figure className="relative m-0 aspect-[3/4] w-full overflow-hidden rounded-xl bg-muted">
+          <Image
+            alt={image.alt}
+            className="object-cover"
+            fill
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            src={image.src}
+            style={{ objectPosition: image.objectPosition }}
+          />
+          {isReservedPhoto ? (
+            <figcaption className="sr-only">
               {landingTestimonials.emptyMediaLabel}
-            </span>
-          ) : (
-            <Image
-              alt={image.alt}
-              className="object-cover"
-              fill
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              src={image.src}
-              style={{ objectPosition: image.objectPosition }}
-            />
-          )}
+            </figcaption>
+          ) : null}
         </figure>
       </div>
       <div className="lg:col-span-5">
