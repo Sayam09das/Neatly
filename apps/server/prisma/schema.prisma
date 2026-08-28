@@ -21,6 +21,89 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CleanerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ServiceCategory {
+  RESIDENTIAL
+  DEEP_CLEAN
+  MOVE_IN_OUT
+  COMMERCIAL
+}
+
+enum QuoteServiceType {
+  RESIDENTIAL
+  DEEP_CLEAN
+  MOVE_IN_OUT
+  COMMERCIAL
+  CUSTOM
+}
+
+enum QuotePropertyType {
+  HOUSE
+  APARTMENT
+  CONDO
+  OFFICE
+  COMMERCIAL_SPACE
+}
+
+enum QuoteFrequency {
+  ONE_TIME
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+}
+
+enum QuoteStatus {
+  NEW
+  REVIEWING
+  CONTACTED
+  QUOTED
+  CONVERTED
+  DECLINED
+  CLOSED
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  RESPONDED
+  ARCHIVED
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum NewsletterStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+}
+
+enum PortfolioImageType {
+  BEFORE
+  AFTER
+  GALLERY
+}
+
 model User {
   id           String     @id @default(cuid())
   name         String
@@ -34,7 +117,13 @@ model User {
 
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  customer            Customer?
+  cleaner             Cleaner?
+  blogPosts           BlogPost[]
+  notifications       Notification[]
 
+  @@index([role])
+  @@index([status])
   @@map("users")
 }
 
@@ -63,4 +152,307 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+model Customer {
+  id            String         @id @default(cuid())
+  userId        String?        @unique
+  name          String
+  email         String         @unique
+  phone         String?
+  address       String?
+  status        CustomerStatus @default(ACTIVE)
+  avatarMediaId String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  avatarMedia MediaAsset? @relation("CustomerAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
+  bookings    Booking[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("customers")
+}
+
+model Cleaner {
+  id        String        @id @default(cuid())
+  userId    String?       @unique
+  name      String
+  email     String?       @unique
+  phone     String?
+  status    CleanerStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bookings Booking[]
+
+  @@index([status])
+  @@map("cleaners")
+}
+
+model MediaAsset {
+  id         String   @id @default(cuid())
+  storageKey String   @unique
+  url        String
+  filename   String
+  mimeType   String
+  size       Int
+  width      Int?
+  height     Int?
+  altText    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  serviceCovers      Service[]        @relation("ServiceCover")
+  blogCovers         BlogPost[]       @relation("BlogCover")
+  testimonialAvatars Testimonial[]    @relation("TestimonialAvatar")
+  customerAvatars    Customer[]       @relation("CustomerAvatar")
+  portfolioImages    PortfolioImage[]
+
+  @@map("media_assets")
+}
+
+model Service {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  shortDescription String
+  fullDescription  String
+  benefits         String[] @default([])
+  includedTasks    Json     @default("[]")
+  excludedTasks    String[] @default([])
+  faqs             Json?
+  coverMediaId     String?
+  seoTitle         String?
+  seoDescription   String?
+  isActive         Boolean  @default(true)
+  isFeatured       Boolean  @default(false)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  coverMedia    MediaAsset?    @relation("ServiceCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  quoteRequests QuoteRequest[]
+  bookings      Booking[]
+
+  @@index([isActive, sortOrder])
+  @@map("services")
+}
+
+model QuoteRequest {
+  id              String            @id @default(cuid())
+  serviceType     QuoteServiceType
+  propertyType    QuotePropertyType
+  approximateSize String
+  bedrooms        Int?
+  bathrooms       Decimal?          @db.Decimal(4, 1)
+  frequency       QuoteFrequency
+  preferredDate   DateTime
+  preferredTime   String
+  fullName        String
+  email           String
+  phone           String
+  serviceAddress  String
+  additionalNotes String?
+  serviceId       String?
+  status          QuoteStatus       @default(NEW)
+  adminNotes      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  booking Booking?
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([serviceId])
+  @@index([email])
+  @@map("quote_requests")
+}
+
+model ContactMessage {
+  id         String        @id @default(cuid())
+  fullName   String
+  email      String
+  phone      String?
+  subject    String
+  message    String
+  status     ContactStatus @default(NEW)
+  adminNotes String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@map("contact_messages")
+}
+
+model PortfolioProject {
+  id          String          @id @default(cuid())
+  title       String
+  slug        String          @unique
+  category    ServiceCategory
+  description String
+  location    String?
+  isFeatured  Boolean         @default(false)
+  isPublished Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  images PortfolioImage[]
+
+  @@index([isPublished, isFeatured, sortOrder])
+  @@map("portfolio_projects")
+}
+
+model PortfolioImage {
+  id                 String             @id @default(cuid())
+  portfolioProjectId String
+  mediaAssetId       String
+  imageType          PortfolioImageType
+  altText            String
+  sortOrder          Int                @default(0)
+  createdAt          DateTime           @default(now())
+
+  portfolioProject PortfolioProject @relation(fields: [portfolioProjectId], references: [id], onDelete: Cascade)
+  mediaAsset       MediaAsset       @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@index([portfolioProjectId, sortOrder])
+  @@map("portfolio_images")
+}
+
+model Testimonial {
+  id              String           @id @default(cuid())
+  customerName    String
+  customerRole    String?
+  rating          Int              @default(5)
+  content         String
+  avatarMediaId   String?
+  serviceCategory ServiceCategory?
+  isFeatured      Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  avatarMedia MediaAsset? @relation("TestimonialAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
+
+  @@index([isActive, isFeatured, sortOrder])
+  @@index([serviceCategory])
+  @@index([createdAt])
+  @@map("testimonials")
+}
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id             String     @id @default(cuid())
+  title          String
+  slug           String     @unique
+  excerpt        String
+  content        String
+  coverMediaId   String?
+  authorId       String
+  categoryId     String?
+  tags           String[]   @default([])
+  status         BlogStatus @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  coverMedia MediaAsset?   @relation("BlogCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  author     User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  category   BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([categoryId])
+  @@map("blog_posts")
+}
+
+model NewsletterSubscriber {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  status         NewsletterStatus @default(SUBSCRIBED)
+  subscribedAt   DateTime         @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([status])
+  @@map("newsletter_subscribers")
+}
+
+model SiteSettings {
+  id                Int      @id @default(1)
+  businessName      String   @default("Neatly")
+  tagline           String   @default("Clean, minimal, high-trust")
+  phone             String
+  email             String
+  address           String
+  workingHours      Json
+  serviceAreas      String[] @default([])
+  socialLinks       Json?
+  notificationEmail String
+  defaultSeoTitle   String
+  defaultSeoDesc    String
+  updatedAt         DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  customerId     String?
+  cleanerId      String?
+  serviceId      String?
+  quoteRequestId String?       @unique
+  scheduledAt    DateTime?
+  serviceAddress String?
+  notes          String?
+  status         BookingStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  customer     Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  cleaner      Cleaner?      @relation(fields: [cleanerId], references: [id], onDelete: Restrict)
+  service      Service?      @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  quoteRequest QuoteRequest? @relation(fields: [quoteRequestId], references: [id], onDelete: Restrict)
+
+  @@index([status, scheduledAt])
+  @@index([customerId])
+  @@index([cleanerId])
+  @@index([serviceId])
+  @@index([scheduledAt])
+  @@map("bookings")
+}
+
+model Notification {
+  id           String    @id @default(cuid())
+  recipientId  String
+  title        String
+  message      String
+  isRead       Boolean   @default(false)
+  relatedHref  String?
+  relatedLabel String?
+  createdAt    DateTime  @default(now())
+  readAt       DateTime?
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isRead, createdAt])
+  @@map("notifications")
 }
