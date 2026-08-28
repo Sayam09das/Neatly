@@ -21,3 +21,14 @@ export function requireRole(user: AuthUser, role: AuthUserRole): AuthUser {
 
   throw new AuthError("FORBIDDEN", AUTH_ERROR_MESSAGES.FORBIDDEN);
 }
+
+export function requireOwnership(
+  user: AuthUser,
+  resourceOwnerId: string,
+): AuthUser {
+  if (user.id === resourceOwnerId) {
+    return user;
+  }
+
+  throw new AuthError("FORBIDDEN", AUTH_ERROR_MESSAGES.FORBIDDEN);
+}

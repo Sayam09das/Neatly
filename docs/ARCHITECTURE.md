@@ -299,6 +299,7 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
     "error": {
       "code": "INVALID_INPUT",
       "message": "Validation failed.",
+      "requestId": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
       "details": [
         { "field": "email", "issue": "Invalid email address format" }
       ]
@@ -306,6 +307,8 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
     "timestamp": "2026-08-25T20:12:43.000Z"
   }
   ```
+* **Request ID:** Every API response includes `x-request-id`. UUID-shaped client values are echoed; other values are replaced with a generated ID. Error objects include `requestId` for correlation.
+* **HTTP API process:** `apps/server` separates `app.ts` (middleware, routes, errors; testable without listen) from `server.ts` (port, listen, graceful shutdown). Application routes live under `/api/v1`. Process liveness is `GET /health`. Dependency readiness is `GET /ready`.
 
 ### 11.2 Public API Endpoints
 * `POST /api/quotes` — Submit a new quote request (Rate-limited, honeypot protected).
@@ -432,7 +435,7 @@ Application Exception Occurs
                                     │
                          Next.js BFF origin / CSRF check
                                     │
-                         POST /auth/login on the Neatly HTTP API
+                         POST /api/v1/auth/login on the Neatly HTTP API
                                     │
                      ┌──────────────┴──────────────┐
                      ▼                             ▼
@@ -482,7 +485,7 @@ Browser-facing Next.js routes return the standard `{ success, data, error, times
 | `POST /api/admin/auth/verify-email` | No | `{ token }` | `{ user: { id, email } }` | `INVALID_INPUT`, `TOKEN_INVALID`, `TOKEN_EXPIRED`, `FORBIDDEN` |
 | `POST /api/admin/auth/resend-verification` | No | `{ email }` | `{ message }` | `INVALID_INPUT`, `RATE_LIMITED`, `FORBIDDEN` |
 
-Backend-owned routes on the HTTP API: `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/session`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/verify-email`, `POST /auth/resend-verification`. Login returns `sessionToken` only to the Next.js BFF.
+Backend-owned application routes live under `/api/v1`. Auth: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/session`, `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password`, `POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification`. Login returns `sessionToken` only to the Next.js BFF. Process liveness is `GET /health`. Dependency readiness is `GET /ready`.
 
 `user` never includes `passwordHash` or tokens. `FORBIDDEN` is returned when the CSRF origin check fails.
 
@@ -746,6 +749,7 @@ Live Production Site + Automated Smoke Test Verification
 | `SITE_URL` | API Server Only | Public origin used in auth emails | ❌ NO |
 | `SMTP_PASSWORD` | API Server Only | Brevo API key for transactional email | ❌ NO |
 | `NEATLY_API_URL` | Next.js Server Only | Origin of the Neatly HTTP API | ❌ NO |
+| `CORS_ORIGIN` | API Server Only | Explicit browser origin for credentialed CORS | ❌ NO |
 | `STORAGE_API_KEY` | API Server Only | API key for Cloudinary/S3 storage | ❌ NO |
 | `NEXT_PUBLIC_SITE_URL`| Client + Next.js Server | Public canonical URL (e.g., `https://neatly.com`) | ✅ YES |
 

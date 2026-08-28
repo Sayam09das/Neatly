@@ -1,5 +1,8 @@
 export type LogFields = Record<string, string | number | boolean | undefined>;
 
+const SENSITIVE_KEY_PATTERN =
+  /(password|secret|token|cookie|authorization|api[_-]?key|session)/i;
+
 export function logInfo(message: string, fields: LogFields = {}): void {
   writeLog("info", message, fields, process.stdout);
 }
@@ -28,7 +31,7 @@ function sanitize(fields: LogFields): LogFields {
   const next: LogFields = {};
 
   for (const [key, value] of Object.entries(fields)) {
-    if (value === undefined) {
+    if (value === undefined || SENSITIVE_KEY_PATTERN.test(key)) {
       continue;
     }
 

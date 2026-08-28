@@ -2,34 +2,34 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadApiEnv } from "../config/env.ts";
 import { requireAdmin } from "../lib/auth/authorization.ts";
 import { AuthError } from "../lib/auth/errors.ts";
-import {
-  getRequestIp,
-  getSessionToken,
-  readJsonBody,
-} from "../lib/auth/http.ts";
+import { getSessionToken } from "../lib/auth/http.ts";
 import { toAppErrorFromAuth } from "../lib/auth/http-error.ts";
 import { getAuthService } from "../lib/auth/runtime.ts";
 import { sendFailure, sendSuccess } from "../lib/http.ts";
+import { readJsonBody } from "../lib/request.ts";
+import type { RequestContext } from "../lib/request-context.ts";
 
-export async function registerHandler(
+export async function registerController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const body = await readJsonBody(req);
     const user = await getAuthService().registerUser(body);
     sendSuccess(res, { user });
   });
 }
 
-export async function loginHandler(
+export async function loginController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const body = await readJsonBody(req);
     const result = await getAuthService().authenticateUser(body, {
-      ip: getRequestIp(req),
+      ip: context.ip,
     });
     requireAdmin(result.user);
     sendSuccess(res, {
@@ -40,21 +40,23 @@ export async function loginHandler(
   });
 }
 
-export async function logoutHandler(
+export async function logoutController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     await getAuthService().logout(getSessionToken(req));
     sendSuccess(res, { signedOut: true });
   });
 }
 
-export async function sessionHandler(
+export async function sessionController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const user = await getAuthService().resolveSession(getSessionToken(req));
 
     if (user === null) {
@@ -67,27 +69,29 @@ export async function sessionHandler(
   });
 }
 
-export async function forgotPasswordHandler(
+export async function forgotPasswordController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const body = await readJsonBody(req);
     const result = await getAuthService().requestPasswordReset(body, {
-      ip: getRequestIp(req),
+      ip: context.ip,
     });
     sendSuccess(res, result);
   });
 }
 
-export async function resetPasswordHandler(
+export async function resetPasswordController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const body = await readJsonBody(req);
     const user = await getAuthService().resetPassword(body, {
-      ip: getRequestIp(req),
+      ip: context.ip,
     });
     sendSuccess(res, {
       user: {
@@ -98,11 +102,12 @@ export async function resetPasswordHandler(
   });
 }
 
-export async function verifyEmailHandler(
+export async function verifyEmailController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const body = await readJsonBody(req);
     const user = await getAuthService().verifyEmail(body);
     sendSuccess(res, {
@@ -114,29 +119,35 @@ export async function verifyEmailHandler(
   });
 }
 
-export async function resendVerificationHandler(
+export async function resendVerificationController(
   req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
 ): Promise<void> {
-  await handleAuth(req, res, async (): Promise<void> => {
+  await handleAuth(res, context, async (): Promise<void> => {
     const body = await readJsonBody(req);
     const result = await getAuthService().requestEmailVerification(body, {
-      ip: getRequestIp(req),
+      ip: context.ip,
     });
     sendSuccess(res, result);
   });
 }
 
 async function handleAuth(
-  _req: IncomingMessage,
   res: ServerResponse,
+  context: RequestContext,
   action: () => Promise<void>,
 ): Promise<void> {
   try {
     await action();
   } catch (error: unknown) {
     if (error instanceof AuthError) {
-      sendFailure(res, toAppErrorFromAuth(error), loadApiEnv().nodeEnv);
+      sendFailure(
+        res,
+        toAppErrorFromAuth(error),
+        loadApiEnv().nodeEnv,
+        context.requestId,
+      );
       return;
     }
 

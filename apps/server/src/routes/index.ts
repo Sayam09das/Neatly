@@ -1,105 +1,56 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { API_PATHS } from "../contracts/v1.ts";
+import { rootController } from "../controllers/root.controller.ts";
 import {
   createMethodNotAllowedError,
-  createNotFoundError,
+  createRouteNotFoundError,
 } from "../lib/errors.ts";
-import { getRequestMethod, getRequestPath } from "../lib/http.ts";
 import {
-  forgotPasswordHandler,
-  loginHandler,
-  logoutHandler,
-  registerHandler,
-  resendVerificationHandler,
-  resetPasswordHandler,
-  sessionHandler,
-  verifyEmailHandler,
-} from "./auth.route.ts";
-import { healthHandler } from "./health.route.ts";
-import { rootHandler } from "./root.route.ts";
+  compileRoutes,
+  type Middleware,
+  matchCompiledRoute,
+  type RouteDefinition,
+  type RouteHandler,
+} from "../lib/router.ts";
+import { healthRoutes } from "./health.routes.ts";
+import { v1Routes } from "./v1/index.ts";
 
-export type RouteHandler = (
-  req: IncomingMessage,
-  res: ServerResponse,
-) => Promise<void> | void;
-
-interface RouteDefinition {
+export interface MatchedRoute {
   handler: RouteHandler;
-  method: string;
-  path: string;
+  middleware: readonly Middleware[];
+  params: Record<string, string>;
 }
 
 const routes: readonly RouteDefinition[] = [
   {
-    handler: rootHandler,
+    handler: rootController,
     method: "GET",
-    path: "/",
+    path: API_PATHS.root,
   },
   {
-    handler: rootHandler,
+    handler: rootController,
     method: "GET",
-    path: "/api",
+    path: API_PATHS.api,
   },
-  {
-    handler: healthHandler,
-    method: "GET",
-    path: "/health",
-  },
-  {
-    handler: registerHandler,
-    method: "POST",
-    path: "/auth/register",
-  },
-  {
-    handler: loginHandler,
-    method: "POST",
-    path: "/auth/login",
-  },
-  {
-    handler: logoutHandler,
-    method: "POST",
-    path: "/auth/logout",
-  },
-  {
-    handler: sessionHandler,
-    method: "GET",
-    path: "/auth/session",
-  },
-  {
-    handler: forgotPasswordHandler,
-    method: "POST",
-    path: "/auth/forgot-password",
-  },
-  {
-    handler: resetPasswordHandler,
-    method: "POST",
-    path: "/auth/reset-password",
-  },
-  {
-    handler: verifyEmailHandler,
-    method: "POST",
-    path: "/auth/verify-email",
-  },
-  {
-    handler: resendVerificationHandler,
-    method: "POST",
-    path: "/auth/resend-verification",
-  },
+  ...healthRoutes,
+  ...v1Routes,
 ];
 
-export function matchRoute(req: IncomingMessage): RouteHandler {
-  const method = getRequestMethod(req);
-  const path = getRequestPath(req);
-  const pathMatches = routes.filter((route) => route.path === path);
+const compiledRoutes = compileRoutes(routes);
 
-  if (pathMatches.length === 0) {
-    throw createNotFoundError();
+export function resolveRoute(method: string, path: string): MatchedRoute {
+  const match = matchCompiledRoute(compiledRoutes, method, path);
+
+  if (match === null) {
+    throw createRouteNotFoundError();
   }
 
-  const match = pathMatches.find((route) => route.method === method);
-
-  if (match === undefined) {
+  if (match === "method") {
     throw createMethodNotAllowedError();
   }
 
-  return match.handler;
+  return {
+    handler: match.route.handler,
+    middleware: match.route.middleware ?? [],
+    params: match.params,
+  };
 }

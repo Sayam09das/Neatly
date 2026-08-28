@@ -38,7 +38,10 @@ export class BackendAuthClient {
   public constructor(private readonly baseUrl: string) {}
 
   public async registerUser(input: unknown): Promise<AuthUser> {
-    const data = await this.post<{ user: unknown }>("/auth/register", input);
+    const data = await this.post<{ user: unknown }>(
+      "/api/v1/auth/register",
+      input,
+    );
     return parseAuthUser(data.user);
   }
 
@@ -50,7 +53,7 @@ export class BackendAuthClient {
       expiresAt: unknown;
       sessionToken: unknown;
       user: unknown;
-    }>("/auth/login", input, { ip: context.ip });
+    }>("/api/v1/auth/login", input, { ip: context.ip });
 
     if (typeof data.sessionToken !== "string" || data.sessionToken === "") {
       throw new AuthError("INTERNAL_ERROR", AUTH_ERROR_MESSAGES.INTERNAL_ERROR);
@@ -67,7 +70,7 @@ export class BackendAuthClient {
     sessionToken: string | undefined,
   ): Promise<AuthUser | null> {
     const data = await this.get<{ user: unknown }>(
-      "/auth/session",
+      "/api/v1/auth/session",
       sessionToken,
     );
 
@@ -80,7 +83,7 @@ export class BackendAuthClient {
 
   public async logout(sessionToken: string | undefined): Promise<void> {
     await this.post<{ signedOut: unknown }>(
-      "/auth/logout",
+      "/api/v1/auth/logout",
       {},
       { sessionToken },
     );
@@ -91,7 +94,7 @@ export class BackendAuthClient {
     context: AuthClientContext,
   ): Promise<{ message: string }> {
     const data = await this.post<{ message: unknown }>(
-      "/auth/forgot-password",
+      "/api/v1/auth/forgot-password",
       input,
       { ip: context.ip },
     );
@@ -108,7 +111,7 @@ export class BackendAuthClient {
     context: AuthClientContext,
   ): Promise<Pick<AuthUser, "email" | "id">> {
     const data = await this.post<{ user: unknown }>(
-      "/auth/reset-password",
+      "/api/v1/auth/reset-password",
       input,
       { ip: context.ip },
     );
@@ -120,7 +123,7 @@ export class BackendAuthClient {
     input: unknown,
   ): Promise<Pick<AuthUser, "email" | "id">> {
     const data = await this.post<{ user: unknown }>(
-      "/auth/verify-email",
+      "/api/v1/auth/verify-email",
       input,
     );
     return parseAuthIdentity(data.user);
@@ -131,7 +134,7 @@ export class BackendAuthClient {
     context: AuthClientContext,
   ): Promise<{ message: string }> {
     const data = await this.post<{ message: unknown }>(
-      "/auth/resend-verification",
+      "/api/v1/auth/resend-verification",
       input,
       { ip: context.ip },
     );

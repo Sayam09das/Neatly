@@ -16,6 +16,7 @@ export interface AuthEnv {
 }
 
 export interface ApiEnv {
+  corsOrigin: string | null;
   host: string;
   nodeEnv: ApiNodeEnv;
   port: number;
@@ -28,6 +29,9 @@ export function loadApiEnv(
   source: Record<string, string | undefined> = process.env,
 ): ApiEnv {
   return {
+    corsOrigin: readOptionalOrigin(
+      source.CORS_ORIGIN ?? source.SITE_URL ?? source.NEXT_PUBLIC_SITE_URL,
+    ),
     host: readHost(source.HOST),
     nodeEnv: readNodeEnv(source.NODE_ENV),
     port: readPort(source.PORT),
@@ -46,6 +50,24 @@ export function loadAuthEnv(
 
 export function isProductionEnv(nodeEnv: ApiNodeEnv): boolean {
   return nodeEnv === "production";
+}
+
+export function assertProductionConfig(
+  source: Record<string, string | undefined> = process.env,
+): void {
+  const env = loadApiEnv(source);
+
+  if (!isProductionEnv(env.nodeEnv)) {
+    return;
+  }
+
+  loadAuthEnv(source);
+
+  const databaseUrl = source.DATABASE_URL?.trim();
+
+  if (databaseUrl === undefined || databaseUrl === "") {
+    throw new Error("DATABASE_URL is required.");
+  }
 }
 
 function readHost(value: string | undefined): string {
@@ -108,6 +130,20 @@ function readSiteUrl(value: string | undefined): string {
     return new URL(trimmed).origin;
   } catch {
     throw new Error("SITE_URL is invalid. Expected a public URL.");
+  }
+}
+
+function readOptionalOrigin(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+
+  if (trimmed === undefined || trimmed === "") {
+    return null;
+  }
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    throw new Error("CORS_ORIGIN is invalid. Expected a public URL.");
   }
 }
 
