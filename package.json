@@ -8,9 +8,13 @@
     "pnpm": ">=11.13.1"
   },
   "scripts": {
-    "build": "pnpm --filter @neatly/web build",
+    "build": "pnpm --filter @neatly/api db:generate && pnpm --filter @neatly/web build",
     "build:api": "pnpm --filter @neatly/api build",
     "check": "pnpm typecheck && pnpm lint",
+    "db:generate": "pnpm --filter @neatly/api db:generate",
+    "db:migrate:deploy": "pnpm --filter @neatly/api db:migrate:deploy",
+    "db:migrate:status": "pnpm --filter @neatly/api db:migrate:status",
+    "db:seed": "pnpm --filter @neatly/api db:seed",
     "dev": "pnpm --filter @neatly/web dev",
     "dev:api": "pnpm --filter @neatly/api dev",
     "format": "biome format --write .",

@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { AUTH_BCRYPT_COST } from "../src/config/auth.ts";
 
+const AUTH_BCRYPT_COST = 12;
 const DEVELOPMENT_ADMIN_EMAIL = "admin@neatly.local";
 const DEVELOPMENT_ADMIN_NAME = "Neatly Admin";
 

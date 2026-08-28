@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 import { createApp } from "./app.ts";
 import { API_SHUTDOWN_TIMEOUT_MS } from "./config/constants.ts";
 import { loadApiEnv } from "./config/env.ts";
+import { disconnectPrisma } from "./lib/db.ts";
 import { logError, logInfo } from "./lib/logger.ts";
 
 const env = loadApiEnv();
@@ -47,6 +48,7 @@ function registerShutdown(httpServer: Server): void {
 
     try {
       await closeServer(activeServer);
+      await disconnectPrisma();
       process.exit(0);
     } catch {
       logError("API shutdown failed");

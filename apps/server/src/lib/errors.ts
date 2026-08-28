@@ -63,3 +63,11 @@ export function createMethodNotAllowedError(): AppError {
     HTTP_STATUS.METHOD_NOT_ALLOWED,
   );
 }
+
+export function createDatabaseUnavailableError(): AppError {
+  return new AppError(
+    API_ERROR_CODES.DATABASE_UNAVAILABLE,
+    "The database is unavailable.",
+    HTTP_STATUS.SERVICE_UNAVAILABLE,
+  );
+}

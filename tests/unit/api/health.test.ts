@@ -1,11 +1,21 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   API_DEFAULT_PORT,
+  API_ERROR_CODES,
   API_SERVICE_NAME,
+  DATABASE_HEALTH_STATUS,
+  HTTP_STATUS,
 } from "../../../apps/server/src/config/constants.ts";
 import { loadApiEnv } from "../../../apps/server/src/config/env.ts";
+import { checkDatabaseConnection } from "../../../apps/server/src/lib/database-health.ts";
 import { matchRoute } from "../../../apps/server/src/routes/index.ts";
+
+vi.mock("../../../apps/server/src/lib/database-health.ts", () => ({
+  checkDatabaseConnection: vi.fn(),
+}));
+
+const pingDatabase = vi.mocked(checkDatabaseConnection);
 
 function createMockRequest(method = "GET", url = "/"): IncomingMessage {
   return {
@@ -73,7 +83,7 @@ describe("GET /", (): void => {
       success: boolean;
     };
 
-    expect(mockRes.statusCode).toBe(200);
+    expect(mockRes.statusCode).toBe(HTTP_STATUS.OK);
     expect(body.success).toBe(true);
     expect(body.error).toBeNull();
     expect(body.data.service).toBe(API_SERVICE_NAME);
@@ -82,7 +92,13 @@ describe("GET /", (): void => {
 });
 
 describe("GET /health", (): void => {
-  it("returns a process-ready payload without querying a database", async (): Promise<void> => {
+  beforeEach((): void => {
+    pingDatabase.mockReset();
+  });
+
+  it("returns a connected payload when the database responds", async (): Promise<void> => {
+    pingDatabase.mockResolvedValue(true);
+
     const req = createMockRequest("GET", "/health");
     const mockRes = createMockResponse();
 
@@ -90,19 +106,44 @@ describe("GET /health", (): void => {
     await handler(req, mockRes.res);
 
     const body = JSON.parse(mockRes.body) as {
-      data: { service: string; status: string };
+      data: { database: string; service: string; status: string };
       error: null;
       success: boolean;
     };
 
-    expect(mockRes.statusCode).toBe(200);
+    expect(mockRes.statusCode).toBe(HTTP_STATUS.OK);
     expect(mockRes.getHeader("content-type")).toContain("application/json");
     expect(body.success).toBe(true);
     expect(body.error).toBeNull();
     expect(body.data).toEqual({
+      database: DATABASE_HEALTH_STATUS.CONNECTED,
       service: API_SERVICE_NAME,
       status: "ok",
     });
+  });
+
+  it("returns an unavailable envelope without internal details when the database is down", async (): Promise<void> => {
+    pingDatabase.mockResolvedValue(false);
+
+    const req = createMockRequest("GET", "/health");
+    const mockRes = createMockResponse();
+
+    const handler = matchRoute(req);
+    await handler(req, mockRes.res);
+
+    const body = JSON.parse(mockRes.body) as {
+      data: null;
+      error: { code: string; message: string };
+      success: boolean;
+    };
+
+    expect(mockRes.statusCode).toBe(HTTP_STATUS.SERVICE_UNAVAILABLE);
+    expect(body.success).toBe(false);
+    expect(body.data).toBeNull();
+    expect(body.error.code).toBe(API_ERROR_CODES.DATABASE_UNAVAILABLE);
+    expect(body.error.message).toBe("The database is unavailable.");
+    expect(body.error.message.toLowerCase()).not.toContain("postgres");
+    expect(body.error.message.toLowerCase()).not.toContain("database_url");
   });
 
   it("returns a consistent not-found envelope for unknown routes", (): void => {

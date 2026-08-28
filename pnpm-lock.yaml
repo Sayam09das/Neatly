@@ -76,10 +76,23 @@ importers:
         version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(jsdom@27.4.0)(vite@8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0))
 
   apps/server:
+    dependencies:
+      '@prisma/client':
+        specifier: ^6.19.0
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      bcrypt:
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
+      '@types/bcrypt':
+        specifier: ^6.0.0
+        version: 6.0.0
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      prisma:
+        specifier: ^6.19.0
+        version: 6.19.3(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -89,15 +102,15 @@ importers:
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.15.0)(react@19.2.8)
+      '@neatly/api':
+        specifier: workspace:*
+        version: link:../server
       '@neatly/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@neatly/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@prisma/client':
-        specifier: ^6.19.0
-        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -141,9 +154,6 @@ importers:
       postcss:
         specifier: ^8.5.6
         version: 8.5.26
-      prisma:
-        specifier: ^6.19.0
-        version: 6.19.3(typescript@5.9.3)
       tailwindcss:
         specifier: ^4.1.18
         version: 4.3.3

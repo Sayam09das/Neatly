@@ -17,7 +17,7 @@
       "!!**/coverage",
       "!!**/playwright-report",
       "!!**/test-results",
-      "!!**/apps/web/prisma/migrations"
+      "!!**/apps/server/prisma/migrations"
     ]
   },
   "formatter": {

@@ -1,4 +1,4 @@
-import type { PasswordResetToken, Session, User } from "@prisma/client";
+import { prisma } from "@neatly/api/db";
 import type {
   AuthPasswordResetRecord,
   AuthRepository,
@@ -8,9 +8,16 @@ import type {
   CreateSessionRecordInput,
   CreateUserRecordInput,
 } from "@/lib/auth/repository";
-import { prisma } from "@/lib/db";
 
-function toUserRecord(user: User): AuthUserRecord {
+function toUserRecord(user: {
+  email: string;
+  id: string;
+  lastLoginAt: Date | null;
+  name: string;
+  passwordHash: string;
+  role: AuthUserRecord["role"];
+  status: AuthUserRecord["status"];
+}): AuthUserRecord {
   return {
     id: user.id,
     name: user.name,
@@ -22,7 +29,12 @@ function toUserRecord(user: User): AuthUserRecord {
   };
 }
 
-function toSessionRecord(session: Session): AuthSessionRecord {
+function toSessionRecord(session: {
+  expiresAt: Date;
+  id: string;
+  tokenHash: string;
+  userId: string;
+}): AuthSessionRecord {
   return {
     id: session.id,
     userId: session.userId,
@@ -31,7 +43,13 @@ function toSessionRecord(session: Session): AuthSessionRecord {
   };
 }
 
-function toResetRecord(token: PasswordResetToken): AuthPasswordResetRecord {
+function toResetRecord(token: {
+  expiresAt: Date;
+  id: string;
+  tokenHash: string;
+  usedAt: Date | null;
+  userId: string;
+}): AuthPasswordResetRecord {
   return {
     id: token.id,
     userId: token.userId,

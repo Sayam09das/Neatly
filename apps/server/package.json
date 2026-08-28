@@ -4,17 +4,35 @@
   "private": true,
   "description": "Neatly HTTP API.",
   "type": "module",
+  "exports": {
+    "./db": "./src/lib/db.ts"
+  },
   "scripts": {
     "dev": "node --watch --env-file-if-exists=.env src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node --env-file-if-exists=.env dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate:status": "prisma migrate status",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "node --experimental-strip-types --env-file-if-exists=.env prisma/seed.ts"
   },
   "engines": {
     "node": ">=24.19.0"
   },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcrypt": "^6.0.0"
+  },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^26.2.0",
+    "prisma": "^6.19.0",
     "typescript": "catalog:"
   }
 }

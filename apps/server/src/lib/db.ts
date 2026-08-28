@@ -13,3 +13,7 @@ export const prisma: PrismaClient =
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.neatlyPrisma = prisma;
 }
+
+export async function disconnectPrisma(): Promise<void> {
+  await prisma.$disconnect();
+}
