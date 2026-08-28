@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { SmoothScroll } from "@/animations/lenis/smooth-scroll";
+import { Toaster } from "@/components/feedback/toaster";
 import { ThemeProvider } from "./theme-provider";
 
 interface ProvidersProps {
@@ -9,7 +10,10 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps): ReactElement {
   return (
     <ThemeProvider>
-      <SmoothScroll>{children}</SmoothScroll>
+      <SmoothScroll>
+        {children}
+        <Toaster />
+      </SmoothScroll>
     </ThemeProvider>
   );
 }

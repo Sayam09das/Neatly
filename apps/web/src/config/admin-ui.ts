@@ -16,9 +16,33 @@ export const adminShellCopy = {
 
 export const adminHomeCopy = {
   description:
-    "Operations tools will appear here as they are built. This page confirms the application shell is ready.",
-  heading: `Welcome to ${APP_NAME} Admin`,
-  title: "Admin",
+    "Keep an eye on quotes, inquiries, and published content from one place.",
+  heading: "Dashboard",
+  title: "Dashboard",
+} as const;
+
+export const adminHeaderCopy = {
+  accountMenuLabel: "Open account menu",
+  breadcrumbLabel: "Breadcrumb",
+  homeBreadcrumb: "Admin",
+  homeTitle: "Dashboard",
+  logoutItem: "Log out",
+  notificationsLabel: "Notifications",
+  openNavigationLabel: "Open navigation",
+  profileItem: "Profile",
+  profileLabel: "Admin",
+  settingsItem: "Settings",
+} as const;
+
+export const adminSidebarCopy = {
+  accountLabel: "Admin",
+  collapseLabel: "Collapse sidebar",
+  expandLabel: "Expand sidebar",
+  closeNavigationLabel: "Close navigation",
+  drawerDescription: "Navigate the admin application.",
+  drawerTitle: "Admin navigation",
+  logoutItem: "Log out",
+  settingsItem: "Settings",
 } as const;
 
 export const adminErrorCopy = {

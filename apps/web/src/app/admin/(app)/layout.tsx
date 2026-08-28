@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactElement, ReactNode } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { adminHomeCopy } from "@/config/admin-ui";
+import {
+  ADMIN_HOME_PATH,
+  adminHeaderCopy,
+  adminHomeCopy,
+} from "@/config/admin-ui";
 import { requireAdminPage } from "@/lib/auth/current-user";
 
 export const dynamic = "force-dynamic";
@@ -24,5 +28,16 @@ export default async function AdminAppLayout({
 }: AdminAppLayoutProps): Promise<ReactElement> {
   await requireAdminPage();
 
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <AdminShell
+      breadcrumbs={[
+        {
+          href: ADMIN_HOME_PATH,
+          label: adminHeaderCopy.homeBreadcrumb,
+        },
+      ]}
+    >
+      {children}
+    </AdminShell>
+  );
 }

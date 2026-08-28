@@ -10,6 +10,7 @@ import AdminHomePage from "@/app/admin/(app)/page";
 import {
   ADMIN_HOME_PATH,
   adminErrorCopy,
+  adminHeaderCopy,
   adminHomeCopy,
   adminNotFoundCopy,
   adminShellCopy,
@@ -20,6 +21,10 @@ import type { AuthUser } from "@/types/auth";
 
 vi.mock("@/lib/auth/current-user", () => ({
   requireAdminPage: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: (): string => "/admin",
 }));
 
 const layoutAdmin: AuthUser = {
@@ -46,6 +51,17 @@ describe("Admin application routes", (): void => {
       screen.getByRole("main", { name: adminShellCopy.mainLabel }),
     ).toBeInTheDocument();
     expect(screen.getByText("Protected shell child")).toBeInTheDocument();
+    expect(screen.getByText(adminHeaderCopy.homeTitle)).toBeInTheDocument();
+    const notificationLinks = screen.getAllByRole("link", {
+      name: adminHeaderCopy.notificationsLabel,
+    });
+
+    expect(notificationLinks.length).toBeGreaterThan(0);
+    expect(
+      notificationLinks.every(
+        (link) => link.getAttribute("href") === "/admin/notifications",
+      ),
+    ).toBe(true);
     expect(screen.queryByText(AUTH_ADMIN_LOGIN_PATH)).not.toBeInTheDocument();
   });
 
@@ -65,7 +81,9 @@ describe("Admin application routes", (): void => {
 
     expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
     expect(screen.getByText(adminShellCopy.loadingLabel)).toBeInTheDocument();
-    expect(document.querySelectorAll('[data-slot="skeleton"]').length).toBe(3);
+    expect(
+      document.querySelectorAll('[data-slot="skeleton"]').length,
+    ).toBeGreaterThan(3);
   });
 
   it("renders a safe error state without implementation details", (): void => {

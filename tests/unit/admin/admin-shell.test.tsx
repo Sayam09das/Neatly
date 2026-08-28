@@ -1,22 +1,21 @@
 /** @vitest-environment jsdom */
 
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AdminShell } from "@/components/admin/admin-shell";
 import {
   ADMIN_HOME_PATH,
   ADMIN_MAIN_CONTENT_ID,
+  adminHeaderCopy,
   adminHomeCopy,
   adminShellCopy,
 } from "@/config/admin-ui";
 
-const DUMMY_DASHBOARD_COPY = [
-  "revenue",
-  "bookings",
-  "customers",
-  "cleaners",
-  "statistics",
-];
+vi.mock("next/navigation", () => ({
+  usePathname: (): string => "/admin",
+}));
+
+const DUMMY_DASHBOARD_COPY = ["revenue", "cleaners", "statistics"];
 
 function getSlot(name: string): HTMLElement {
   const node = document.querySelector(`[data-slot="${name}"]`);
@@ -38,7 +37,7 @@ describe("AdminShell", (): void => {
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(
-      screen.getByRole("complementary", {
+      screen.getByRole("navigation", {
         name: adminShellCopy.navigationLabel,
       }),
     ).toBeInTheDocument();
@@ -49,9 +48,16 @@ describe("AdminShell", (): void => {
       screen.getByRole("link", { name: adminShellCopy.skipToContent }),
     ).toHaveAttribute("href", `#${ADMIN_MAIN_CONTENT_ID}`);
     expect(
-      screen.getByRole("link", { name: adminShellCopy.brandLabel }),
+      screen.getAllByRole("link", { name: adminShellCopy.brandLabel }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: adminShellCopy.brandLabel })[0],
     ).toHaveAttribute("href", ADMIN_HOME_PATH);
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", {
+        name: adminHeaderCopy.breadcrumbLabel,
+      }),
+    ).not.toBeInTheDocument();
 
     const markup = document.body.textContent ?? "";
 
