@@ -2,6 +2,7 @@ export const AUTH_SESSION_MAX_AGE_SECONDS = 604_800;
 export const AUTH_BCRYPT_COST = 12;
 export const AUTH_PASSWORD_MIN_LENGTH = 12;
 export const AUTH_PASSWORD_MAX_LENGTH = 72;
+export const AUTH_EMAIL_MAX_LENGTH = 254;
 export const AUTH_NAME_MIN_LENGTH = 2;
 export const AUTH_NAME_MAX_LENGTH = 80;
 export const AUTH_TOKEN_BYTES = 32;

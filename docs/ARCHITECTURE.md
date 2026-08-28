@@ -302,13 +302,18 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
       "requestId": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
       "details": [
         { "field": "email", "issue": "Invalid email address format" }
-      ]
+      ],
+      "fields": {
+        "email": "Invalid email address format"
+      }
     },
     "timestamp": "2026-08-25T20:12:43.000Z"
   }
   ```
 * **Request ID:** Every API response includes `x-request-id`. UUID-shaped client values are echoed; other values are replaced with a generated ID. Error objects include `requestId` for correlation.
+* **Validation:** Backend Zod schemas are authoritative. Security-sensitive bodies use strict objects so unknown fields (for example `role`) are rejected. Validation failures keep `code: "INVALID_INPUT"` with `details: [{ field, issue }]` for frontend compatibility, plus a `fields` map. Prisma errors are mapped to application errors and never returned raw.
 * **HTTP API process:** `apps/server` separates `app.ts` (middleware, routes, errors; testable without listen) from `server.ts` (port, listen, graceful shutdown). Application routes live under `/api/v1`. Process liveness is `GET /health`. Dependency readiness is `GET /ready`.
+* **Domain services:** Core business rules live in `apps/server/src/services` (`users`, `customers`, `cleaners`, `catalog`, `bookings`, `reviews`, `notifications`, `admin`, `dashboard`) and are independent of HTTP. They accept a typed `Actor` plus domain inputs and return DTOs (`*Record`, `ListResult`). They do not read request objects, cookies, or status codes. Prisma access goes through `apps/server/src/repositories`. Booking status changes go through `booking-transitions.ts`. Reviews persist as `Testimonial` rows. Catalog “service” means a cleaning offering (`Service` model), not an infrastructure class. HTTP controllers for these domains are added in later API phases. Email stays behind `EmailService` → `EmailProvider`. Notifications are persisted only; real-time delivery is later.
 
 ### 11.2 Public API Endpoints
 * `POST /api/quotes` — Submit a new quote request (Rate-limited, honeypot protected).

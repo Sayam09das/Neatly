@@ -84,6 +84,18 @@ export class RateLimitError extends AppError {
   }
 }
 
+export class InternalServerError extends AppError {
+  public constructor(message = "An unexpected error occurred.") {
+    super(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      message,
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      false,
+    );
+    this.name = "InternalServerError";
+  }
+}
+
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
@@ -93,12 +105,7 @@ export function toAppError(error: unknown): AppError {
     return error;
   }
 
-  return new AppError(
-    API_ERROR_CODES.INTERNAL_ERROR,
-    unknownErrorMessage(error),
-    HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    false,
-  );
+  return new InternalServerError(unknownErrorMessage(error));
 }
 
 function unknownErrorMessage(error: unknown): string {

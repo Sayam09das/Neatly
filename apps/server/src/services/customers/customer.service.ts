@@ -1,0 +1,181 @@
+import {
+  type Actor,
+  assertOwnerOrAdmin,
+  requireAdminActor,
+} from "../../lib/domain/actor.ts";
+import { customerNotFound } from "../../lib/domain/errors.ts";
+import {
+  type ListResult,
+  resolvePagination,
+  resolveSort,
+  toListResult,
+} from "../../lib/domain/list.ts";
+import { ConflictError, ValidationError } from "../../lib/errors.ts";
+import { parseWithSchema } from "../../lib/validations/parse.ts";
+import { emailSchema } from "../../lib/validations/primitives.ts";
+import type { CustomerRepository } from "../../repositories/customer.repository.ts";
+import {
+  type CreateCustomerInput,
+  CUSTOMER_SORT_FIELDS,
+  type CustomerListQuery,
+  type CustomerRecord,
+  type CustomerStats,
+  type UpdateCustomerInput,
+} from "./customer.types.ts";
+
+export class CustomerService {
+  private readonly customers: CustomerRepository;
+
+  public constructor(customers: CustomerRepository) {
+    this.customers = customers;
+  }
+
+  public async create(
+    actor: Actor,
+    input: CreateCustomerInput,
+  ): Promise<CustomerRecord> {
+    requireAdminActor(actor);
+    const email = parseWithSchema(emailSchema, input.email);
+    const existing = await this.customers.findByEmail(email);
+
+    if (existing !== null) {
+      throw new ConflictError("A customer with this email already exists.");
+    }
+
+    const name = requireName(input.name);
+    return this.customers.create({
+      address: emptyToNull(input.address),
+      avatarMediaId: input.avatarMediaId ?? null,
+      email,
+      name,
+      phone: emptyToNull(input.phone),
+      userId: input.userId ?? null,
+    });
+  }
+
+  public async getById(actor: Actor, id: string): Promise<CustomerRecord> {
+    const customer = await this.customers.findById(id);
+
+    if (customer === null) {
+      throw customerNotFound();
+    }
+
+    assertOwnerOrAdmin(actor, customer.userId);
+    return customer;
+  }
+
+  public async list(
+    actor: Actor,
+    query: CustomerListQuery = {},
+  ): Promise<ListResult<CustomerRecord>> {
+    requireAdminActor(actor);
+    const pagination = resolvePagination(query.pagination);
+    const sort = resolveSort(query.sort, CUSTOMER_SORT_FIELDS);
+    const result = await this.customers.list({ ...query, pagination, sort });
+    return toListResult(result.items, result.total, pagination);
+  }
+
+  public async update(
+    actor: Actor,
+    id: string,
+    input: UpdateCustomerInput,
+  ): Promise<CustomerRecord> {
+    const customer = await this.getById(actor, id);
+
+    if (input.email !== undefined) {
+      const email = parseWithSchema(emailSchema, input.email);
+      const existing = await this.customers.findByEmail(email);
+
+      if (existing !== null && existing.id !== customer.id) {
+        throw new ConflictError("A customer with this email already exists.");
+      }
+    }
+
+    const updated = await this.customers.update(id, {
+      address:
+        input.address === undefined ? undefined : emptyToNull(input.address),
+      avatarMediaId: input.avatarMediaId,
+      email:
+        input.email === undefined
+          ? undefined
+          : parseWithSchema(emailSchema, input.email),
+      name: input.name === undefined ? undefined : requireName(input.name),
+      phone: input.phone === undefined ? undefined : emptyToNull(input.phone),
+    });
+
+    if (updated === null) {
+      throw customerNotFound();
+    }
+
+    return updated;
+  }
+
+  public async deactivate(actor: Actor, id: string): Promise<CustomerRecord> {
+    requireAdminActor(actor);
+    const customer = await this.customers.findById(id);
+
+    if (customer === null) {
+      throw customerNotFound();
+    }
+
+    const updated = await this.customers.update(id, { status: "INACTIVE" });
+
+    if (updated === null) {
+      throw customerNotFound();
+    }
+
+    return updated;
+  }
+
+  public async activate(actor: Actor, id: string): Promise<CustomerRecord> {
+    requireAdminActor(actor);
+    const customer = await this.customers.findById(id);
+
+    if (customer === null) {
+      throw customerNotFound();
+    }
+
+    const updated = await this.customers.update(id, { status: "ACTIVE" });
+
+    if (updated === null) {
+      throw customerNotFound();
+    }
+
+    return updated;
+  }
+
+  public async stats(actor: Actor): Promise<CustomerStats> {
+    requireAdminActor(actor);
+    const [total, active] = await Promise.all([
+      this.customers.countTotal(),
+      this.customers.countByStatus("ACTIVE"),
+    ]);
+
+    return {
+      active,
+      inactive: total - active,
+      total,
+    };
+  }
+}
+
+function requireName(name: string): string {
+  const trimmed = name.trim();
+
+  if (trimmed === "") {
+    throw new ValidationError("Validation failed.", [
+      { field: "name", issue: "Enter a name." },
+    ]);
+  }
+
+  return trimmed;
+}
+
+function emptyToNull(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}

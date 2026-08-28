@@ -1,7 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { API_REQUEST_ID_HEADER, HTTP_STATUS } from "../config/constants.ts";
 import { type ApiNodeEnv, isProductionEnv } from "../config/env.ts";
-import { type AppError, toAppError } from "./errors.ts";
+import type { AppError } from "./errors.ts";
+import { normalizeError } from "./normalize-error.ts";
+import { toFieldsMap } from "./validations/parse.ts";
 
 export interface ApiSuccessBody<T> {
   data: T;
@@ -16,6 +18,7 @@ export interface ApiErrorBody {
   error: {
     code: string;
     details?: readonly { field: string; issue: string }[];
+    fields?: Record<string, string>;
     message: string;
     requestId?: string;
   };
@@ -70,12 +73,15 @@ export function sendFailure(
     ? error.message
     : "An unexpected error occurred.";
 
+  const details = error.details;
   const body: ApiErrorBody = {
     data: null,
     error: {
       code: error.code,
       message,
-      ...(error.details === undefined ? {} : { details: error.details }),
+      ...(details === undefined
+        ? {}
+        : { details, fields: toFieldsMap(details) }),
       ...(requestId === undefined ? {} : { requestId }),
     },
     success: false,
@@ -91,7 +97,7 @@ export function sendUnknownError(
   nodeEnv: ApiNodeEnv,
   requestId?: string,
 ): void {
-  sendFailure(res, toAppError(error), nodeEnv, requestId);
+  sendFailure(res, normalizeError(error), nodeEnv, requestId);
 }
 
 export function getRequestPath(req: IncomingMessage): string {

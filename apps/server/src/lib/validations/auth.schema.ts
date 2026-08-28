@@ -2,22 +2,8 @@ import { z } from "@neatly/config/zod";
 import {
   AUTH_NAME_MAX_LENGTH,
   AUTH_NAME_MIN_LENGTH,
-  AUTH_PASSWORD_MAX_LENGTH,
-  AUTH_PASSWORD_MIN_LENGTH,
 } from "../../config/auth.ts";
-
-const emailSchema = z.email("Enter a valid email.");
-
-const passwordSchema = z
-  .string()
-  .min(
-    AUTH_PASSWORD_MIN_LENGTH,
-    `Use at least ${String(AUTH_PASSWORD_MIN_LENGTH)} characters.`,
-  )
-  .max(
-    AUTH_PASSWORD_MAX_LENGTH,
-    `Use at most ${String(AUTH_PASSWORD_MAX_LENGTH)} characters.`,
-  );
+import { emailSchema, passwordSchema } from "./primitives.ts";
 
 const nameSchema = z
   .string()
@@ -27,30 +13,37 @@ const nameSchema = z
 
 const tokenSchema = z.string().trim().min(1, "A token is required.");
 
-export const registerUserSchema = z.object({
+export const registerUserSchema = z.strictObject({
   email: emailSchema,
   name: nameSchema,
   password: passwordSchema,
 });
 
-export const loginSchema = z.object({
+export const loginSchema = z.strictObject({
   email: emailSchema,
   password: z.string().min(1, "Enter your password."),
 });
 
-export const forgotPasswordSchema = z.object({
+export const forgotPasswordSchema = z.strictObject({
   email: emailSchema,
 });
 
-export const resetPasswordSchema = z.object({
+export const resetPasswordSchema = z.strictObject({
   password: passwordSchema,
   token: tokenSchema,
 });
 
-export const verifyEmailSchema = z.object({
+export const verifyEmailSchema = z.strictObject({
   token: tokenSchema,
 });
 
-export const resendVerificationSchema = z.object({
+export const resendVerificationSchema = z.strictObject({
   email: emailSchema,
 });
+
+export type RegisterUserInput = z.infer<typeof registerUserSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;

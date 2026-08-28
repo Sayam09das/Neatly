@@ -20,6 +20,7 @@ import {
   type AuthUser,
   toAuthUser,
 } from "../lib/auth/types.ts";
+import { ValidationError } from "../lib/errors.ts";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -28,6 +29,7 @@ import {
   resetPasswordSchema,
   verifyEmailSchema,
 } from "../lib/validations/auth.schema.ts";
+import { parseWithSchema } from "../lib/validations/parse.ts";
 import type { EmailService } from "./email.service.ts";
 
 const DUMMY_PASSWORD_GUARD = "invalid-credential-timing-guard";
@@ -49,20 +51,15 @@ function normalizeEmail(email: string): string {
 }
 
 function parseSchema<T>(schema: z.ZodType<T>, input: unknown): T {
-  const result = schema.safeParse(input);
+  try {
+    return parseWithSchema(schema, input);
+  } catch (error: unknown) {
+    if (error instanceof ValidationError) {
+      throw new AuthError("INVALID_INPUT", error.message, error.details);
+    }
 
-  if (result.success) {
-    return result.data;
+    throw error;
   }
-
-  throw new AuthError(
-    "INVALID_INPUT",
-    "Validation failed.",
-    result.error.issues.map((issue) => ({
-      field: String(issue.path[0] ?? "form"),
-      issue: issue.message,
-    })),
-  );
 }
 
 export class AuthService {

@@ -12,6 +12,8 @@ export const PAGINATION_DEFAULT_PAGE = 1;
 export const PAGINATION_DEFAULT_LIMIT = 20;
 export const PAGINATION_MAX_LIMIT = 100;
 export const SORT_DIRECTIONS = ["asc", "desc"] as const;
+export const SEARCH_QUERY_MAX_LENGTH = 120;
+export const VALIDATION_FAILED_MESSAGE = "Validation failed.";
 
 export const API_ERROR_CODES = {
   CONFLICT: "CONFLICT",

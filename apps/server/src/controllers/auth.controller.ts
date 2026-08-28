@@ -6,28 +6,38 @@ import { getSessionToken } from "../lib/auth/http.ts";
 import { toAppErrorFromAuth } from "../lib/auth/http-error.ts";
 import { getAuthService } from "../lib/auth/runtime.ts";
 import { sendFailure, sendSuccess } from "../lib/http.ts";
-import { readJsonBody } from "../lib/request.ts";
-import type { RequestContext } from "../lib/request-context.ts";
+import {
+  getValidatedBody,
+  type RequestContext,
+} from "../lib/request-context.ts";
+import type {
+  ForgotPasswordInput,
+  LoginInput,
+  RegisterUserInput,
+  ResendVerificationInput,
+  ResetPasswordInput,
+  VerifyEmailInput,
+} from "../lib/validations/auth.schema.ts";
 
 export async function registerController(
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
-    const body = await readJsonBody(req);
+    const body = getValidatedBody<RegisterUserInput>(context);
     const user = await getAuthService().registerUser(body);
     sendSuccess(res, { user });
   });
 }
 
 export async function loginController(
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
-    const body = await readJsonBody(req);
+    const body = getValidatedBody<LoginInput>(context);
     const result = await getAuthService().authenticateUser(body, {
       ip: context.ip,
     });
@@ -70,12 +80,12 @@ export async function sessionController(
 }
 
 export async function forgotPasswordController(
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
-    const body = await readJsonBody(req);
+    const body = getValidatedBody<ForgotPasswordInput>(context);
     const result = await getAuthService().requestPasswordReset(body, {
       ip: context.ip,
     });
@@ -84,12 +94,12 @@ export async function forgotPasswordController(
 }
 
 export async function resetPasswordController(
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
-    const body = await readJsonBody(req);
+    const body = getValidatedBody<ResetPasswordInput>(context);
     const user = await getAuthService().resetPassword(body, {
       ip: context.ip,
     });
@@ -103,12 +113,12 @@ export async function resetPasswordController(
 }
 
 export async function verifyEmailController(
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
-    const body = await readJsonBody(req);
+    const body = getValidatedBody<VerifyEmailInput>(context);
     const user = await getAuthService().verifyEmail(body);
     sendSuccess(res, {
       user: {
@@ -120,12 +130,12 @@ export async function verifyEmailController(
 }
 
 export async function resendVerificationController(
-  req: IncomingMessage,
+  _req: IncomingMessage,
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
-    const body = await readJsonBody(req);
+    const body = getValidatedBody<ResendVerificationInput>(context);
     const result = await getAuthService().requestEmailVerification(body, {
       ip: context.ip,
     });

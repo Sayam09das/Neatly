@@ -1,8 +1,17 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage } from "node:http";
 import type { AuthUser } from "./auth/types.ts";
+import { InternalServerError } from "./errors.ts";
+
+export interface RequestInput {
+  body?: unknown;
+  headers?: unknown;
+  params?: unknown;
+  query?: unknown;
+}
 
 export interface RequestContext {
+  input: RequestInput;
   ip: string;
   method: string;
   params: Record<string, string>;
@@ -21,6 +30,7 @@ export function createRequestContext(input: {
   requestId?: string;
 }): RequestContext {
   return {
+    input: {},
     ip: input.ip,
     method: input.method,
     params: {},
@@ -53,4 +63,28 @@ export function tryGetRequestContext(
   req: IncomingMessage,
 ): RequestContext | undefined {
   return contexts.get(req);
+}
+
+export function getValidatedBody<T>(context: RequestContext): T {
+  return readValidated<T>(context.input.body);
+}
+
+export function getValidatedQuery<T>(context: RequestContext): T {
+  return readValidated<T>(context.input.query);
+}
+
+export function getValidatedParams<T>(context: RequestContext): T {
+  return readValidated<T>(context.input.params);
+}
+
+export function getValidatedHeaders<T>(context: RequestContext): T {
+  return readValidated<T>(context.input.headers);
+}
+
+function readValidated<T>(value: unknown): T {
+  if (value === undefined) {
+    throw new InternalServerError();
+  }
+
+  return value as T;
 }

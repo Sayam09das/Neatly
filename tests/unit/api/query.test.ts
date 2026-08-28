@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   PAGINATION_DEFAULT_LIMIT,
   PAGINATION_DEFAULT_PAGE,
-  PAGINATION_MAX_LIMIT,
 } from "../../../apps/server/src/config/constants.ts";
 import { ValidationError } from "../../../apps/server/src/lib/errors.ts";
 import {
@@ -13,25 +12,25 @@ import {
 } from "../../../apps/server/src/lib/query.ts";
 
 describe("parsePagination", (): void => {
-  it("applies defaults and a maximum limit", (): void => {
+  it("applies defaults and rejects an excessive limit", (): void => {
     const defaults = parsePagination(new URLSearchParams());
-    const capped = parsePagination(new URLSearchParams("page=2&limit=500"));
 
     expect(defaults).toEqual({
       limit: PAGINATION_DEFAULT_LIMIT,
       page: PAGINATION_DEFAULT_PAGE,
       skip: 0,
     });
-    expect(capped).toEqual({
-      limit: PAGINATION_MAX_LIMIT,
-      page: 2,
-      skip: PAGINATION_MAX_LIMIT,
-    });
+    expect((): void => {
+      parsePagination(new URLSearchParams("page=2&limit=500"));
+    }).toThrow(ValidationError);
   });
 
   it("rejects invalid page values", (): void => {
     expect((): void => {
       parsePagination(new URLSearchParams("page=0"));
+    }).toThrow(ValidationError);
+    expect((): void => {
+      parsePagination(new URLSearchParams("page=abc"));
     }).toThrow(ValidationError);
   });
 });

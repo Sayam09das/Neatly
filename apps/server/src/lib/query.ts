@@ -1,10 +1,9 @@
+import type { SORT_DIRECTIONS } from "../config/constants.ts";
+import { parseWithSchema, searchParamsToRecord } from "./validations/parse.ts";
 import {
-  PAGINATION_DEFAULT_LIMIT,
-  PAGINATION_DEFAULT_PAGE,
-  PAGINATION_MAX_LIMIT,
-  SORT_DIRECTIONS,
-} from "../config/constants.ts";
-import { ValidationError } from "./errors.ts";
+  createSortQuerySchema,
+  paginationQuerySchema,
+} from "./validations/primitives.ts";
 
 export type SortDirection = (typeof SORT_DIRECTIONS)[number];
 
@@ -29,23 +28,10 @@ export interface SortQuery {
 export function parsePagination(
   searchParams: URLSearchParams,
 ): PaginationQuery {
-  const page = readPositiveInteger(
-    searchParams.get("page"),
-    "page",
-    PAGINATION_DEFAULT_PAGE,
+  return parseWithSchema(
+    paginationQuerySchema,
+    searchParamsToRecord(searchParams),
   );
-  const requestedLimit = readPositiveInteger(
-    searchParams.get("limit"),
-    "limit",
-    PAGINATION_DEFAULT_LIMIT,
-  );
-  const limit = Math.min(requestedLimit, PAGINATION_MAX_LIMIT);
-
-  return {
-    limit,
-    page,
-    skip: (page - 1) * limit,
-  };
 }
 
 export function toPaginationMeta(
@@ -66,25 +52,10 @@ export function parseSort(
   searchParams: URLSearchParams,
   allowedFields: readonly string[],
 ): SortQuery | undefined {
-  const field = searchParams.get("sort")?.trim();
-
-  if (field === undefined || field === "") {
-    return undefined;
-  }
-
-  if (!allowedFields.includes(field)) {
-    throw new ValidationError("Validation failed.", [
-      { field: "sort", issue: "This sort field is not allowed." },
-    ]);
-  }
-
-  const rawDirection = searchParams.get("order")?.trim().toLowerCase();
-  const direction: SortDirection =
-    rawDirection === undefined || rawDirection === ""
-      ? "asc"
-      : parseSortDirection(rawDirection);
-
-  return { direction, field };
+  return parseWithSchema(
+    createSortQuerySchema(allowedFields),
+    searchParamsToRecord(searchParams),
+  );
 }
 
 export function parseAllowedFilters(
@@ -103,34 +74,4 @@ export function parseAllowedFilters(
   }
 
   return filters;
-}
-
-function parseSortDirection(value: string): SortDirection {
-  if (value === SORT_DIRECTIONS[0] || value === SORT_DIRECTIONS[1]) {
-    return value;
-  }
-
-  throw new ValidationError("Validation failed.", [
-    { field: "order", issue: "Use asc or desc." },
-  ]);
-}
-
-function readPositiveInteger(
-  value: string | null,
-  field: string,
-  fallback: number,
-): number {
-  if (value === null || value.trim() === "") {
-    return fallback;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    throw new ValidationError("Validation failed.", [
-      { field, issue: "Enter a positive whole number." },
-    ]);
-  }
-
-  return parsed;
 }
