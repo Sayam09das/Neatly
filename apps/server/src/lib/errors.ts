@@ -6,6 +6,9 @@ import {
 
 export class AppError extends Error {
   public readonly code: ApiErrorCode;
+  public readonly details:
+    | readonly { field: string; issue: string }[]
+    | undefined;
   public readonly expose: boolean;
   public readonly statusCode: number;
 
@@ -14,12 +17,14 @@ export class AppError extends Error {
     message: string,
     statusCode: number,
     expose = true,
+    details?: readonly { field: string; issue: string }[],
   ) {
     super(message);
     this.name = "AppError";
     this.code = code;
     this.statusCode = statusCode;
     this.expose = expose;
+    this.details = details;
   }
 }
 

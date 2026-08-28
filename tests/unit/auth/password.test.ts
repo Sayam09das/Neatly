@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import {
+  hashPassword,
+  verifyPassword,
+} from "../../../apps/server/src/lib/auth/password.ts";
 
 describe("password hashing", (): void => {
   it("hashes passwords and verifies the original value", async (): Promise<void> => {

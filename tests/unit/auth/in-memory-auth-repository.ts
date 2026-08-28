@@ -1,18 +1,21 @@
 import { randomUUID } from "node:crypto";
 import type {
+  AuthEmailVerificationRecord,
   AuthPasswordResetRecord,
   AuthRepository,
   AuthSessionRecord,
   AuthUserRecord,
+  CreateEmailVerificationRecordInput,
   CreatePasswordResetRecordInput,
   CreateSessionRecordInput,
   CreateUserRecordInput,
-} from "@/lib/auth/repository";
+} from "../../../apps/server/src/lib/auth/repository.ts";
 
 export class InMemoryAuthRepository implements AuthRepository {
-  public readonly users: AuthUserRecord[] = [];
-  public readonly sessions: AuthSessionRecord[] = [];
   public readonly resetTokens: AuthPasswordResetRecord[] = [];
+  public readonly sessions: AuthSessionRecord[] = [];
+  public readonly users: AuthUserRecord[] = [];
+  public readonly verificationTokens: AuthEmailVerificationRecord[] = [];
 
   public async findUserByEmail(email: string): Promise<AuthUserRecord | null> {
     return this.users.find((user) => user.email === email) ?? null;
@@ -26,13 +29,14 @@ export class InMemoryAuthRepository implements AuthRepository {
     input: CreateUserRecordInput,
   ): Promise<AuthUserRecord> {
     const user: AuthUserRecord = {
-      id: randomUUID(),
-      name: input.name,
       email: input.email,
+      emailVerifiedAt: null,
+      id: randomUUID(),
+      lastLoginAt: null,
+      name: input.name,
       passwordHash: input.passwordHash,
       role: input.role ?? "ADMIN",
       status: input.status ?? "ACTIVE",
-      lastLoginAt: null,
     };
     this.users.push(user);
     return user;
@@ -57,14 +61,22 @@ export class InMemoryAuthRepository implements AuthRepository {
     }
   }
 
+  public async markEmailVerified(userId: string, at: Date): Promise<void> {
+    const user = await this.findUserById(userId);
+
+    if (user !== null) {
+      user.emailVerifiedAt = at;
+    }
+  }
+
   public async createSession(
     input: CreateSessionRecordInput,
   ): Promise<AuthSessionRecord> {
     const session: AuthSessionRecord = {
-      id: randomUUID(),
-      userId: input.userId,
-      tokenHash: input.tokenHash,
       expiresAt: input.expiresAt,
+      id: randomUUID(),
+      tokenHash: input.tokenHash,
+      userId: input.userId,
     };
     this.sessions.push(session);
     return session;
@@ -100,11 +112,11 @@ export class InMemoryAuthRepository implements AuthRepository {
     input: CreatePasswordResetRecordInput,
   ): Promise<AuthPasswordResetRecord> {
     const token: AuthPasswordResetRecord = {
-      id: randomUUID(),
-      userId: input.userId,
-      tokenHash: input.tokenHash,
       expiresAt: input.expiresAt,
+      id: randomUUID(),
+      tokenHash: input.tokenHash,
       usedAt: null,
+      userId: input.userId,
     };
     this.resetTokens.push(token);
     return token;
@@ -140,11 +152,62 @@ export class InMemoryAuthRepository implements AuthRepository {
     }
   }
 
+  public async createEmailVerificationToken(
+    input: CreateEmailVerificationRecordInput,
+  ): Promise<AuthEmailVerificationRecord> {
+    const token: AuthEmailVerificationRecord = {
+      expiresAt: input.expiresAt,
+      id: randomUUID(),
+      tokenHash: input.tokenHash,
+      usedAt: null,
+      userId: input.userId,
+    };
+    this.verificationTokens.push(token);
+    return token;
+  }
+
+  public async findEmailVerificationTokenByHash(
+    tokenHash: string,
+  ): Promise<AuthEmailVerificationRecord | null> {
+    return (
+      this.verificationTokens.find((token) => token.tokenHash === tokenHash) ??
+      null
+    );
+  }
+
+  public async consumeEmailVerificationToken(
+    tokenId: string,
+    usedAt: Date,
+  ): Promise<boolean> {
+    const token = this.verificationTokens.find((item) => item.id === tokenId);
+
+    if (token === undefined || token.usedAt !== null) {
+      return false;
+    }
+
+    token.usedAt = usedAt;
+    return true;
+  }
+
+  public async deleteEmailVerificationTokensForUser(
+    userId: string,
+  ): Promise<void> {
+    for (
+      let index = this.verificationTokens.length - 1;
+      index >= 0;
+      index -= 1
+    ) {
+      if (this.verificationTokens[index]?.userId === userId) {
+        this.verificationTokens.splice(index, 1);
+      }
+    }
+  }
+
   public async completePasswordReset(input: {
-    tokenId: string;
-    userId: string;
     passwordHash: string;
+    tokenId: string;
     usedAt: Date;
+    userId: string;
   }): Promise<boolean> {
     const consumed = await this.consumePasswordResetToken(
       input.tokenId,

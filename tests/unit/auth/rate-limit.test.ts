@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MemoryRateLimiter } from "@/lib/auth/rate-limit";
+import { MemoryRateLimiter } from "../../../apps/server/src/lib/auth/rate-limit.ts";
 
 describe("MemoryRateLimiter", (): void => {
   it("allows up to the configured number of attempts inside the window", (): void => {

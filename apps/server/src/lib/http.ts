@@ -14,6 +14,7 @@ export interface ApiErrorBody {
   data: null;
   error: {
     code: string;
+    details?: readonly { field: string; issue: string }[];
     message: string;
   };
   success: false;
@@ -65,6 +66,7 @@ export function sendFailure(
     error: {
       code: error.code,
       message,
+      ...(error.details === undefined ? {} : { details: error.details }),
     },
     success: false,
     timestamp: new Date().toISOString(),

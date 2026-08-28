@@ -1,14 +1,15 @@
-import { ConsoleEmailProvider } from "@/services/email/console.provider";
 import type {
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
-} from "@/services/email/provider";
+} from "./email/provider.ts";
 
 export class EmailService {
-  public constructor(
-    private readonly provider: EmailProvider = new ConsoleEmailProvider(),
-  ) {}
+  private readonly provider: EmailProvider;
+
+  public constructor(provider: EmailProvider) {
+    this.provider = provider;
+  }
 
   public async sendPasswordResetEmail(
     input: PasswordResetEmailInput,

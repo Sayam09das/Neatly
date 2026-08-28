@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { AUTH_GENERIC_RESET_NOTICE } from "@/config/auth";
-import { AuthError } from "@/lib/auth/errors";
-import { verifyPassword } from "@/lib/auth/password";
-import { MemoryRateLimiter } from "@/lib/auth/rate-limit";
-import { AuthService } from "@/services/auth.service";
+import {
+  AUTH_GENERIC_RESET_NOTICE,
+  AUTH_GENERIC_VERIFY_NOTICE,
+} from "../../../apps/server/src/config/auth.ts";
+import { AuthError } from "../../../apps/server/src/lib/auth/errors.ts";
+import { verifyPassword } from "../../../apps/server/src/lib/auth/password.ts";
+import { MemoryRateLimiter } from "../../../apps/server/src/lib/auth/rate-limit.ts";
+import { AuthService } from "../../../apps/server/src/services/auth.service.ts";
 import type {
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
-} from "@/services/email/provider";
-import { EmailService } from "@/services/email.service";
+} from "../../../apps/server/src/services/email/provider.ts";
+import { EmailService } from "../../../apps/server/src/services/email.service.ts";
 import { InMemoryAuthRepository } from "./in-memory-auth-repository";
 
 const SESSION_SECRET = "test-session-secret-value-32-chars-min";
@@ -34,9 +37,9 @@ class RecordingEmailProvider implements EmailProvider {
 }
 
 function createAuthHarness(now?: () => Date): {
-  service: AuthService;
-  repository: InMemoryAuthRepository;
   emails: RecordingEmailProvider;
+  repository: InMemoryAuthRepository;
+  service: AuthService;
 } {
   const repository = new InMemoryAuthRepository();
   const emails = new RecordingEmailProvider();
@@ -45,26 +48,41 @@ function createAuthHarness(now?: () => Date): {
     new EmailService(emails),
     SESSION_SECRET,
     {
-      now,
-      siteUrl: SITE_URL,
       loginLimiter: new MemoryRateLimiter(),
+      now,
       resetLimiter: new MemoryRateLimiter(),
+      siteUrl: SITE_URL,
+      verifyLimiter: new MemoryRateLimiter(),
     },
   );
 
-  return { service, repository, emails };
+  return { emails, repository, service };
 }
 
-function tokenFromResetUrl(url: string): string {
+function tokenFromUrl(url: string): string {
   return new URL(url).searchParams.get("token") ?? "";
+}
+
+async function registerVerifiedAdmin(
+  service: AuthService,
+  emails: RecordingEmailProvider,
+): Promise<void> {
+  await service.registerUser({
+    email: "admin@neatly.example",
+    name: "Neatly Admin",
+    password: ADMIN_PASSWORD,
+  });
+  await service.verifyEmail({
+    token: tokenFromUrl(emails.verifications[0]?.verifyUrl ?? ""),
+  });
 }
 
 describe("AuthService", (): void => {
   it("registers an admin user without returning the password hash", async (): Promise<void> => {
-    const { service, repository } = createAuthHarness();
+    const { emails, repository, service } = createAuthHarness();
     const user = await service.registerUser({
-      name: "Neatly Admin",
       email: "Admin@Neatly.example",
+      name: "Neatly Admin",
       password: ADMIN_PASSWORD,
     });
 
@@ -72,26 +90,32 @@ describe("AuthService", (): void => {
     expect(user.role).toBe("ADMIN");
     expect(user).not.toHaveProperty("passwordHash");
     expect(repository.users[0]?.passwordHash).not.toBe(ADMIN_PASSWORD);
+    expect(repository.users[0]?.emailVerifiedAt).toBeNull();
     expect(
       await verifyPassword(
         ADMIN_PASSWORD,
         repository.users[0]?.passwordHash ?? "",
       ),
     ).toBe(true);
+    expect(emails.verifications).toHaveLength(1);
+    expect(emails.verifications[0]?.verifyUrl).not.toContain(ADMIN_PASSWORD);
+    expect(repository.verificationTokens[0]?.tokenHash).not.toBe(
+      tokenFromUrl(emails.verifications[0]?.verifyUrl ?? ""),
+    );
   });
 
   it("rejects duplicate registration with a safe message", async (): Promise<void> => {
     const { service } = createAuthHarness();
     await service.registerUser({
-      name: "Neatly Admin",
       email: "admin@neatly.example",
+      name: "Neatly Admin",
       password: ADMIN_PASSWORD,
     });
 
     try {
       await service.registerUser({
-        name: "Neatly Admin",
         email: "admin@neatly.example",
+        name: "Neatly Admin",
         password: ADMIN_PASSWORD,
       });
       expect.unreachable();
@@ -121,13 +145,38 @@ describe("AuthService", (): void => {
     });
   });
 
-  it("authenticates valid credentials and resolves the session", async (): Promise<void> => {
-    const { service } = createAuthHarness();
+  it("rejects login until the email is verified", async (): Promise<void> => {
+    const { emails, service } = createAuthHarness();
     await service.registerUser({
-      name: "Neatly Admin",
       email: "admin@neatly.example",
+      name: "Neatly Admin",
       password: ADMIN_PASSWORD,
     });
+
+    await expect(
+      service.authenticateUser(
+        { email: "admin@neatly.example", password: ADMIN_PASSWORD },
+        { ip: "203.0.113.9" },
+      ),
+    ).rejects.toMatchObject({
+      code: "INVALID_CREDENTIALS",
+      message: "Invalid email or password.",
+    });
+
+    await service.verifyEmail({
+      token: tokenFromUrl(emails.verifications[0]?.verifyUrl ?? ""),
+    });
+
+    const session = await service.authenticateUser(
+      { email: "admin@neatly.example", password: ADMIN_PASSWORD },
+      { ip: "203.0.113.9" },
+    );
+    expect(session.user.email).toBe("admin@neatly.example");
+  });
+
+  it("authenticates valid credentials and resolves the session", async (): Promise<void> => {
+    const { emails, service } = createAuthHarness();
+    await registerVerifiedAdmin(service, emails);
 
     const session = await service.authenticateUser(
       { email: "admin@neatly.example", password: ADMIN_PASSWORD },
@@ -142,12 +191,8 @@ describe("AuthService", (): void => {
   });
 
   it("rejects invalid credentials without revealing whether the email exists", async (): Promise<void> => {
-    const { service } = createAuthHarness();
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness();
+    await registerVerifiedAdmin(service, emails);
 
     try {
       await service.authenticateUser(
@@ -176,12 +221,8 @@ describe("AuthService", (): void => {
   });
 
   it("rate limits repeated login attempts from the same IP", async (): Promise<void> => {
-    const { service } = createAuthHarness();
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness();
+    await registerVerifiedAdmin(service, emails);
 
     const ip = "203.0.113.13";
 
@@ -203,12 +244,8 @@ describe("AuthService", (): void => {
   });
 
   it("logs the user out and rejects the previous session token", async (): Promise<void> => {
-    const { service } = createAuthHarness();
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness();
+    await registerVerifiedAdmin(service, emails);
     const session = await service.authenticateUser(
       { email: "admin@neatly.example", password: ADMIN_PASSWORD },
       { ip: "203.0.113.14" },
@@ -222,12 +259,8 @@ describe("AuthService", (): void => {
 
   it("treats expired sessions as signed out", async (): Promise<void> => {
     let current = new Date("2026-08-27T00:00:00.000Z");
-    const { service } = createAuthHarness((): Date => current);
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness((): Date => current);
+    await registerVerifiedAdmin(service, emails);
     const session = await service.authenticateUser(
       { email: "admin@neatly.example", password: ADMIN_PASSWORD },
       { ip: "203.0.113.15" },
@@ -240,12 +273,8 @@ describe("AuthService", (): void => {
   });
 
   it("sends a generic forgot-password response whether or not the email exists", async (): Promise<void> => {
-    const { service, emails } = createAuthHarness();
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness();
+    await registerVerifiedAdmin(service, emails);
 
     const existing = await service.requestPasswordReset(
       { email: "admin@neatly.example" },
@@ -263,12 +292,8 @@ describe("AuthService", (): void => {
   });
 
   it("resets a password, consumes the token, and invalidates sessions", async (): Promise<void> => {
-    const { service, emails } = createAuthHarness();
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness();
+    await registerVerifiedAdmin(service, emails);
     const session = await service.authenticateUser(
       { email: "admin@neatly.example", password: ADMIN_PASSWORD },
       { ip: "203.0.113.18" },
@@ -278,10 +303,10 @@ describe("AuthService", (): void => {
       { ip: "203.0.113.19" },
     );
 
-    const token = tokenFromResetUrl(emails.passwordResets[0]?.resetUrl ?? "");
+    const token = tokenFromUrl(emails.passwordResets[0]?.resetUrl ?? "");
     const nextPassword = "new-correct-horse-battery";
     await service.resetPassword(
-      { token, password: nextPassword },
+      { password: nextPassword, token },
       { ip: "203.0.113.20" },
     );
 
@@ -303,7 +328,7 @@ describe("AuthService", (): void => {
 
     await expect(
       service.resetPassword(
-        { token, password: "another-valid-password" },
+        { password: "another-valid-password", token },
         { ip: "203.0.113.23" },
       ),
     ).rejects.toMatchObject({ code: "TOKEN_INVALID" });
@@ -311,31 +336,55 @@ describe("AuthService", (): void => {
 
   it("rejects expired and unknown reset tokens", async (): Promise<void> => {
     let current = new Date("2026-08-27T00:00:00.000Z");
-    const { service, emails } = createAuthHarness((): Date => current);
-    await service.registerUser({
-      name: "Neatly Admin",
-      email: "admin@neatly.example",
-      password: ADMIN_PASSWORD,
-    });
+    const { emails, service } = createAuthHarness((): Date => current);
+    await registerVerifiedAdmin(service, emails);
     await service.requestPasswordReset(
       { email: "admin@neatly.example" },
       { ip: "203.0.113.24" },
     );
-    const token = tokenFromResetUrl(emails.passwordResets[0]?.resetUrl ?? "");
+    const token = tokenFromUrl(emails.passwordResets[0]?.resetUrl ?? "");
 
     current = new Date("2026-08-27T01:00:01.000Z");
     await expect(
       service.resetPassword(
-        { token, password: "new-correct-horse-battery" },
+        { password: "new-correct-horse-battery", token },
         { ip: "203.0.113.25" },
       ),
     ).rejects.toMatchObject({ code: "TOKEN_EXPIRED" });
 
     await expect(
       service.resetPassword(
-        { token: "00".repeat(32), password: "new-correct-horse-battery" },
+        { password: "new-correct-horse-battery", token: "00".repeat(32) },
         { ip: "203.0.113.26" },
       ),
     ).rejects.toMatchObject({ code: "TOKEN_INVALID" });
+  });
+
+  it("returns a generic verification notice and rejects reused tokens", async (): Promise<void> => {
+    const { emails, service } = createAuthHarness();
+    await service.registerUser({
+      email: "admin@neatly.example",
+      name: "Neatly Admin",
+      password: ADMIN_PASSWORD,
+    });
+
+    const existing = await service.requestEmailVerification(
+      { email: "admin@neatly.example" },
+      { ip: "203.0.113.27" },
+    );
+    const missing = await service.requestEmailVerification(
+      { email: "missing@neatly.example" },
+      { ip: "203.0.113.28" },
+    );
+
+    expect(existing.message).toBe(AUTH_GENERIC_VERIFY_NOTICE);
+    expect(missing.message).toBe(AUTH_GENERIC_VERIFY_NOTICE);
+    expect(emails.verifications.length).toBeGreaterThan(1);
+
+    const token = tokenFromUrl(emails.verifications.at(-1)?.verifyUrl ?? "");
+    await service.verifyEmail({ token });
+    await expect(service.verifyEmail({ token })).rejects.toMatchObject({
+      code: "TOKEN_INVALID",
+    });
   });
 });

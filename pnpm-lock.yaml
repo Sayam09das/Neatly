@@ -77,6 +77,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@neatly/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@prisma/client':
         specifier: ^6.19.0
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
@@ -102,18 +105,12 @@ importers:
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.15.0)(react@19.2.8)
-      '@neatly/api':
-        specifier: workspace:*
-        version: link:../server
       '@neatly/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@neatly/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      bcrypt:
-        specifier: ^6.0.0
-        version: 6.0.0
       framer-motion:
         specifier: ^13.1.1
         version: 13.1.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -139,9 +136,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.3.3
-      '@types/bcrypt':
-        specifier: ^6.0.0
-        version: 6.0.0
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { generateAuthToken, hashAuthToken } from "@/lib/auth/tokens";
+import {
+  generateAuthToken,
+  hashAuthToken,
+} from "../../../apps/server/src/lib/auth/tokens.ts";
 
 const SECRET = "test-session-secret-value-32-chars-min";
 

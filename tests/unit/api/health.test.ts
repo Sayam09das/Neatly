@@ -7,7 +7,10 @@ import {
   DATABASE_HEALTH_STATUS,
   HTTP_STATUS,
 } from "../../../apps/server/src/config/constants.ts";
-import { loadApiEnv } from "../../../apps/server/src/config/env.ts";
+import {
+  loadApiEnv,
+  loadAuthEnv,
+} from "../../../apps/server/src/config/env.ts";
 import { checkDatabaseConnection } from "../../../apps/server/src/lib/database-health.ts";
 import { matchRoute } from "../../../apps/server/src/routes/index.ts";
 
@@ -161,6 +164,33 @@ describe("GET /health", (): void => {
       matchRoute(req);
     }).toThrow();
   });
+
+  it("registers backend-owned authentication routes", (): void => {
+    expect(matchRoute(createMockRequest("POST", "/auth/login"))).toBeTypeOf(
+      "function",
+    );
+    expect(matchRoute(createMockRequest("POST", "/auth/logout"))).toBeTypeOf(
+      "function",
+    );
+    expect(matchRoute(createMockRequest("GET", "/auth/session"))).toBeTypeOf(
+      "function",
+    );
+    expect(matchRoute(createMockRequest("POST", "/auth/register"))).toBeTypeOf(
+      "function",
+    );
+    expect(
+      matchRoute(createMockRequest("POST", "/auth/forgot-password")),
+    ).toBeTypeOf("function");
+    expect(
+      matchRoute(createMockRequest("POST", "/auth/reset-password")),
+    ).toBeTypeOf("function");
+    expect(
+      matchRoute(createMockRequest("POST", "/auth/verify-email")),
+    ).toBeTypeOf("function");
+    expect(
+      matchRoute(createMockRequest("POST", "/auth/resend-verification")),
+    ).toBeTypeOf("function");
+  });
 });
 
 describe("loadApiEnv", (): void => {
@@ -176,5 +206,43 @@ describe("loadApiEnv", (): void => {
     expect((): void => {
       loadApiEnv({ PORT: "not-a-port" });
     }).toThrow(/PORT is invalid/);
+  });
+});
+
+describe("loadAuthEnv", (): void => {
+  it("loads a valid session secret and site URL", (): void => {
+    const secret = "local-development-session-secret-value";
+    const env = loadAuthEnv({
+      SESSION_SECRET: secret,
+      SITE_URL: "https://neatly.example/admin",
+    });
+
+    expect(env.sessionSecret).toBe(secret);
+    expect(env.siteUrl).toBe("https://neatly.example");
+    expect(env.smtp).toBeNull();
+  });
+
+  it("rejects a short SESSION_SECRET without echoing the value", (): void => {
+    const shortSecret = "too-short";
+
+    expect((): void => {
+      loadAuthEnv({
+        SESSION_SECRET: shortSecret,
+        SITE_URL: "https://neatly.example",
+      });
+    }).toThrow(/SESSION_SECRET is invalid/);
+
+    try {
+      loadAuthEnv({
+        SESSION_SECRET: shortSecret,
+        SITE_URL: "https://neatly.example",
+      });
+    } catch (error: unknown) {
+      expect(error).toBeInstanceOf(Error);
+      if (!(error instanceof Error)) {
+        return;
+      }
+      expect(error.message).not.toContain(shortSecret);
+    }
   });
 });

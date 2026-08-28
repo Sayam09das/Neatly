@@ -1,6 +1,6 @@
 export interface PasswordResetEmailInput {
-  to: string;
   resetUrl: string;
+  to: string;
 }
 
 export interface VerificationEmailInput {

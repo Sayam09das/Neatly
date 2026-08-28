@@ -4,6 +4,16 @@ import {
   createNotFoundError,
 } from "../lib/errors.ts";
 import { getRequestMethod, getRequestPath } from "../lib/http.ts";
+import {
+  forgotPasswordHandler,
+  loginHandler,
+  logoutHandler,
+  registerHandler,
+  resendVerificationHandler,
+  resetPasswordHandler,
+  sessionHandler,
+  verifyEmailHandler,
+} from "./auth.route.ts";
 import { healthHandler } from "./health.route.ts";
 import { rootHandler } from "./root.route.ts";
 
@@ -33,6 +43,46 @@ const routes: readonly RouteDefinition[] = [
     handler: healthHandler,
     method: "GET",
     path: "/health",
+  },
+  {
+    handler: registerHandler,
+    method: "POST",
+    path: "/auth/register",
+  },
+  {
+    handler: loginHandler,
+    method: "POST",
+    path: "/auth/login",
+  },
+  {
+    handler: logoutHandler,
+    method: "POST",
+    path: "/auth/logout",
+  },
+  {
+    handler: sessionHandler,
+    method: "GET",
+    path: "/auth/session",
+  },
+  {
+    handler: forgotPasswordHandler,
+    method: "POST",
+    path: "/auth/forgot-password",
+  },
+  {
+    handler: resetPasswordHandler,
+    method: "POST",
+    path: "/auth/reset-password",
+  },
+  {
+    handler: verifyEmailHandler,
+    method: "POST",
+    path: "/auth/verify-email",
+  },
+  {
+    handler: resendVerificationHandler,
+    method: "POST",
+    path: "/auth/resend-verification",
   },
 ];
 

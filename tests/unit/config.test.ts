@@ -12,10 +12,7 @@ const validClientSource = {
 } as const;
 
 const validServerSource = {
-  DATABASE_URL: "postgresql://neatly:neatly@localhost:5432/neatly",
-  SESSION_SECRET: "local-development-session-secret-value",
-  EMAIL_API_KEY: "local-email-key",
-  STORAGE_API_KEY: "local-storage-key",
+  NEATLY_API_URL: "http://127.0.0.1:4000",
   NEXT_PUBLIC_SITE_URL: "https://neatly.example",
 } as const;
 
@@ -81,17 +78,32 @@ describe("loadServerEnv", (): void => {
   it("returns validated server configuration", (): void => {
     const env: ServerEnv = loadServerEnv(validServerSource);
 
-    expect(env.DATABASE_URL).toBe(validServerSource.DATABASE_URL);
-    expect(env.NEXT_PUBLIC_SITE_URL).toBe(
-      validServerSource.NEXT_PUBLIC_SITE_URL,
-    );
+    expect(env).toEqual({
+      NEATLY_API_URL: validServerSource.NEATLY_API_URL,
+      NEXT_PUBLIC_SITE_URL: validServerSource.NEXT_PUBLIC_SITE_URL,
+    });
+    expect(env).not.toHaveProperty("DATABASE_URL");
+    expect(env).not.toHaveProperty("SESSION_SECRET");
+  });
+
+  it("ignores backend secrets present in the source", (): void => {
+    const env = loadServerEnv({
+      ...validServerSource,
+      DATABASE_URL: "postgresql://neatly:neatly@localhost:5432/neatly",
+      SESSION_SECRET: "local-development-session-secret-value",
+    });
+
+    expect(Object.keys(env).sort()).toEqual([
+      "NEATLY_API_URL",
+      "NEXT_PUBLIC_SITE_URL",
+    ]);
   });
 
   it("fails when a required server variable is missing", (): void => {
     try {
       loadServerEnv({
         ...validServerSource,
-        DATABASE_URL: undefined,
+        NEATLY_API_URL: undefined,
       });
       expect.unreachable();
     } catch (error: unknown) {
@@ -99,18 +111,18 @@ describe("loadServerEnv", (): void => {
       if (!(error instanceof EnvValidationError)) {
         return;
       }
-      expect(error.message).toContain("DATABASE_URL is required");
-      expect(error.variableNames).toContain("DATABASE_URL");
+      expect(error.message).toContain("NEATLY_API_URL is required");
+      expect(error.variableNames).toContain("NEATLY_API_URL");
     }
   });
 
-  it("fails when SESSION_SECRET is too short without echoing the value", (): void => {
-    const shortSecret = "too-short";
+  it("fails when NEATLY_API_URL is invalid without echoing the value", (): void => {
+    const invalidValue = "not-a-url";
 
     try {
       loadServerEnv({
         ...validServerSource,
-        SESSION_SECRET: shortSecret,
+        NEATLY_API_URL: invalidValue,
       });
       expect.unreachable();
     } catch (error: unknown) {
@@ -118,8 +130,8 @@ describe("loadServerEnv", (): void => {
       if (!(error instanceof EnvValidationError)) {
         return;
       }
-      expect(error.message).toContain("SESSION_SECRET is invalid");
-      expect(error.message).not.toContain(shortSecret);
+      expect(error.message).toContain("NEATLY_API_URL is invalid");
+      expect(error.message).not.toContain(invalidValue);
     }
   });
 

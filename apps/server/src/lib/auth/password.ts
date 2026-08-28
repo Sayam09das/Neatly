@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { AUTH_BCRYPT_COST } from "@/config/auth";
+import { AUTH_BCRYPT_COST } from "../../config/auth.ts";
 
 export async function hashPassword(
   password: string,

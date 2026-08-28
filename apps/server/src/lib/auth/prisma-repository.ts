@@ -1,16 +1,19 @@
-import { prisma } from "@neatly/api/db";
+import { prisma } from "../db.ts";
 import type {
+  AuthEmailVerificationRecord,
   AuthPasswordResetRecord,
   AuthRepository,
   AuthSessionRecord,
   AuthUserRecord,
+  CreateEmailVerificationRecordInput,
   CreatePasswordResetRecordInput,
   CreateSessionRecordInput,
   CreateUserRecordInput,
-} from "@/lib/auth/repository";
+} from "./repository.ts";
 
 function toUserRecord(user: {
   email: string;
+  emailVerifiedAt: Date | null;
   id: string;
   lastLoginAt: Date | null;
   name: string;
@@ -25,6 +28,7 @@ function toUserRecord(user: {
     passwordHash: user.passwordHash,
     role: user.role,
     status: user.status,
+    emailVerifiedAt: user.emailVerifiedAt,
     lastLoginAt: user.lastLoginAt,
   };
 }
@@ -50,6 +54,22 @@ function toResetRecord(token: {
   usedAt: Date | null;
   userId: string;
 }): AuthPasswordResetRecord {
+  return {
+    id: token.id,
+    userId: token.userId,
+    tokenHash: token.tokenHash,
+    expiresAt: token.expiresAt,
+    usedAt: token.usedAt,
+  };
+}
+
+function toVerificationRecord(token: {
+  expiresAt: Date;
+  id: string;
+  tokenHash: string;
+  usedAt: Date | null;
+  userId: string;
+}): AuthEmailVerificationRecord {
   return {
     id: token.id,
     userId: token.userId,
@@ -106,6 +126,13 @@ export class PrismaAuthRepository implements AuthRepository {
     await prisma.user.update({
       where: { id: userId },
       data: { lastLoginAt: at },
+    });
+  }
+
+  public async markEmailVerified(userId: string, at: Date): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { emailVerifiedAt: at },
     });
   }
 
@@ -190,11 +217,58 @@ export class PrismaAuthRepository implements AuthRepository {
     });
   }
 
+  public async createEmailVerificationToken(
+    input: CreateEmailVerificationRecordInput,
+  ): Promise<AuthEmailVerificationRecord> {
+    const token = await prisma.emailVerificationToken.create({
+      data: {
+        userId: input.userId,
+        tokenHash: input.tokenHash,
+        expiresAt: input.expiresAt,
+      },
+    });
+
+    return toVerificationRecord(token);
+  }
+
+  public async findEmailVerificationTokenByHash(
+    tokenHash: string,
+  ): Promise<AuthEmailVerificationRecord | null> {
+    const token = await prisma.emailVerificationToken.findUnique({
+      where: { tokenHash },
+    });
+
+    return token === null ? null : toVerificationRecord(token);
+  }
+
+  public async consumeEmailVerificationToken(
+    tokenId: string,
+    usedAt: Date,
+  ): Promise<boolean> {
+    const result = await prisma.emailVerificationToken.updateMany({
+      where: {
+        id: tokenId,
+        usedAt: null,
+      },
+      data: { usedAt },
+    });
+
+    return result.count === 1;
+  }
+
+  public async deleteEmailVerificationTokensForUser(
+    userId: string,
+  ): Promise<void> {
+    await prisma.emailVerificationToken.deleteMany({
+      where: { userId },
+    });
+  }
+
   public async completePasswordReset(input: {
-    tokenId: string;
-    userId: string;
     passwordHash: string;
+    tokenId: string;
     usedAt: Date;
+    userId: string;
   }): Promise<boolean> {
     return prisma.$transaction(async (tx): Promise<boolean> => {
       const consumed = await tx.passwordResetToken.updateMany({

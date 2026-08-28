@@ -1,7 +1,7 @@
 import {
   AUTH_RATE_LIMIT_MAX_ATTEMPTS,
   AUTH_RATE_LIMIT_WINDOW_MS,
-} from "@/config/auth";
+} from "../../config/auth.ts";
 
 interface RateLimitBucket {
   count: number;
@@ -10,12 +10,19 @@ interface RateLimitBucket {
 
 export class MemoryRateLimiter {
   private readonly buckets = new Map<string, RateLimitBucket>();
+  private readonly maxAttempts: number;
+  private readonly now: () => number;
+  private readonly windowMs: number;
 
   public constructor(
-    private readonly maxAttempts: number = AUTH_RATE_LIMIT_MAX_ATTEMPTS,
-    private readonly windowMs: number = AUTH_RATE_LIMIT_WINDOW_MS,
-    private readonly now: () => number = Date.now,
-  ) {}
+    maxAttempts: number = AUTH_RATE_LIMIT_MAX_ATTEMPTS,
+    windowMs: number = AUTH_RATE_LIMIT_WINDOW_MS,
+    now: () => number = Date.now,
+  ) {
+    this.maxAttempts = maxAttempts;
+    this.windowMs = windowMs;
+    this.now = now;
+  }
 
   public consume(key: string): boolean {
     const timestamp = this.now();
@@ -37,21 +44,7 @@ export class MemoryRateLimiter {
     return true;
   }
 
-  public peekRemaining(key: string): number {
-    const timestamp = this.now();
-    const existing = this.buckets.get(key);
-
-    if (existing === undefined || existing.resetAt <= timestamp) {
-      return this.maxAttempts;
-    }
-
-    return Math.max(this.maxAttempts - existing.count, 0);
-  }
-
   public reset(key: string): void {
     this.buckets.delete(key);
   }
 }
-
-export const loginRateLimiter = new MemoryRateLimiter();
-export const passwordResetRateLimiter = new MemoryRateLimiter();

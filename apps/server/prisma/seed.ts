@@ -37,6 +37,7 @@ async function seedDevelopmentAdmin(): Promise<void> {
       passwordHash: await bcrypt.hash(password, AUTH_BCRYPT_COST),
       role: "ADMIN",
       status: "ACTIVE",
+      emailVerifiedAt: new Date(),
     },
   });
 }

@@ -317,10 +317,16 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
 * `GET  /api/blog` — Fetch published blog posts (supports pagination & category filters).
 
 ### 11.3 Protected Admin API Endpoints (`/api/admin/*`)
+
+Next.js Route Handlers remain the browser-facing BFF. Authentication decisions execute on the Neatly HTTP API. The BFF sets HttpOnly cookies and never returns session tokens to JavaScript.
+
 * `POST /api/admin/auth/login` — Authenticate admin credentials and set session cookie.
 * `POST /api/admin/auth/logout` — Invalidate session and clear session cookie.
+* `POST /api/admin/auth/register` — Create an admin account and send a verification email.
 * `POST /api/admin/auth/forgot-password` — Request a password reset email. Always returns a generic success payload.
 * `POST /api/admin/auth/reset-password` — Consume a single-use reset token and set a new password hash.
+* `POST /api/admin/auth/verify-email` — Consume a single-use email verification token.
+* `POST /api/admin/auth/resend-verification` — Resend a verification email. Always returns a generic success payload.
 * `GET  /api/admin/quotes` — List quotes with status filtering.
 * `PATCH /api/admin/quotes/[id]` — Update quote status or append internal notes.
 * `GET  /api/admin/contacts` — List contact inbox submissions.
@@ -424,26 +430,29 @@ Application Exception Occurs
                                     │
                          Submit Credentials (Email + Password)
                                     │
-                         Zod Server-Side Validation
+                         Next.js BFF origin / CSRF check
                                     │
-                         AuthService.validateCredentials()
+                         POST /auth/login on the Neatly HTTP API
                                     │
                      ┌──────────────┴──────────────┐
                      ▼                             ▼
-              [Password Match]            [Password Mismatch]
+              [Password Match,              [Password Mismatch,
+               verified, active]             unverified, or inactive]
                      │                             │
-       Generate Crypto Session Token      Increment Rate Limit Counter
+       Persist hashed session in DB       Increment Rate Limit Counter
                      │                             │
-       Persist Session Record in DB       Return HTTP 401 Error
+       Return session token to BFF        Return HTTP 401 Error
                      │
        Set HttpOnly, Secure Cookie
+       (token never returned to browser)
                      │
        Redirect to /admin Dashboard
 ```
 
 ### Technical Controls
-* **Password Hashing:** `bcrypt` with a minimum cost factor of 12.
-* **Session Strategy:** Crypto-random 256-bit session tokens stored in an `HttpOnly` cookie. The raw token is hashed with `HMAC-SHA256(SESSION_SECRET)` before it is written to the `sessions` table. There are no JWT access or refresh tokens.
+* **Ownership:** Authentication is owned by the Neatly HTTP API (`apps/server`). Next.js does not import Prisma, hash passwords, or read `SESSION_SECRET`.
+* **Password Hashing:** `bcrypt` with a minimum cost factor of 12. Hashes are never logged, returned, or placed in tokens.
+* **Session Strategy:** Crypto-random 256-bit session tokens stored in an `HttpOnly` cookie on the Next.js origin. The raw token is hashed with `HMAC-SHA256(SESSION_SECRET)` in the API before it is written to the `sessions` table. There are no JWT access or refresh tokens and no `localStorage` credentials.
 * **Session Cookie Configuration:**
   * `HttpOnly: true` (Prevents client-side JavaScript access via `document.cookie`).
   * `Secure: true` in production (Mandates HTTPS transport). `Secure` is disabled on local HTTP development.
@@ -452,23 +461,28 @@ Application Exception Occurs
   * `Max-Age: 604800` (7-day session validity).
 * **CSRF:** Cookie-authenticated auth mutations also require a matching `Origin`, `Referer`, or `Host` against `NEXT_PUBLIC_SITE_URL`.
 * **Password Reset:** Hashed, single-use tokens expire after 60 minutes. A successful reset rehashes the password and deletes all sessions for that admin.
-* **Email Verification:** Not part of the MVP. Admin identities are created by seed / internal `AuthService.registerUser()`, not public self-registration.
-* **Account Enumeration:** Forgot-password always returns: "If an account exists for this email, instructions have been sent."
-* **Rate Limiting:** Maximum 5 login, forgot-password, and reset-password attempts per IP per 15 minutes (in-process limiter; Redis is out of MVP scope).
-* **Authorization Boundary:** The server session cookie is the source of truth. `getSession()` / `getCurrentUser()` resolve the admin in Server Components (request-deduped, dynamic, never cached). `requireAuth()` throws for API handlers. `requireAdminPage()` redirects unauthenticated visitors to `/admin/login`. `requireRole()` / `requirePermission()` enforce RBAC. There is no client `AuthProvider` and no JWT refresh flow.
-* **Route Protection:** Middleware only checks cookie presence on `/admin/*` (except login / forgot-password / reset-password). The `app/admin/(app)` layout validates the session in the database and redirects if it is missing or expired. The `app/admin/(session)` layout sends an already-authenticated admin to `/admin`. Public marketing routes are never gated.
+* **Email Verification:** Hashed, single-use tokens expire after 24 hours. Login requires `emailVerifiedAt` to be set. Resend and forgot-password always return a generic notice.
+* **Account Enumeration:** Forgot-password and resend-verification always return: "If an account exists for this email, instructions have been sent."
+* **Rate Limiting:** Maximum 5 login, forgot-password, reset-password, and resend-verification attempts per IP per 15 minutes (in-process limiter on the API; Redis is out of MVP scope).
+* **Authorization Boundary:** The server session cookie is the source of truth. `getSession()` / `getCurrentUser()` resolve the admin through the API (request-deduped, dynamic, never cached). `requireAuth()` throws for API handlers. `requireAdminPage()` redirects unauthenticated visitors to `/admin/login`. `requireRole()` / `requirePermission()` enforce RBAC. There is no client `AuthProvider` and no JWT refresh flow.
+* **Route Protection:** Middleware only checks cookie presence on `/admin/*` (except login / register / forgot-password / reset-password / verify-email). The `app/admin/(app)` layout validates the session through the backend API and redirects if it is missing or expired. The `app/admin/(session)` layout sends an already-authenticated admin to `/admin`. Public marketing routes are never gated.
 * **Authenticated API Client:** Same-origin `adminRequest()` sends the session cookie (`credentials: "same-origin"`, `cache: "no-store"`). HTTP 401 is unauthorized / session invalid. HTTP 403 is authenticated-but-forbidden and must not log the user out. There is no retry or token-refresh loop.
 
 ### Auth API Contract
 
-All auth routes return the standard `{ success, data, error, timestamp }` envelope and `Cache-Control: no-store`.
+Browser-facing Next.js routes return the standard `{ success, data, error, timestamp }` envelope and `Cache-Control: no-store`. The BFF calls the HTTP API and never includes `sessionToken` in browser responses.
 
 | Route | Auth required | Request body | Success `data` | Error codes |
 | :--- | :--- | :--- | :--- | :--- |
 | `POST /api/admin/auth/login` | No | `{ email, password }` | `{ user, expiresAt }` | `INVALID_INPUT`, `INVALID_CREDENTIALS`, `RATE_LIMITED`, `FORBIDDEN` |
 | `POST /api/admin/auth/logout` | No | none | `{ signedOut: true }` | `FORBIDDEN` |
+| `POST /api/admin/auth/register` | No | `{ name, email, password }` | `{ user }` | `INVALID_INPUT`, `FORBIDDEN` |
 | `POST /api/admin/auth/forgot-password` | No | `{ email }` | `{ message }` | `INVALID_INPUT`, `RATE_LIMITED`, `FORBIDDEN` |
 | `POST /api/admin/auth/reset-password` | No | `{ token, password }` | `{ user: { id, email } }` | `INVALID_INPUT`, `TOKEN_INVALID`, `TOKEN_EXPIRED`, `RATE_LIMITED`, `FORBIDDEN` |
+| `POST /api/admin/auth/verify-email` | No | `{ token }` | `{ user: { id, email } }` | `INVALID_INPUT`, `TOKEN_INVALID`, `TOKEN_EXPIRED`, `FORBIDDEN` |
+| `POST /api/admin/auth/resend-verification` | No | `{ email }` | `{ message }` | `INVALID_INPUT`, `RATE_LIMITED`, `FORBIDDEN` |
+
+Backend-owned routes on the HTTP API: `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/session`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/verify-email`, `POST /auth/resend-verification`. Login returns `sessionToken` only to the Next.js BFF.
 
 `user` never includes `passwordHash` or tokens. `FORBIDDEN` is returned when the CSRF origin check fails.
 
@@ -727,11 +741,13 @@ Live Production Site + Automated Smoke Test Verification
 
 | Variable Name | Environment Scope | Description | Exposed to Client? |
 | :--- | :--- | :--- | :--- |
-| `DATABASE_URL` | Server Only | PostgreSQL connection string | ❌ NO |
-| `SESSION_SECRET` | Server Only | Secret string for session token hashing | ❌ NO |
-| `EMAIL_API_KEY` | Server Only | API key for Resend/SendGrid provider | ❌ NO |
-| `STORAGE_API_KEY` | Server Only | API key for Cloudinary/S3 storage | ❌ NO |
-| `NEXT_PUBLIC_SITE_URL`| Client + Server | Public canonical URL (e.g., `https://neatly.com`) | ✅ YES |
+| `DATABASE_URL` | API Server Only | PostgreSQL connection string | ❌ NO |
+| `SESSION_SECRET` | API Server Only | Secret string for session and token hashing | ❌ NO |
+| `SITE_URL` | API Server Only | Public origin used in auth emails | ❌ NO |
+| `SMTP_PASSWORD` | API Server Only | Brevo API key for transactional email | ❌ NO |
+| `NEATLY_API_URL` | Next.js Server Only | Origin of the Neatly HTTP API | ❌ NO |
+| `STORAGE_API_KEY` | API Server Only | API key for Cloudinary/S3 storage | ❌ NO |
+| `NEXT_PUBLIC_SITE_URL`| Client + Next.js Server | Public canonical URL (e.g., `https://neatly.com`) | ✅ YES |
 
 ---
 

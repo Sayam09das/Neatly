@@ -1,20 +1,13 @@
 import { loadServerEnv } from "@neatly/config/server";
-import { PrismaAuthRepository } from "@/lib/auth/prisma-repository";
-import { AuthService } from "@/services/auth.service";
-import { EmailService } from "@/services/email.service";
+import { BackendAuthClient } from "@/lib/auth/api-client";
 
-let authService: AuthService | undefined;
+let authClient: BackendAuthClient | undefined;
 
-export function getAuthService(): AuthService {
-  if (authService === undefined) {
+export function getAuthService(): BackendAuthClient {
+  if (authClient === undefined) {
     const env = loadServerEnv();
-    authService = new AuthService(
-      new PrismaAuthRepository(),
-      new EmailService(),
-      env.SESSION_SECRET,
-      { siteUrl: env.NEXT_PUBLIC_SITE_URL },
-    );
+    authClient = new BackendAuthClient(env.NEATLY_API_URL);
   }
 
-  return authService;
+  return authClient;
 }

@@ -1,29 +1,34 @@
 import type { z } from "@neatly/config/zod";
 import {
   AUTH_ADMIN_RESET_PASSWORD_PATH,
+  AUTH_ADMIN_VERIFY_EMAIL_PATH,
+  AUTH_EMAIL_VERIFICATION_TTL_MS,
   AUTH_GENERIC_RESET_NOTICE,
+  AUTH_GENERIC_VERIFY_NOTICE,
   AUTH_PASSWORD_RESET_TTL_MS,
   AUTH_SESSION_MAX_AGE_SECONDS,
-} from "@/config/auth";
-import { AUTH_ERROR_MESSAGES, AuthError } from "@/lib/auth/errors";
-import { logAuthEvent } from "@/lib/auth/logger";
-import { hashPassword, verifyPassword } from "@/lib/auth/password";
+} from "../config/auth.ts";
+import { isAdminRole } from "../lib/auth/authorization.ts";
+import { AUTH_ERROR_MESSAGES, AuthError } from "../lib/auth/errors.ts";
+import { logAuthEvent } from "../lib/auth/logger.ts";
+import { hashPassword, verifyPassword } from "../lib/auth/password.ts";
+import { MemoryRateLimiter } from "../lib/auth/rate-limit.ts";
+import type { AuthRepository } from "../lib/auth/repository.ts";
+import { generateAuthToken, hashAuthToken } from "../lib/auth/tokens.ts";
 import {
-  loginRateLimiter,
-  type MemoryRateLimiter,
-  passwordResetRateLimiter,
-} from "@/lib/auth/rate-limit";
-import type { AuthRepository } from "@/lib/auth/repository";
-import { toAuthUser } from "@/lib/auth/repository";
-import { generateAuthToken, hashAuthToken } from "@/lib/auth/tokens";
+  type AuthSessionResult,
+  type AuthUser,
+  toAuthUser,
+} from "../lib/auth/types.ts";
 import {
   forgotPasswordSchema,
   loginSchema,
   registerUserSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
-} from "@/lib/validations/auth.schema";
-import type { EmailService } from "@/services/email.service";
-import type { AuthSessionResult, AuthUser } from "@/types/auth";
+  verifyEmailSchema,
+} from "../lib/validations/auth.schema.ts";
+import type { EmailService } from "./email.service.ts";
 
 const DUMMY_PASSWORD_GUARD = "invalid-credential-timing-guard";
 
@@ -32,10 +37,11 @@ export interface AuthServiceContext {
 }
 
 export interface AuthServiceOptions {
-  now?: () => Date;
-  siteUrl?: string;
   loginLimiter?: MemoryRateLimiter;
+  now?: () => Date;
   resetLimiter?: MemoryRateLimiter;
+  siteUrl?: string;
+  verifyLimiter?: MemoryRateLimiter;
 }
 
 function normalizeEmail(email: string): string {
@@ -61,19 +67,29 @@ function parseSchema<T>(schema: z.ZodType<T>, input: unknown): T {
 
 export class AuthService {
   private dummyPasswordHash: string | undefined;
-  private readonly now: () => Date;
+  private readonly emailService: EmailService;
   private readonly loginLimiter: MemoryRateLimiter;
+  private readonly now: () => Date;
+  private readonly options: AuthServiceOptions;
+  private readonly repository: AuthRepository;
   private readonly resetLimiter: MemoryRateLimiter;
+  private readonly sessionSecret: string;
+  private readonly verifyLimiter: MemoryRateLimiter;
 
   public constructor(
-    private readonly repository: AuthRepository,
-    private readonly emailService: EmailService,
-    private readonly sessionSecret: string,
-    private readonly options: AuthServiceOptions = {},
+    repository: AuthRepository,
+    emailService: EmailService,
+    sessionSecret: string,
+    options: AuthServiceOptions = {},
   ) {
+    this.repository = repository;
+    this.emailService = emailService;
+    this.sessionSecret = sessionSecret;
+    this.options = options;
     this.now = options.now ?? ((): Date => new Date());
-    this.loginLimiter = options.loginLimiter ?? loginRateLimiter;
-    this.resetLimiter = options.resetLimiter ?? passwordResetRateLimiter;
+    this.loginLimiter = options.loginLimiter ?? new MemoryRateLimiter();
+    this.resetLimiter = options.resetLimiter ?? new MemoryRateLimiter();
+    this.verifyLimiter = options.verifyLimiter ?? new MemoryRateLimiter();
   }
 
   public async registerUser(input: unknown): Promise<AuthUser> {
@@ -96,10 +112,12 @@ export class AuthService {
 
     const passwordHash = await hashPassword(values.password);
     const user = await this.repository.createUser({
-      name: values.name,
       email,
+      name: values.name,
       passwordHash,
     });
+
+    await this.dispatchVerificationEmail(user.id, user.email);
 
     return toAuthUser(user);
   }
@@ -120,7 +138,13 @@ export class AuthService {
       user?.passwordHash ?? (await this.getDummyPasswordHash());
     const passwordMatches = await verifyPassword(values.password, passwordHash);
 
-    if (user === null || !passwordMatches || user.status !== "ACTIVE") {
+    if (
+      user === null ||
+      !passwordMatches ||
+      user.status !== "ACTIVE" ||
+      user.emailVerifiedAt === null ||
+      !isAdminRole(user.role)
+    ) {
       throw new AuthError(
         "INVALID_CREDENTIALS",
         AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
@@ -136,16 +160,16 @@ export class AuthService {
     );
 
     await this.repository.createSession({
-      userId: user.id,
-      tokenHash: hashAuthToken(sessionToken, this.sessionSecret),
       expiresAt,
+      tokenHash: hashAuthToken(sessionToken, this.sessionSecret),
+      userId: user.id,
     });
     await this.repository.markLogin(user.id, createdAt);
 
     return {
-      user: toAuthUser({ ...user, lastLoginAt: createdAt }),
-      sessionToken,
       expiresAt,
+      sessionToken,
+      user: toAuthUser({ ...user, lastLoginAt: createdAt }),
     };
   }
 
@@ -171,7 +195,11 @@ export class AuthService {
 
     const user = await this.repository.findUserById(session.userId);
 
-    if (user === null || user.status !== "ACTIVE") {
+    if (
+      user === null ||
+      user.status !== "ACTIVE" ||
+      user.emailVerifiedAt === null
+    ) {
       await this.repository.deleteSessionByTokenHash(session.tokenHash);
       return null;
     }
@@ -215,20 +243,20 @@ export class AuthService {
       const createdAt = this.now();
 
       await this.repository.createPasswordResetToken({
-        userId: user.id,
-        tokenHash: hashAuthToken(token, this.sessionSecret),
         expiresAt: new Date(createdAt.getTime() + AUTH_PASSWORD_RESET_TTL_MS),
+        tokenHash: hashAuthToken(token, this.sessionSecret),
+        userId: user.id,
       });
 
       try {
         await this.emailService.sendPasswordResetEmail({
-          to: user.email,
           resetUrl: this.buildResetUrl(token, siteUrl),
+          to: user.email,
         });
       } catch {
         logAuthEvent({
-          type: "password_reset_email_failed",
           outcome: "failure",
+          type: "password_reset_email_failed",
         });
       }
     }
@@ -245,6 +273,7 @@ export class AuthService {
     if (!this.resetLimiter.consume(`reset:${context.ip}`)) {
       throw new AuthError("RATE_LIMITED", AUTH_ERROR_MESSAGES.RATE_LIMITED);
     }
+
     const record = await this.repository.findPasswordResetTokenByHash(
       hashAuthToken(values.token, this.sessionSecret),
     );
@@ -259,10 +288,10 @@ export class AuthService {
 
     const passwordHash = await hashPassword(values.password);
     const consumed = await this.repository.completePasswordReset({
-      tokenId: record.id,
-      userId: record.userId,
       passwordHash,
+      tokenId: record.id,
       usedAt: this.now(),
+      userId: record.userId,
     });
 
     if (!consumed) {
@@ -278,8 +307,108 @@ export class AuthService {
     return toAuthUser(user);
   }
 
+  public async requestEmailVerification(
+    input: unknown,
+    context: AuthServiceContext,
+  ): Promise<{ message: string }> {
+    const values = parseSchema(resendVerificationSchema, input);
+
+    if (!this.verifyLimiter.consume(`verify:${context.ip}`)) {
+      throw new AuthError("RATE_LIMITED", AUTH_ERROR_MESSAGES.RATE_LIMITED);
+    }
+
+    const email = normalizeEmail(values.email);
+    const user = await this.repository.findUserByEmail(email);
+
+    if (
+      user !== null &&
+      user.status === "ACTIVE" &&
+      user.emailVerifiedAt === null
+    ) {
+      await this.dispatchVerificationEmail(user.id, user.email);
+    }
+
+    return { message: AUTH_GENERIC_VERIFY_NOTICE };
+  }
+
+  public async verifyEmail(input: unknown): Promise<AuthUser> {
+    const values = parseSchema(verifyEmailSchema, input);
+    const record = await this.repository.findEmailVerificationTokenByHash(
+      hashAuthToken(values.token, this.sessionSecret),
+    );
+
+    if (record === null || record.usedAt !== null) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+
+    if (record.expiresAt.getTime() <= this.now().getTime()) {
+      throw new AuthError("TOKEN_EXPIRED", AUTH_ERROR_MESSAGES.TOKEN_EXPIRED);
+    }
+
+    const usedAt = this.now();
+    const consumed = await this.repository.consumeEmailVerificationToken(
+      record.id,
+      usedAt,
+    );
+
+    if (!consumed) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+
+    await this.repository.markEmailVerified(record.userId, usedAt);
+    await this.repository.deleteEmailVerificationTokensForUser(record.userId);
+
+    const user = await this.repository.findUserById(record.userId);
+
+    if (user === null) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+
+    return toAuthUser(user);
+  }
+
+  private async dispatchVerificationEmail(
+    userId: string,
+    email: string,
+  ): Promise<void> {
+    const siteUrl = this.options.siteUrl;
+
+    if (siteUrl === undefined || siteUrl.trim() === "") {
+      return;
+    }
+
+    await this.repository.deleteEmailVerificationTokensForUser(userId);
+
+    const token = generateAuthToken();
+    const createdAt = this.now();
+
+    await this.repository.createEmailVerificationToken({
+      expiresAt: new Date(createdAt.getTime() + AUTH_EMAIL_VERIFICATION_TTL_MS),
+      tokenHash: hashAuthToken(token, this.sessionSecret),
+      userId,
+    });
+
+    try {
+      await this.emailService.sendVerificationEmail({
+        to: email,
+        verifyUrl: this.buildVerifyUrl(token, siteUrl),
+      });
+    } catch {
+      logAuthEvent({
+        outcome: "failure",
+        type: "verification_email_failed",
+      });
+    }
+  }
+
   private buildResetUrl(token: string, siteUrl: string): string {
     const url = new URL(AUTH_ADMIN_RESET_PASSWORD_PATH, `${siteUrl}/`);
+    url.searchParams.set("token", token);
+    return url.toString();
+  }
+
+  private buildVerifyUrl(token: string, siteUrl: string): string {
+    const url = new URL(AUTH_ADMIN_VERIFY_EMAIL_PATH, `${siteUrl}/`);
     url.searchParams.set("token", token);
     return url.toString();
   }

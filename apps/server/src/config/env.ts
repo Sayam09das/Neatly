@@ -1,6 +1,19 @@
+import { AUTH_SESSION_SECRET_MIN_LENGTH } from "./auth.ts";
 import { API_DEFAULT_HOST, API_DEFAULT_PORT } from "./constants.ts";
 
 export type ApiNodeEnv = "development" | "production" | "test";
+
+export interface SmtpEnv {
+  fromEmail: string;
+  fromName: string;
+  password: string;
+}
+
+export interface AuthEnv {
+  sessionSecret: string;
+  siteUrl: string;
+  smtp: SmtpEnv | null;
+}
 
 export interface ApiEnv {
   host: string;
@@ -18,6 +31,16 @@ export function loadApiEnv(
     host: readHost(source.HOST),
     nodeEnv: readNodeEnv(source.NODE_ENV),
     port: readPort(source.PORT),
+  };
+}
+
+export function loadAuthEnv(
+  source: Record<string, string | undefined> = process.env,
+): AuthEnv {
+  return {
+    sessionSecret: readSessionSecret(source.SESSION_SECRET),
+    siteUrl: readSiteUrl(source.SITE_URL ?? source.NEXT_PUBLIC_SITE_URL),
+    smtp: readSmtp(source),
   };
 }
 
@@ -54,4 +77,59 @@ function readPort(value: string | undefined): number {
   }
 
   return port;
+}
+
+function readSessionSecret(value: string | undefined): string {
+  const trimmed = value?.trim();
+
+  if (trimmed === undefined || trimmed === "") {
+    throw new Error(
+      `SESSION_SECRET is required. Expected a secret at least ${String(AUTH_SESSION_SECRET_MIN_LENGTH)} characters.`,
+    );
+  }
+
+  if (trimmed.length < AUTH_SESSION_SECRET_MIN_LENGTH) {
+    throw new Error(
+      `SESSION_SECRET is invalid. Expected a secret at least ${String(AUTH_SESSION_SECRET_MIN_LENGTH)} characters.`,
+    );
+  }
+
+  return trimmed;
+}
+
+function readSiteUrl(value: string | undefined): string {
+  const trimmed = value?.trim();
+
+  if (trimmed === undefined || trimmed === "") {
+    throw new Error("SITE_URL is required. Expected a public URL.");
+  }
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    throw new Error("SITE_URL is invalid. Expected a public URL.");
+  }
+}
+
+function readSmtp(source: Record<string, string | undefined>): SmtpEnv | null {
+  const fromEmail = source.SMTP_FROM_EMAIL?.trim();
+  const fromName = source.SMTP_FROM_NAME?.trim();
+  const password = source.SMTP_PASSWORD?.trim();
+
+  if (
+    fromEmail === undefined ||
+    fromEmail === "" ||
+    fromName === undefined ||
+    fromName === "" ||
+    password === undefined ||
+    password === ""
+  ) {
+    return null;
+  }
+
+  return {
+    fromEmail,
+    fromName,
+    password,
+  };
 }

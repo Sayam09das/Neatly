@@ -101,6 +101,7 @@ Stores administrative user accounts for dashboard access and content authorship.
 | `passwordHash` | String | NOT NULL | `bcrypt` hashed password string |
 | `role` | Enum (`UserRole`) | NOT NULL, Default: `ADMIN` | Role authorization level |
 | `status` | Enum (`UserStatus`) | NOT NULL, Default: `ACTIVE` | Account access status |
+| `emailVerifiedAt` | DateTime | NULLABLE | Set when the admin email verification token is consumed |
 | `lastLoginAt` | DateTime | NULLABLE | Timestamp of last successful login |
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
 | `updatedAt` | DateTime | NOT NULL, UpdatedAt | Record modification timestamp (UTC) |
@@ -131,6 +132,19 @@ Single-use password reset tokens. Raw tokens are never stored. Tokens expire 60 
 | `userId` | String | NOT NULL, FK (`User`) | Owning admin user |
 | `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the reset token |
 | `expiresAt` | DateTime | NOT NULL | Expiry timestamp (60 minutes from issue) |
+| `usedAt` | DateTime | NULLABLE | Set when the token is consumed |
+| `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
+
+### 5.5 Email Verification Token (`EmailVerificationToken`)
+
+Single-use email verification tokens. Raw tokens are never stored. Tokens expire 24 hours after issue and are invalidated after a successful verification.
+
+| Field Name | Data Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | String (CUID) | Primary Key, Default: Auto | Unique identifier |
+| `userId` | String | NOT NULL, FK (`User`) | Owning admin user |
+| `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the verification token |
+| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (24 hours from issue) |
 | `usedAt` | DateTime | NULLABLE | Set when the token is consumed |
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
 

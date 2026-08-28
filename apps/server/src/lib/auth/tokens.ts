@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { AUTH_TOKEN_BYTES } from "@/config/auth";
+import { AUTH_TOKEN_BYTES } from "../../config/auth.ts";
 
 export function generateAuthToken(): string {
   return randomBytes(AUTH_TOKEN_BYTES).toString("hex");
