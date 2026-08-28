@@ -71,6 +71,12 @@ describe("getAdminNavigationDecision", (): void => {
     ).toEqual({ type: "allow" });
     expect(
       getAdminNavigationDecision({
+        pathname: "/admin/register",
+        user: null,
+      }),
+    ).toEqual({ type: "allow" });
+    expect(
+      getAdminNavigationDecision({
         pathname: "/admin/forgot-password",
         user: null,
       }),

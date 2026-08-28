@@ -7,7 +7,9 @@ import { registerGsapPlugins } from "@/animations/gsap/plugins";
 import { useIsomorphicLayoutEffect } from "@/animations/hooks/use-isomorphic-layout-effect";
 import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
 import "lenis/dist/lenis.css";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { isProtectedAdminPath } from "@/lib/auth/paths";
 
 const LENIS_SMOOTH_DURATION_SECONDS = 1.2;
 const LENIS_WHEEL_MULTIPLIER = 1;
@@ -29,15 +31,24 @@ export function hasLenisPreventAttribute(node: HTMLElement): boolean {
   return node.hasAttribute("data-lenis-prevent");
 }
 
+export function shouldSkipSmoothScroll(
+  pathname: string,
+  prefersReducedMotion: boolean,
+): boolean {
+  return prefersReducedMotion || isProtectedAdminPath(pathname);
+}
+
 interface SmoothScrollProps {
   children: ReactNode;
 }
 
 export function SmoothScroll({ children }: SmoothScrollProps): ReactNode {
   const prefersReducedMotion = useReducedMotion();
+  const pathname = usePathname() ?? "/";
+  const skipLenis = shouldSkipSmoothScroll(pathname, prefersReducedMotion);
 
   useIsomorphicLayoutEffect((): (() => void) | undefined => {
-    if (prefersReducedMotion || lenisInstance !== null) {
+    if (skipLenis || lenisInstance !== null) {
       return undefined;
     }
 
@@ -78,7 +89,7 @@ export function SmoothScroll({ children }: SmoothScrollProps): ReactNode {
         lenisInstance = null;
       }
     };
-  }, [prefersReducedMotion]);
+  }, [skipLenis]);
 
   return children;
 }

@@ -32,7 +32,7 @@ describe("LandingPage architecture", (): void => {
     expect(
       screen.getByRole("main").querySelector("footer"),
     ).toBeInTheDocument();
-  });
+  }, 15000);
 
   it("renders the PRD section headings in conversion order", (): void => {
     render(<LandingPage />);

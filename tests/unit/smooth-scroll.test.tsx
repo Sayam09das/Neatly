@@ -6,6 +6,7 @@ import {
   getLenis,
   hasLenisPreventAttribute,
   SmoothScroll,
+  shouldSkipSmoothScroll,
 } from "@/animations/lenis/smooth-scroll";
 
 vi.mock("lenis/dist/lenis.css", () => ({}));
@@ -29,6 +30,15 @@ function stubMatchMedia(matches: boolean): void {
       }) as MediaQueryList,
   });
 }
+
+describe("shouldSkipSmoothScroll", (): void => {
+  it("skips Lenis on admin routes so the shell uses native scrolling", (): void => {
+    expect(shouldSkipSmoothScroll("/", false)).toBe(false);
+    expect(shouldSkipSmoothScroll("/admin", false)).toBe(true);
+    expect(shouldSkipSmoothScroll("/admin/login", false)).toBe(true);
+    expect(shouldSkipSmoothScroll("/about", true)).toBe(true);
+  });
+});
 
 describe("SmoothScroll", (): void => {
   beforeEach((): void => {

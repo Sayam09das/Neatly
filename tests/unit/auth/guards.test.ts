@@ -43,8 +43,10 @@ describe("auth origin checks", (): void => {
 describe("admin path protection", (): void => {
   it("keeps login and password-reset routes public", (): void => {
     expect(isPublicAdminPath("/admin/login")).toBe(true);
+    expect(isPublicAdminPath("/admin/register")).toBe(true);
     expect(isPublicAdminPath("/admin/forgot-password")).toBe(true);
     expect(isPublicAdminPath("/admin/reset-password")).toBe(true);
+    expect(isPublicAdminPath("/admin/verify-email")).toBe(true);
     expect(isProtectedAdminPath("/admin/quotes")).toBe(true);
     expect(isPublicAdminPath("/admin/quotes")).toBe(false);
   });
