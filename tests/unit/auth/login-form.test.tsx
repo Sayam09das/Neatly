@@ -109,6 +109,12 @@ describe("LoginForm", (): void => {
         }),
     );
 
+    const assign = vi.fn();
+    vi.stubGlobal("location", {
+      assign,
+      search: "",
+    });
+
     render(<LoginForm onSubmit={onSubmit} />);
 
     await user.type(
@@ -136,11 +142,10 @@ describe("LoginForm", (): void => {
     resolveSubmit?.({ status: "ok" });
 
     await waitFor((): void => {
-      expect(
-        screen.getByRole("button", { name: authLoginCopy.submit }),
-      ).toBeEnabled();
+      expect(assign).toHaveBeenCalledWith("/admin");
     });
     expect(onSubmit).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
   });
 
   it("can render a prepared backend error without inventing success", async (): Promise<void> => {

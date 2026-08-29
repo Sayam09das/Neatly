@@ -33,6 +33,7 @@ import {
   authFormBannerMessage,
   collectFieldErrors,
 } from "@/lib/auth/form-errors";
+import { adminPostLoginPath } from "@/lib/auth/submit-login";
 import { loginSchema } from "@/lib/validations/auth.schema";
 import { emptyLoginFormValues } from "@/lib/validations/auth-form.schema";
 import {
@@ -110,7 +111,10 @@ export function LoginForm({
 
       if (result.status === "error") {
         setBanner(result.code);
+        return;
       }
+
+      window.location.assign(adminPostLoginPath(window.location.search));
     } finally {
       setStatus("idle");
     }

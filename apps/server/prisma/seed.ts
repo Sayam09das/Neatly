@@ -26,18 +26,29 @@ async function seedDevelopmentAdmin(): Promise<void> {
     where: { email: DEVELOPMENT_ADMIN_EMAIL },
   });
 
+  const passwordHash = await bcrypt.hash(password, AUTH_BCRYPT_COST);
+
   if (existing !== null) {
+    await prisma.user.update({
+      data: {
+        emailVerifiedAt: existing.emailVerifiedAt ?? new Date(),
+        passwordHash,
+        role: "ADMIN",
+        status: "ACTIVE",
+      },
+      where: { email: DEVELOPMENT_ADMIN_EMAIL },
+    });
     return;
   }
 
   await prisma.user.create({
     data: {
-      name: DEVELOPMENT_ADMIN_NAME,
       email: DEVELOPMENT_ADMIN_EMAIL,
-      passwordHash: await bcrypt.hash(password, AUTH_BCRYPT_COST),
+      emailVerifiedAt: new Date(),
+      name: DEVELOPMENT_ADMIN_NAME,
+      passwordHash,
       role: "ADMIN",
       status: "ACTIVE",
-      emailVerifiedAt: new Date(),
     },
   });
 }

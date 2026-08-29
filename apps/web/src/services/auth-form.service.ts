@@ -1,3 +1,4 @@
+import { submitAdminLogin } from "@/lib/auth/submit-login";
 import type {
   ForgotPasswordValues,
   LoginValues,
@@ -13,9 +14,9 @@ import type {
 } from "@/types/auth-form";
 
 export async function submitLoginForm(
-  _values: LoginValues,
+  values: LoginValues,
 ): Promise<AuthFormSubmitResult> {
-  return { status: "ok" };
+  return submitAdminLogin(values);
 }
 
 export async function submitRegisterForm(
