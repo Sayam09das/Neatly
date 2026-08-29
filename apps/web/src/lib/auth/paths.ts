@@ -7,7 +7,11 @@ import {
   CUSTOMER_HOME_PATH,
   CUSTOMER_LOGIN_PATH,
   CUSTOMER_PATHS,
+  CUSTOMER_QUOTE_SERVICE_PARAM,
+  customerDashboardServiceApplyPath,
 } from "@/config/customer";
+
+const SERVICE_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function isPublicAdminPath(pathname: string): boolean {
   return AUTH_PUBLIC_ADMIN_PATHS.some(
@@ -19,12 +23,32 @@ export function isProtectedAdminPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+export function isSafeServiceSlug(slug: string): boolean {
+  return SERVICE_SLUG_PATTERN.test(slug);
+}
+
+export function isCustomerServiceApplyPath(pathname: string): boolean {
+  if (!pathname.startsWith(`${CUSTOMER_PATHS.services}/`)) {
+    return false;
+  }
+
+  const remainder = pathname.slice(`${CUSTOMER_PATHS.services}/`.length);
+  const segments = remainder.split("/");
+
+  return (
+    segments.length === 2 &&
+    segments[1] === "apply" &&
+    isSafeServiceSlug(segments[0] ?? "")
+  );
+}
+
 export function isProtectedCustomerPath(pathname: string): boolean {
   return (
     pathname === CUSTOMER_HOME_PATH ||
     pathname.startsWith(`${CUSTOMER_HOME_PATH}/`) ||
     pathname === CUSTOMER_PATHS.booking ||
-    pathname.startsWith(`${CUSTOMER_PATHS.booking}/`)
+    pathname.startsWith(`${CUSTOMER_PATHS.booking}/`) ||
+    isCustomerServiceApplyPath(pathname)
   );
 }
 
@@ -34,12 +58,31 @@ export function isAuthEntryPath(pathname: string): boolean {
   );
 }
 
-export function isSafeCustomerNextPath(pathname: string): boolean {
+export function isSafeCustomerNextPath(candidate: string): boolean {
   if (
-    pathname.includes("://") ||
-    pathname.includes("\\") ||
-    pathname.includes("..")
+    !candidate.startsWith("/") ||
+    candidate.includes("://") ||
+    candidate.includes("\\") ||
+    candidate.includes("..") ||
+    candidate.includes("//")
   ) {
+    return false;
+  }
+
+  const queryIndex = candidate.indexOf("?");
+  const pathname =
+    queryIndex === -1 ? candidate : candidate.slice(0, queryIndex);
+  const search = queryIndex === -1 ? "" : candidate.slice(queryIndex + 1);
+
+  if (isCustomerServiceApplyPath(pathname)) {
+    return search === "";
+  }
+
+  if (pathname === CUSTOMER_PATHS.quote) {
+    return isSafeQuoteNextSearch(search);
+  }
+
+  if (search !== "") {
     return false;
   }
 
@@ -47,10 +90,7 @@ export function isSafeCustomerNextPath(pathname: string): boolean {
     return true;
   }
 
-  if (
-    pathname.startsWith(`${CUSTOMER_HOME_PATH}/`) &&
-    !pathname.includes("//")
-  ) {
+  if (pathname.startsWith(`${CUSTOMER_HOME_PATH}/`)) {
     return true;
   }
 
@@ -58,10 +98,7 @@ export function isSafeCustomerNextPath(pathname: string): boolean {
     return true;
   }
 
-  return (
-    pathname.startsWith(`${CUSTOMER_PATHS.bookingConfirmation}/`) &&
-    !pathname.includes("//")
-  );
+  return pathname.startsWith(`${CUSTOMER_PATHS.bookingConfirmation}/`);
 }
 
 export type EdgeAuthDecision =
@@ -77,12 +114,12 @@ export function getEdgeAuthDecision(input: {
       return { type: "next" };
     }
 
+    const next = customerApplyLoginNextPath(input.pathname);
+
     return {
       type: "redirect",
       pathname: CUSTOMER_LOGIN_PATH,
-      ...(isSafeCustomerNextPath(input.pathname)
-        ? { next: input.pathname }
-        : {}),
+      ...(isSafeCustomerNextPath(next) ? { next } : {}),
     };
   }
 
@@ -101,4 +138,30 @@ export function getEdgeAuthDecision(input: {
     type: "redirect",
     pathname: AUTH_ADMIN_LOGIN_PATH,
   };
+}
+
+export function customerApplyLoginNextPath(pathname: string): string {
+  if (!isCustomerServiceApplyPath(pathname)) {
+    return pathname;
+  }
+
+  const remainder = pathname.slice(`${CUSTOMER_PATHS.services}/`.length);
+  const slug = remainder.split("/")[0] ?? "";
+
+  return customerDashboardServiceApplyPath(slug);
+}
+
+function isSafeQuoteNextSearch(search: string): boolean {
+  if (search === "") {
+    return true;
+  }
+
+  const params = new URLSearchParams(search);
+  const keys = [...params.keys()];
+
+  if (keys.length !== 1 || keys[0] !== CUSTOMER_QUOTE_SERVICE_PARAM) {
+    return false;
+  }
+
+  return isSafeServiceSlug(params.get(CUSTOMER_QUOTE_SERVICE_PARAM) ?? "");
 }

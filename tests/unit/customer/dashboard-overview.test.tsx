@@ -48,7 +48,7 @@ describe("CustomerDashboardOverview", (): void => {
       screen.getAllByRole("link", {
         name: customerDashboardCopy.nextBookingEmptyAction,
       })[0],
-    ).toHaveAttribute("href", CUSTOMER_PATHS.services);
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboardServices);
     expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
     expect(screen.queryByText(/\$4,250/)).not.toBeInTheDocument();
   });

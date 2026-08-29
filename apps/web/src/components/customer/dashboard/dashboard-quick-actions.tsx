@@ -26,7 +26,7 @@ export function DashboardQuickActions(): ReactElement {
         </li>
         <li>
           <Button asChild variant="ghost">
-            <Link href={CUSTOMER_PATHS.services}>
+            <Link href={CUSTOMER_PATHS.dashboardServices}>
               {customerDashboardCopy.servicesAction}
             </Link>
           </Button>

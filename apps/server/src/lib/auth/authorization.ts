@@ -1,4 +1,4 @@
-import { AUTH_ADMIN_ROLES } from "../../config/auth.ts";
+import { AUTH_ADMIN_ROLES, AUTH_OPERATOR_ROLES } from "../../config/auth.ts";
 import { AUTH_ERROR_MESSAGES, AuthError } from "./errors.ts";
 import type { AuthUser, AuthUserRole } from "./types.ts";
 
@@ -6,8 +6,20 @@ export function isAdminRole(role: AuthUserRole): boolean {
   return (AUTH_ADMIN_ROLES as readonly string[]).includes(role);
 }
 
+export function isAdminOperatorRole(role: AuthUserRole): boolean {
+  return (AUTH_OPERATOR_ROLES as readonly string[]).includes(role);
+}
+
 export function requireAdmin(user: AuthUser): AuthUser {
   if (!isAdminRole(user.role)) {
+    throw new AuthError("FORBIDDEN", AUTH_ERROR_MESSAGES.FORBIDDEN);
+  }
+
+  return user;
+}
+
+export function requireAdminOperator(user: AuthUser): AuthUser {
+  if (!isAdminOperatorRole(user.role)) {
     throw new AuthError("FORBIDDEN", AUTH_ERROR_MESSAGES.FORBIDDEN);
   }
 

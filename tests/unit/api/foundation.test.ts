@@ -10,7 +10,10 @@ import { requireOwnership } from "../../../apps/server/src/lib/auth/authorizatio
 import { getAuthService } from "../../../apps/server/src/lib/auth/runtime.ts";
 import { AppError } from "../../../apps/server/src/lib/errors.ts";
 import { createRequestContext } from "../../../apps/server/src/lib/request-context.ts";
-import { requireRole } from "../../../apps/server/src/middleware/auth.ts";
+import {
+  requireAdminAccess,
+  requireRole,
+} from "../../../apps/server/src/middleware/auth.ts";
 import { dispatchApi, parseJsonBody } from "./http-harness";
 
 vi.mock("../../../apps/server/src/lib/auth/runtime.ts", () => ({
@@ -190,6 +193,31 @@ describe("API foundation", (): void => {
     try {
       requireAdminRole(req, res, context);
       throw new Error("expected requireRole to reject STAFF");
+    } catch (error: unknown) {
+      expect(error).toBeInstanceOf(AppError);
+      expect((error as AppError).code).toBe(API_ERROR_CODES.FORBIDDEN);
+      expect((error as AppError).statusCode).toBe(HTTP_STATUS.FORBIDDEN);
+    }
+  });
+
+  it("requireAdminAccess rejects STAFF customers from admin APIs", (): void => {
+    const context = createRequestContext({
+      ip: "127.0.0.1",
+      method: "GET",
+      path: API_PATHS.adminBookings,
+    });
+    const req = {} as IncomingMessage;
+    const res = {} as ServerResponse;
+
+    context.user = adminUser;
+    expect((): void => {
+      requireAdminAccess(req, res, context);
+    }).not.toThrow();
+
+    context.user = { ...adminUser, role: "STAFF" };
+    try {
+      requireAdminAccess(req, res, context);
+      throw new Error("expected requireAdminAccess to reject STAFF");
     } catch (error: unknown) {
       expect(error).toBeInstanceOf(AppError);
       expect((error as AppError).code).toBe(API_ERROR_CODES.FORBIDDEN);

@@ -4,10 +4,11 @@ import { cache } from "react";
 import {
   AUTH_ADMIN_HOME_PATH,
   AUTH_ADMIN_LOGIN_PATH,
+  AUTH_CUSTOMER_HOME_PATH,
   AUTH_SESSION_COOKIE_NAME,
 } from "@/config/auth";
 import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
-import { requireRole } from "@/lib/auth/authorization";
+import { isAdminOperatorRole, requireRole } from "@/lib/auth/authorization";
 import { createClearedSessionCookie } from "@/lib/auth/cookies";
 import { AUTH_ERROR_MESSAGES, AuthError } from "@/lib/auth/errors";
 import { getAuthService } from "@/lib/auth/runtime";
@@ -59,6 +60,10 @@ export async function requireAdminPage(): Promise<AuthUser> {
     redirect(AUTH_ADMIN_LOGIN_PATH);
   }
 
+  if (!isAdminOperatorRole(user.role)) {
+    redirect(AUTH_CUSTOMER_HOME_PATH);
+  }
+
   return user;
 }
 
@@ -75,9 +80,16 @@ export async function requireCustomerPage(): Promise<AuthUser> {
 export async function redirectAuthenticatedAdmin(): Promise<void> {
   const user = await getCurrentUser();
 
-  if (user !== null) {
-    redirect(AUTH_ADMIN_HOME_PATH);
+  if (user === null) {
+    return;
   }
+
+  if (isAdminOperatorRole(user.role)) {
+    redirect(AUTH_ADMIN_HOME_PATH);
+    return;
+  }
+
+  redirect(AUTH_CUSTOMER_HOME_PATH);
 }
 
 export async function requirePermission(role: AuthUserRole): Promise<AuthUser> {

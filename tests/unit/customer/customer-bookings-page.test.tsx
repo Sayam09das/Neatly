@@ -48,7 +48,7 @@ describe("CustomerBookings", (): void => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: customerDashboardCopy.servicesAction }),
-    ).toHaveAttribute("href", CUSTOMER_PATHS.services);
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboardServices);
     expect(screen.queryByText("booking_#")).not.toBeInTheDocument();
   });
 

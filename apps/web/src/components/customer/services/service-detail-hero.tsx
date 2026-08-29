@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import {
   CUSTOMER_PATHS,
   customerQuoteLabel,
-  customerQuotePath,
+  customerServiceApplyPath,
   customerServiceDetailCopy,
   customerServicesCopy,
 } from "@/config/customer";
@@ -18,7 +18,7 @@ interface ServiceDetailHeroProps {
 export function ServiceDetailHero({
   service,
 }: ServiceDetailHeroProps): ReactElement {
-  const quoteHref = customerQuotePath(service.slug);
+  const quoteHref = customerServiceApplyPath(service.slug);
   const quoteLabel = customerQuoteLabel(service.name);
 
   return (

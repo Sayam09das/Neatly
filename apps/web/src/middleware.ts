@@ -33,5 +33,6 @@ export const config = {
     "/dashboard/:path*",
     "/booking",
     "/booking/:path*",
+    "/services/:slug/apply",
   ],
 };

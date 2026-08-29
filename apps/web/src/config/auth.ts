@@ -21,6 +21,11 @@ export const AUTH_REGISTER_ALIAS_PATH = "/register";
 export const AUTH_FORGOT_PASSWORD_ALIAS_PATH = "/forgot-password";
 export const AUTH_RESET_PASSWORD_ALIAS_PATH = "/reset-password";
 export const AUTH_VERIFY_EMAIL_ALIAS_PATH = "/verify-email";
+export const AUTH_OPERATOR_ROLES = [
+  "ADMIN",
+  "SUPER_ADMIN",
+  "CONTENT_MANAGER",
+] as const;
 export const AUTH_ROUTES = {
   forgotPassword: AUTH_ADMIN_FORGOT_PASSWORD_PATH,
   login: AUTH_ADMIN_LOGIN_PATH,

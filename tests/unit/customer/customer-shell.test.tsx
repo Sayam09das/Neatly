@@ -57,7 +57,7 @@ describe("CustomerShell", (): void => {
     ).toHaveAttribute("href", CUSTOMER_PATHS.bookings);
     expect(
       screen.getAllByRole("link", { name: "Services" })[0],
-    ).toHaveAttribute("href", CUSTOMER_PATHS.services);
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboardServices);
     const notificationLinks = screen.getAllByRole("link", {
       name: customerNavbarCopy.notificationsLabel,
     });

@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactElement } from "react";
 import {
+  customerServiceApplyLabel,
+  customerServiceApplyPath,
   customerServiceDetailsLabel,
   customerServicePath,
   customerServicesCopy,
@@ -21,6 +23,8 @@ export function ServicesDiscoveryCard({
 }: ServicesDiscoveryCardProps): ReactElement {
   const detailsHref = customerServicePath(service.slug);
   const detailsLabel = customerServiceDetailsLabel(service.name);
+  const applyHref = customerServiceApplyPath(service.slug);
+  const applyLabel = customerServiceApplyLabel(service.name);
 
   return (
     <article
@@ -41,7 +45,10 @@ export function ServicesDiscoveryCard({
         <p className="mt-3 max-w-prose text-body-small text-muted-foreground">
           {service.shortDescription}
         </p>
-        <p className="mt-6">
+        <p className="mt-3 text-caption text-muted-foreground">
+          {customerServicesCopy.availableLabel}
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <Link
             aria-label={detailsLabel}
             className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -49,7 +56,14 @@ export function ServicesDiscoveryCard({
           >
             {customerServicesCopy.viewDetails}
           </Link>
-        </p>
+          <Link
+            aria-label={applyLabel}
+            className="inline-flex min-h-touch items-center justify-center rounded-full bg-primary px-5 py-2.5 text-button font-semibold text-primary-foreground motion-safe:transition-colors motion-safe:duration-normal hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            href={applyHref}
+          >
+            {customerServicesCopy.apply}
+          </Link>
+        </div>
       </div>
     </article>
   );

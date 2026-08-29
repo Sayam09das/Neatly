@@ -1,4 +1,4 @@
-import { isAdminRole } from "../auth/authorization.ts";
+import { isAdminOperatorRole } from "../auth/authorization.ts";
 import type { AuthUserRole } from "../auth/types.ts";
 import { AuthorizationError } from "../errors.ts";
 
@@ -22,7 +22,7 @@ export function isAdminActor(actor: Actor): boolean {
     return false;
   }
 
-  return isAdminRole(actor.role);
+  return isAdminOperatorRole(actor.role);
 }
 
 export function requireAdminActor(actor: Actor): void {

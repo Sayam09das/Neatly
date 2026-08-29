@@ -7,11 +7,11 @@ export interface CustomerNavItem {
 
 export const customerAppNavigation: readonly CustomerNavItem[] = [
   { href: CUSTOMER_PATHS.dashboard, label: "Overview" },
+  { href: CUSTOMER_PATHS.dashboardServices, label: "Services" },
   { href: CUSTOMER_PATHS.bookings, label: "Bookings" },
   { href: CUSTOMER_PATHS.reviews, label: "Reviews" },
   { href: CUSTOMER_PATHS.notifications, label: "Notifications" },
   { href: CUSTOMER_PATHS.help, label: "Help" },
-  { href: CUSTOMER_PATHS.services, label: "Services" },
 ] as const;
 
 export const customerNavigation: readonly CustomerNavItem[] =

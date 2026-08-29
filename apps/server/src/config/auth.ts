@@ -24,3 +24,8 @@ export const AUTH_ADMIN_ROLES = [
   "CONTENT_MANAGER",
   "STAFF",
 ] as const;
+export const AUTH_OPERATOR_ROLES = [
+  "ADMIN",
+  "SUPER_ADMIN",
+  "CONTENT_MANAGER",
+] as const;

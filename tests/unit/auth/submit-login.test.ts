@@ -30,6 +30,17 @@ describe("customerPostLoginPath", (): void => {
       "/dashboard/bookings",
     );
     expect(customerPostLoginPath("?next=%2Fbooking")).toBe("/booking");
+    expect(
+      customerPostLoginPath("?next=%2Fservices%2Fdeep-cleaning%2Fapply"),
+    ).toBe("/services/deep-cleaning/apply");
+    expect(
+      customerPostLoginPath(
+        "?next=%2Fdashboard%2Fservices%2Fdeep-cleaning%2Fapply",
+      ),
+    ).toBe("/dashboard/services/deep-cleaning/apply");
+    expect(
+      customerPostLoginPath("?next=%2Fquote%3Fservice%3Ddeep-cleaning"),
+    ).toBe("/quote?service=deep-cleaning");
     expect(customerPostLoginPath("?next=%2Fadmin%2Fbookings")).toBe(
       AUTH_CUSTOMER_HOME_PATH,
     );

@@ -27,13 +27,24 @@ describe("customer route protection", (): void => {
     expect(isProtectedCustomerPath("/dashboard/bookings/123")).toBe(true);
     expect(isProtectedCustomerPath("/quote")).toBe(false);
     expect(isProtectedCustomerPath("/services")).toBe(false);
+    expect(isProtectedCustomerPath("/services/deep-cleaning")).toBe(false);
+    expect(isProtectedCustomerPath("/services/deep-cleaning/apply")).toBe(true);
     expect(isProtectedCustomerPath("/booking")).toBe(true);
     expect(isProtectedCustomerPath("/booking/confirmation/abc")).toBe(true);
     expect(isSafeCustomerNextPath("/dashboard/profile")).toBe(true);
     expect(isSafeCustomerNextPath("/booking")).toBe(true);
     expect(isSafeCustomerNextPath("/booking/confirmation/abc")).toBe(true);
+    expect(isSafeCustomerNextPath("/services/deep-cleaning/apply")).toBe(true);
+    expect(
+      isSafeCustomerNextPath("/dashboard/services/deep-cleaning/apply"),
+    ).toBe(true);
+    expect(isSafeCustomerNextPath("/quote?service=deep-cleaning")).toBe(true);
     expect(isSafeCustomerNextPath("https://evil.example")).toBe(false);
     expect(isSafeCustomerNextPath("/dashboard/../admin")).toBe(false);
+    expect(isSafeCustomerNextPath("/services/../admin/apply")).toBe(false);
+    expect(
+      isSafeCustomerNextPath("https://evil.example/services/x/apply"),
+    ).toBe(false);
   });
 
   it("redirects unauthenticated dashboard requests to login with a safe next path", (): void => {
@@ -56,6 +67,50 @@ describe("customer route protection", (): void => {
     expect(
       getEdgeAuthDecision({
         hasSession: false,
+        pathname: "/services",
+      }),
+    ).toEqual({ type: "next" });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: false,
+        pathname: "/services/deep-cleaning",
+      }),
+    ).toEqual({ type: "next" });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: false,
+        pathname: "/services/deep-cleaning/apply",
+      }),
+    ).toEqual({
+      next: "/dashboard/services/deep-cleaning/apply",
+      pathname: CUSTOMER_LOGIN_PATH,
+      type: "redirect",
+    });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: true,
+        pathname: "/services/deep-cleaning/apply",
+      }),
+    ).toEqual({ type: "next" });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: false,
+        pathname: "/dashboard/services/deep-cleaning/apply",
+      }),
+    ).toEqual({
+      next: "/dashboard/services/deep-cleaning/apply",
+      pathname: CUSTOMER_LOGIN_PATH,
+      type: "redirect",
+    });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: true,
+        pathname: "/dashboard/services/deep-cleaning/apply",
+      }),
+    ).toEqual({ type: "next" });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: false,
         pathname: "/admin/bookings",
       }),
     ).toEqual({
@@ -68,6 +123,18 @@ describe("customer route protection", (): void => {
     expect(
       getCustomerNavigationDecision({
         pathname: "/dashboard",
+        user: null,
+      }),
+    ).toEqual({ type: "redirect", to: CUSTOMER_LOGIN_PATH });
+    expect(
+      getCustomerNavigationDecision({
+        pathname: CUSTOMER_PATHS.services,
+        user: null,
+      }),
+    ).toEqual({ type: "allow" });
+    expect(
+      getCustomerNavigationDecision({
+        pathname: "/services/deep-cleaning/apply",
         user: null,
       }),
     ).toEqual({ type: "redirect", to: CUSTOMER_LOGIN_PATH });

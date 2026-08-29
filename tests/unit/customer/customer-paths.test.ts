@@ -4,6 +4,7 @@ import {
   CUSTOMER_API_PREFIX,
   CUSTOMER_PATHS,
   customerBookingDetailPath,
+  customerDashboardServiceApplyPath,
   customerPaths,
   customerServicePath,
   withCustomerApiId,
@@ -28,6 +29,7 @@ describe("customer paths", (): void => {
     expect(CUSTOMER_PATHS.notifications).toBe("/dashboard/notifications");
     expect(CUSTOMER_PATHS.reviews).toBe("/dashboard/reviews");
     expect(CUSTOMER_PATHS.help).toBe("/dashboard/help");
+    expect(CUSTOMER_PATHS.dashboardServices).toBe("/dashboard/services");
     expect(CUSTOMER_PATHS.quote).toBe("/quote");
     expect(CUSTOMER_PATHS.booking).toBe("/booking");
     expect(CUSTOMER_PATHS.bookingConfirmation).toBe("/booking/confirmation");
@@ -39,6 +41,9 @@ describe("customer paths", (): void => {
       "/dashboard/bookings/booking_1",
     );
     expect(customerServicePath("deep-clean")).toBe("/services/deep-clean");
+    expect(customerDashboardServiceApplyPath("deep-cleaning")).toBe(
+      "/dashboard/services/deep-cleaning/apply",
+    );
     expect(withCustomerApiId(CUSTOMER_API_PATHS.booking, "booking_1")).toBe(
       `${CUSTOMER_API_PREFIX}/bookings/booking_1`,
     );
@@ -52,11 +57,11 @@ describe("customer navigation", (): void => {
   it("covers account sections without counts or dummy labels", (): void => {
     expect(getCustomerNavItems().map((item) => item.href)).toEqual([
       CUSTOMER_PATHS.dashboard,
+      CUSTOMER_PATHS.dashboardServices,
       CUSTOMER_PATHS.bookings,
       CUSTOMER_PATHS.reviews,
       CUSTOMER_PATHS.notifications,
       CUSTOMER_PATHS.help,
-      CUSTOMER_PATHS.services,
     ]);
     expect(customerNavigation.some((item) => /\d/.test(item.label))).toBe(
       false,
@@ -90,6 +95,10 @@ describe("customer navigation", (): void => {
       ),
     ).toBe(true);
     expect(getCustomerPageTitle("/dashboard")).toBe("Overview");
+    expect(getCustomerPageTitle("/dashboard/services")).toBe("Services");
+    expect(
+      getCustomerPageTitle("/dashboard/services/deep-cleaning/apply"),
+    ).toBe("Services");
     expect(getCustomerPageTitle("/dashboard/bookings/123")).toBe("Bookings");
     expect(isCustomerNavItemActive(null, CUSTOMER_PATHS.dashboard)).toBe(false);
   });

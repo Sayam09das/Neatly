@@ -68,7 +68,10 @@ export function parseCustomerServicesSearchParams(
   };
 }
 
-export function customerServicesHref(query: CustomerServicesQuery): string {
+export function customerServicesHref(
+  query: CustomerServicesQuery,
+  catalogHref: string = CUSTOMER_PATHS.services,
+): string {
   const params = new URLSearchParams();
 
   if (query.q !== "") {
@@ -80,9 +83,7 @@ export function customerServicesHref(query: CustomerServicesQuery): string {
   }
 
   const encoded = params.toString();
-  return encoded === ""
-    ? CUSTOMER_PATHS.services
-    : `${CUSTOMER_PATHS.services}?${encoded}`;
+  return encoded === "" ? catalogHref : `${catalogHref}?${encoded}`;
 }
 
 export function isLocalCustomerServiceImage(src: string | null): src is string {

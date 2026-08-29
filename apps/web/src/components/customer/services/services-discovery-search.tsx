@@ -11,16 +11,18 @@ import {
 import type { CustomerServicesQuery } from "@/lib/customer/catalog";
 
 interface ServicesDiscoverySearchProps {
+  catalogHref?: string;
   query: CustomerServicesQuery;
 }
 
 export function ServicesDiscoverySearch({
+  catalogHref = CUSTOMER_PATHS.services,
   query,
 }: ServicesDiscoverySearchProps): ReactElement {
   return (
     <search className="mt-8">
       <form
-        action={CUSTOMER_PATHS.services}
+        action={catalogHref}
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
         method="get"
       >
@@ -44,7 +46,7 @@ export function ServicesDiscoverySearch({
           {query.q === "" ? null : (
             <Link
               className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              href={CUSTOMER_PATHS.services}
+              href={catalogHref}
             >
               {customerServicesCopy.searchClear}
             </Link>

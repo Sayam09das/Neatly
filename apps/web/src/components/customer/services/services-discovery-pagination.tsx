@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
-import { customerServicesCopy } from "@/config/customer";
+import { CUSTOMER_PATHS, customerServicesCopy } from "@/config/customer";
 import {
   type CustomerServicesQuery,
   customerServicesHref,
@@ -8,11 +8,13 @@ import {
 import type { CustomerServicePagination } from "@/types/customer";
 
 interface ServicesDiscoveryPaginationProps {
+  catalogHref?: string;
   pagination: CustomerServicePagination;
   query: CustomerServicesQuery;
 }
 
 export function ServicesDiscoveryPagination({
+  catalogHref = CUSTOMER_PATHS.services,
   pagination,
   query,
 }: ServicesDiscoveryPaginationProps): ReactElement | null {
@@ -22,11 +24,17 @@ export function ServicesDiscoveryPagination({
 
   const previousHref =
     pagination.page > 1
-      ? customerServicesHref({ ...query, page: pagination.page - 1 })
+      ? customerServicesHref(
+          { ...query, page: pagination.page - 1 },
+          catalogHref,
+        )
       : null;
   const nextHref =
     pagination.page < pagination.totalPages
-      ? customerServicesHref({ ...query, page: pagination.page + 1 })
+      ? customerServicesHref(
+          { ...query, page: pagination.page + 1 },
+          catalogHref,
+        )
       : null;
 
   return (

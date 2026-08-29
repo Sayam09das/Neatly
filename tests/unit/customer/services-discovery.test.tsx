@@ -7,6 +7,8 @@ import {
   CUSTOMER_PATHS,
   customerEmptyCopy,
   customerErrorCopy,
+  customerServiceApplyLabel,
+  customerServiceApplyPath,
   customerServiceDetailsLabel,
   customerServicePath,
   customerServicesCopy,
@@ -74,6 +76,11 @@ describe("ServicesDiscovery", (): void => {
         name: customerServiceDetailsLabel(services[1]?.name ?? ""),
       }),
     ).toHaveAttribute("href", customerServicePath("studio-reset"));
+    expect(
+      screen.getByRole("link", {
+        name: customerServiceApplyLabel(services[0]?.name ?? ""),
+      }),
+    ).toHaveAttribute("href", customerServiceApplyPath("home-refresh"));
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
     expect(screen.queryByText(/popular/i)).not.toBeInTheDocument();
     expect(

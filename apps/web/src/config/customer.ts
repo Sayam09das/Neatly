@@ -10,6 +10,7 @@ export const CUSTOMER_PATHS = {
   bookingConfirmation: "/booking/confirmation",
   bookings: "/dashboard/bookings",
   dashboard: CUSTOMER_HOME_PATH,
+  dashboardServices: "/dashboard/services",
   help: "/dashboard/help",
   notifications: "/dashboard/notifications",
   profile: "/dashboard/profile",
@@ -137,7 +138,7 @@ export const customerEmptyCopy = {
   },
   services: {
     description: "Published cleaning services will appear here.",
-    title: "No services listed",
+    title: "No services are currently available.",
   },
   serviceSearch: {
     description: "Try a different search, or browse all published services.",
@@ -217,6 +218,8 @@ export const customerSurfaceCopy = {
 } as const;
 
 export const customerServicesCopy = {
+  apply: "Request a service",
+  availableLabel: "Available",
   backToServices: "Back to services",
   browseAll: "Browse all services",
   imageUnavailable: "No image available",
@@ -244,10 +247,14 @@ export const customerServiceDetailCopy = {
   nextStepsBody:
     "Request a quote with your property details. We will review the request and follow up — this does not create a booking.",
   nextStepsHeading: "What happens next",
-  quoteCta: "Request a quote",
+  quoteCta: "Request a service",
 } as const;
 
 export const customerQuoteCopy = {
+  accountEmailHint: "This is the email on your account.",
+  addEmail: "Add another email",
+  addPerson: "Add another person",
+  addPhone: "Add another phone",
   changeService: "Change service",
   confirmationBody:
     "We received your request. A team member will review the details and follow up with a quote. This is not a booking.",
@@ -257,6 +264,7 @@ export const customerQuoteCopy = {
   edit: "Edit",
   honeypotLabel: "Company website",
   noServiceSelected: "No service selected yet. You can still request a quote.",
+  removeExtra: "Remove",
   reviewHeading: "Review your request",
   selectedService: "Selected service",
   serverError: "We could not submit your request. Please try again.",
@@ -280,6 +288,11 @@ export const customerQuoteFieldCopy = {
   bathrooms: "Bathrooms",
   bedrooms: "Bedrooms",
   email: "Email",
+  extraEmail: "Additional email",
+  extraPersonEmail: "Additional person email",
+  extraPersonName: "Additional person name",
+  extraPersonPhone: "Additional person phone",
+  extraPhone: "Additional phone",
   frequency: "How often",
   fullName: "Full name",
   phone: "Phone",
@@ -635,6 +648,14 @@ export function customerServicePath(slug: string): string {
   return `${CUSTOMER_PATHS.services}/${encodeURIComponent(slug)}`;
 }
 
+export function customerServiceApplyPath(slug: string): string {
+  return `${customerServicePath(slug)}/apply`;
+}
+
+export function customerDashboardServiceApplyPath(slug: string): string {
+  return `${CUSTOMER_PATHS.dashboardServices}/${encodeURIComponent(slug)}/apply`;
+}
+
 export function customerQuotePath(slug?: string): string {
   if (slug === undefined || slug.trim() === "") {
     return CUSTOMER_PATHS.quote;
@@ -654,7 +675,11 @@ export function customerPublicServiceApiPath(slug: string): string {
 }
 
 export function customerQuoteLabel(name: string): string {
-  return `Request a quote for ${name}`;
+  return `Request a service for ${name}`;
+}
+
+export function customerServiceApplyLabel(name: string): string {
+  return customerQuoteLabel(name);
 }
 
 export function customerServiceDetailsLabel(name: string): string {

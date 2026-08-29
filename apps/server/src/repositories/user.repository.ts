@@ -1,5 +1,5 @@
 import type { Prisma, UserRole, UserStatus } from "@prisma/client";
-import { AUTH_ADMIN_ROLES } from "../config/auth.ts";
+import { AUTH_OPERATOR_ROLES } from "../config/auth.ts";
 import { prisma } from "../lib/db.ts";
 import { resolvePagination } from "../lib/domain/list.ts";
 import type { SortQuery } from "../lib/query.ts";
@@ -76,7 +76,7 @@ export class PrismaUserRepository implements UserRepository {
       select: { id: true },
       take: 100,
       where: {
-        role: { in: [...AUTH_ADMIN_ROLES] },
+        role: { in: [...AUTH_OPERATOR_ROLES] },
         status: "ACTIVE",
       },
     });

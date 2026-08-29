@@ -971,8 +971,7 @@ export class InMemoryUserRepository implements UserRepository {
           row.status === "ACTIVE" &&
           (row.role === "ADMIN" ||
             row.role === "SUPER_ADMIN" ||
-            row.role === "CONTENT_MANAGER" ||
-            row.role === "STAFF"),
+            row.role === "CONTENT_MANAGER"),
       )
       .map((row) => row.id);
   }

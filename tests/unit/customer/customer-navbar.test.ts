@@ -75,6 +75,16 @@ describe("customer navbar presentation", (): void => {
     expect(customer.showNotifications).toBe(true);
     expect(customer.showLogin).toBe(false);
     expect(customer.showQuote).toBe(false);
+
+    const staffCustomer = getCustomerNavbarPresentation(
+      {
+        identity: { email: "sayam@neatly.example", name: "Sayam Das" },
+        role: "STAFF",
+      },
+      "public",
+    );
+    expect(staffCustomer.showAdmin).toBe(false);
+    expect(staffCustomer.mode).toBe("customer");
   });
 
   it("builds initials from identity without placeholder names", (): void => {

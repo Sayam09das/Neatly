@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   requireRole as assertAssignedRole,
-  requireAdmin,
+  requireAdminOperator,
 } from "../lib/auth/authorization.ts";
 import { AuthError } from "../lib/auth/errors.ts";
 import { getSessionToken } from "../lib/auth/http.ts";
@@ -31,7 +31,7 @@ export function requireAdminAccess(
   _res: ServerResponse,
   context: RequestContext,
 ): void {
-  assertAuthenticatedRole(context, (user) => requireAdmin(user));
+  assertAuthenticatedRole(context, (user) => requireAdminOperator(user));
 }
 
 export function requireRole(role: AuthUserRole): Middleware {

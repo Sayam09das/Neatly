@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 import {
-  customerQuotePath,
+  customerServiceApplyPath,
   customerServiceDetailCopy,
 } from "@/config/customer";
 import type { CustomerServiceDetail } from "@/types/customer";
@@ -93,7 +93,7 @@ export function ServiceDetailSections({
         <p className="mt-6">
           <Link
             className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            href={customerQuotePath(service.slug)}
+            href={customerServiceApplyPath(service.slug)}
           >
             {customerServiceDetailCopy.quoteCta}
           </Link>

@@ -68,7 +68,7 @@ export function CustomerBookings({
               <p className="mt-6">
                 <Link
                   className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  href={CUSTOMER_PATHS.services}
+                  href={CUSTOMER_PATHS.dashboardServices}
                 >
                   {customerDashboardCopy.servicesAction}
                 </Link>

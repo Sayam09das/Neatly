@@ -9,7 +9,6 @@ import type { AuthUser } from "@/types/auth";
 export const ADMIN_NAVBAR_ROLES = [
   "ADMIN",
   "CONTENT_MANAGER",
-  "STAFF",
   "SUPER_ADMIN",
 ] as const;
 

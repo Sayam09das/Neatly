@@ -28,11 +28,14 @@ import {
 import { collectFieldErrors } from "@/lib/auth/form-errors";
 import { submitQuoteRequest } from "@/lib/customer/quote";
 import {
-  emptyQuoteRequestValues,
+  QUOTE_EXTRA_PHONE_MAX,
+  type QuoteAccountContact,
   type QuoteRequestFormValues,
+  quoteExtraContactLines,
   quoteFrequencies,
   quotePropertyTypes,
   quoteRequestFormSchema,
+  quoteRequestValuesFromAccount,
   quoteServiceTypes,
   toQuoteRequestPayload,
 } from "@/lib/validations/public-quote.schema";
@@ -54,25 +57,40 @@ const STEP_FIELDS: ReadonlyArray<ReadonlyArray<keyof QuoteRequestFormValues>> =
     ["serviceType"],
     ["propertyType", "approximateSize", "bedrooms", "bathrooms"],
     ["frequency", "preferredDate", "preferredTime", "additionalNotes"],
-    ["fullName", "email", "phone", "serviceAddress", "companyWebsite"],
+    [
+      "companyWebsite",
+      "email",
+      "extraEmail",
+      "extraPersonEmail",
+      "extraPersonName",
+      "extraPersonPhone",
+      "extraPhone1",
+      "extraPhone2",
+      "fullName",
+      "phone",
+      "serviceAddress",
+    ],
     [],
   ];
 
 interface QuoteRequestFormProps {
+  account?: QuoteAccountContact | null;
+  catalogHref?: string;
   service: CustomerServiceDetail | null;
   serviceUnavailable: boolean;
 }
 
 export function QuoteRequestForm({
+  account = null,
+  catalogHref = CUSTOMER_PATHS.services,
   service,
   serviceUnavailable,
 }: QuoteRequestFormProps): ReactElement {
   const instanceId = useId();
   const [step, setStep] = useState(0);
-  const [fields, setFields] = useState<QuoteRequestFormValues>(() => ({
-    ...emptyQuoteRequestValues,
-    serviceId: service?.id ?? "",
-  }));
+  const [fields, setFields] = useState<QuoteRequestFormValues>(() =>
+    quoteRequestValuesFromAccount(account, service?.id ?? ""),
+  );
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof QuoteRequestFormValues, string>>
   >({});
@@ -83,7 +101,7 @@ export function QuoteRequestForm({
 
   useEffect(() => {
     function onBeforeUnload(event: BeforeUnloadEvent): void {
-      if (confirmation !== null || !hasMeaningfulInput(fields)) {
+      if (confirmation !== null || !hasMeaningfulInput(account, fields)) {
         return;
       }
 
@@ -95,7 +113,7 @@ export function QuoteRequestForm({
     return (): void => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
-  }, [confirmation, fields]);
+  }, [account, confirmation, fields]);
 
   const minDate = useMemo((): string => {
     return new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -110,6 +128,10 @@ export function QuoteRequestForm({
   ): void {
     const name = event.target.name as keyof QuoteRequestFormValues;
     setFields((current) => ({ ...current, [name]: event.target.value }));
+  }
+
+  function handleFieldsPatch(patch: Partial<QuoteRequestFormValues>): void {
+    setFields((current) => ({ ...current, ...patch }));
   }
 
   function validateStep(index: number): boolean {
@@ -149,6 +171,12 @@ export function QuoteRequestForm({
           "bedrooms",
           "companyWebsite",
           "email",
+          "extraEmail",
+          "extraPersonEmail",
+          "extraPersonName",
+          "extraPersonPhone",
+          "extraPhone1",
+          "extraPhone2",
           "frequency",
           "fullName",
           "phone",
@@ -196,7 +224,7 @@ export function QuoteRequestForm({
         <p className="mt-8">
           <Link
             className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            href={CUSTOMER_PATHS.services}
+            href={catalogHref}
           >
             {customerQuoteCopy.confirmationNext}
           </Link>
@@ -229,10 +257,7 @@ export function QuoteRequestForm({
       {serviceUnavailable ? (
         <p className="mt-6 text-body text-destructive" role="alert">
           {customerQuoteCopy.unavailableService}{" "}
-          <Link
-            className="underline underline-offset-4"
-            href={CUSTOMER_PATHS.services}
-          >
+          <Link className="underline underline-offset-4" href={catalogHref}>
             {customerServiceDetailCopy.changeService}
           </Link>
         </p>
@@ -253,6 +278,7 @@ export function QuoteRequestForm({
         </div>
         {step === 0 ? (
           <ServiceStep
+            catalogHref={catalogHref}
             errorPrefix={errorPrefix}
             fields={fields}
             onChange={handleChange}
@@ -279,10 +305,12 @@ export function QuoteRequestForm({
         ) : null}
         {step === 3 ? (
           <ContactStep
+            account={account}
             errorPrefix={errorPrefix}
             errors={fieldErrors}
             fields={fields}
             onChange={handleChange}
+            onFieldsPatch={handleFieldsPatch}
           />
         ) : null}
         {step === 4 ? (
@@ -320,13 +348,22 @@ export function QuoteRequestForm({
   );
 }
 
-function hasMeaningfulInput(fields: QuoteRequestFormValues): boolean {
+function hasMeaningfulInput(
+  account: QuoteAccountContact | null,
+  fields: QuoteRequestFormValues,
+): boolean {
+  const accountName = account?.name.trim() ?? "";
+  const accountEmail = account?.email.trim() ?? "";
+  const accountPhone = account?.phone?.trim() ?? "";
+  const accountAddress = account?.address?.trim() ?? "";
+
   return (
-    fields.fullName.trim() !== "" ||
-    fields.email.trim() !== "" ||
-    fields.phone.trim() !== "" ||
-    fields.serviceAddress.trim() !== "" ||
-    fields.additionalNotes.trim() !== ""
+    fields.fullName.trim() !== accountName ||
+    fields.email.trim() !== accountEmail ||
+    fields.phone.trim() !== accountPhone ||
+    fields.serviceAddress.trim() !== accountAddress ||
+    fields.additionalNotes.trim() !== "" ||
+    quoteExtraContactLines(fields).length > 0
   );
 }
 
@@ -342,12 +379,14 @@ interface StepProps {
 }
 
 function ServiceStep({
+  catalogHref,
   errorPrefix,
   fields,
   onChange,
   service,
   serviceTypeError,
 }: StepProps & {
+  catalogHref: string;
   service: CustomerServiceDetail | null;
   serviceTypeError: string | undefined;
 }): ReactElement {
@@ -365,7 +404,7 @@ function ServiceStep({
             {customerQuoteCopy.noServiceSelected}{" "}
             <Link
               className="text-primary underline underline-offset-4"
-              href={CUSTOMER_PATHS.services}
+              href={catalogHref}
             >
               {customerQuoteCopy.changeService}
             </Link>
@@ -624,11 +663,33 @@ function DetailsStep({
 }
 
 function ContactStep({
+  account,
   errorPrefix,
   errors = {},
   fields,
   onChange,
-}: StepProps): ReactElement {
+  onFieldsPatch,
+}: StepProps & {
+  account: QuoteAccountContact | null;
+  onFieldsPatch: (patch: Partial<QuoteRequestFormValues>) => void;
+}): ReactElement {
+  const accountEmailLocked = account !== null && account.email.trim() !== "";
+  const [showExtraEmail, setShowExtraEmail] = useState(
+    fields.extraEmail.trim() !== "",
+  );
+  const [extraPhoneCount, setExtraPhoneCount] = useState((): number => {
+    if (fields.extraPhone2.trim() !== "") {
+      return QUOTE_EXTRA_PHONE_MAX;
+    }
+
+    return fields.extraPhone1.trim() === "" ? 0 : 1;
+  });
+  const [showExtraPerson, setShowExtraPerson] = useState(
+    fields.extraPersonName.trim() !== "" ||
+      fields.extraPersonEmail.trim() !== "" ||
+      fields.extraPersonPhone.trim() !== "",
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <Field
@@ -646,22 +707,72 @@ function ContactStep({
           value={fields.fullName}
         />
       </Field>
-      <Field
-        error={errors.email}
-        errorId={`${errorPrefix}-email-error`}
-        htmlFor={`${errorPrefix}-email`}
-        label={customerQuoteFieldCopy.email}
-      >
-        <Input
-          aria-invalid={errors.email !== undefined}
-          autoComplete="email"
-          id={`${errorPrefix}-email`}
-          name="email"
-          onChange={onChange}
-          type="email"
-          value={fields.email}
+      <div className="flex flex-col gap-2">
+        <Field
+          error={errors.email}
+          errorId={`${errorPrefix}-email-error`}
+          htmlFor={`${errorPrefix}-email`}
+          label={customerQuoteFieldCopy.email}
+        >
+          <Input
+            aria-describedby={
+              [
+                errors.email === undefined
+                  ? null
+                  : `${errorPrefix}-email-error`,
+                accountEmailLocked ? `${errorPrefix}-email-hint` : null,
+              ]
+                .filter((value): value is string => value !== null)
+                .join(" ") || undefined
+            }
+            aria-invalid={errors.email !== undefined}
+            autoComplete="email"
+            id={`${errorPrefix}-email`}
+            name="email"
+            onChange={onChange}
+            readOnly={accountEmailLocked}
+            type="email"
+            value={fields.email}
+          />
+        </Field>
+        {accountEmailLocked ? (
+          <p
+            className="text-caption text-muted-foreground"
+            id={`${errorPrefix}-email-hint`}
+          >
+            {customerQuoteCopy.accountEmailHint}
+          </p>
+        ) : null}
+      </div>
+      {showExtraEmail ? (
+        <OptionalContactField
+          error={errors.extraEmail}
+          errorId={`${errorPrefix}-extra-email-error`}
+          htmlFor={`${errorPrefix}-extra-email`}
+          label={customerQuoteFieldCopy.extraEmail}
+          onRemove={(): void => {
+            onFieldsPatch({ extraEmail: "" });
+            setShowExtraEmail(false);
+          }}
+        >
+          <Input
+            aria-invalid={errors.extraEmail !== undefined}
+            autoComplete="email"
+            id={`${errorPrefix}-extra-email`}
+            name="extraEmail"
+            onChange={onChange}
+            type="email"
+            value={fields.extraEmail}
+          />
+        </OptionalContactField>
+      ) : (
+        <AddContactButton
+          label={customerQuoteCopy.addEmail}
+          onClick={(): void => {
+            setShowExtraEmail(true);
+          }}
         />
-      </Field>
+      )}
       <Field
         error={errors.phone}
         errorId={`${errorPrefix}-phone-error`}
@@ -678,6 +789,127 @@ function ContactStep({
           value={fields.phone}
         />
       </Field>
+      {extraPhoneCount >= 1 ? (
+        <OptionalContactField
+          error={errors.extraPhone1}
+          errorId={`${errorPrefix}-extra-phone-1-error`}
+          htmlFor={`${errorPrefix}-extra-phone-1`}
+          label={customerQuoteFieldCopy.extraPhone}
+          onRemove={(): void => {
+            onFieldsPatch({
+              extraPhone1: fields.extraPhone2,
+              extraPhone2: "",
+            });
+            setExtraPhoneCount((current) => current - 1);
+          }}
+        >
+          <Input
+            aria-invalid={errors.extraPhone1 !== undefined}
+            autoComplete="tel"
+            id={`${errorPrefix}-extra-phone-1`}
+            name="extraPhone1"
+            onChange={onChange}
+            type="tel"
+            value={fields.extraPhone1}
+          />
+        </OptionalContactField>
+      ) : null}
+      {extraPhoneCount >= 2 ? (
+        <OptionalContactField
+          error={errors.extraPhone2}
+          errorId={`${errorPrefix}-extra-phone-2-error`}
+          htmlFor={`${errorPrefix}-extra-phone-2`}
+          label={`${customerQuoteFieldCopy.extraPhone} 2`}
+          onRemove={(): void => {
+            onFieldsPatch({ extraPhone2: "" });
+            setExtraPhoneCount(1);
+          }}
+        >
+          <Input
+            aria-invalid={errors.extraPhone2 !== undefined}
+            autoComplete="tel"
+            id={`${errorPrefix}-extra-phone-2`}
+            name="extraPhone2"
+            onChange={onChange}
+            type="tel"
+            value={fields.extraPhone2}
+          />
+        </OptionalContactField>
+      ) : null}
+      {extraPhoneCount < QUOTE_EXTRA_PHONE_MAX ? (
+        <AddContactButton
+          label={customerQuoteCopy.addPhone}
+          onClick={(): void => {
+            setExtraPhoneCount((current) => current + 1);
+          }}
+        />
+      ) : null}
+      {showExtraPerson ? (
+        <div className="flex flex-col gap-6">
+          <OptionalContactField
+            error={errors.extraPersonName}
+            errorId={`${errorPrefix}-extra-person-name-error`}
+            htmlFor={`${errorPrefix}-extra-person-name`}
+            label={customerQuoteFieldCopy.extraPersonName}
+            onRemove={(): void => {
+              onFieldsPatch({
+                extraPersonEmail: "",
+                extraPersonName: "",
+                extraPersonPhone: "",
+              });
+              setShowExtraPerson(false);
+            }}
+          >
+            <Input
+              aria-invalid={errors.extraPersonName !== undefined}
+              autoComplete="name"
+              id={`${errorPrefix}-extra-person-name`}
+              name="extraPersonName"
+              onChange={onChange}
+              value={fields.extraPersonName}
+            />
+          </OptionalContactField>
+          <Field
+            error={errors.extraPersonEmail}
+            errorId={`${errorPrefix}-extra-person-email-error`}
+            htmlFor={`${errorPrefix}-extra-person-email`}
+            label={customerQuoteFieldCopy.extraPersonEmail}
+          >
+            <Input
+              aria-invalid={errors.extraPersonEmail !== undefined}
+              autoComplete="email"
+              id={`${errorPrefix}-extra-person-email`}
+              name="extraPersonEmail"
+              onChange={onChange}
+              type="email"
+              value={fields.extraPersonEmail}
+            />
+          </Field>
+          <Field
+            error={errors.extraPersonPhone}
+            errorId={`${errorPrefix}-extra-person-phone-error`}
+            htmlFor={`${errorPrefix}-extra-person-phone`}
+            label={customerQuoteFieldCopy.extraPersonPhone}
+          >
+            <Input
+              aria-invalid={errors.extraPersonPhone !== undefined}
+              autoComplete="tel"
+              id={`${errorPrefix}-extra-person-phone`}
+              name="extraPersonPhone"
+              onChange={onChange}
+              type="tel"
+              value={fields.extraPersonPhone}
+            />
+          </Field>
+        </div>
+      ) : (
+        <AddContactButton
+          label={customerQuoteCopy.addPerson}
+          onClick={(): void => {
+            setShowExtraPerson(true);
+          }}
+        />
+      )}
       <Field
         error={errors.serviceAddress}
         errorId={`${errorPrefix}-address-error`}
@@ -745,6 +977,9 @@ function QuoteReview({
       >
         <p>{fields.fullName}</p>
         <p>{fields.email}</p>
+        {quoteExtraContactLines(fields).map((line) => (
+          <p key={line}>{line}</p>
+        ))}
         <p>{fields.phone}</p>
         <p>{fields.serviceAddress}</p>
       </ReviewBlock>
@@ -773,6 +1008,69 @@ function ReviewBlock({
         {children}
       </div>
     </section>
+  );
+}
+
+function AddContactButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}): ReactElement {
+  return (
+    <p>
+      <Button
+        className="min-h-touch px-0"
+        onClick={onClick}
+        type="button"
+        variant="ghost"
+      >
+        {label}
+      </Button>
+    </p>
+  );
+}
+
+function OptionalContactField({
+  children,
+  error,
+  errorId,
+  htmlFor,
+  label,
+  onRemove,
+}: {
+  children: ReactElement;
+  error: string | undefined;
+  errorId: string;
+  htmlFor: string;
+  label: string;
+  onRemove: () => void;
+}): ReactElement {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-4">
+        <Label htmlFor={htmlFor}>{label}</Label>
+        <Button
+          className="min-h-touch px-0"
+          onClick={onRemove}
+          type="button"
+          variant="ghost"
+        >
+          {customerQuoteCopy.removeExtra}
+        </Button>
+      </div>
+      {children}
+      {error === undefined ? null : (
+        <p
+          aria-live="polite"
+          className="text-caption text-destructive"
+          id={errorId}
+        >
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 

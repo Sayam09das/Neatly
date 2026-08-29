@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ServiceDetails } from "@/components/customer/services/service-details";
 import {
   customerQuoteLabel,
-  customerQuotePath,
+  customerServiceApplyPath,
   customerServiceDetailCopy,
   customerServicesCopy,
 } from "@/config/customer";
@@ -40,7 +40,7 @@ describe("ServiceDetails", (): void => {
     expect(screen.getByText("Interior oven")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: customerQuoteLabel(service.name) }),
-    ).toHaveAttribute("href", customerQuotePath(service.slug));
+    ).toHaveAttribute("href", customerServiceApplyPath(service.slug));
     expect(
       screen.getByRole("link", { name: customerServicesCopy.backToServices }),
     ).toHaveAttribute("href", "/services");

@@ -19,12 +19,14 @@ import type { CustomerServicesQuery } from "@/lib/customer/catalog";
 import type { CustomerServiceList } from "@/types/customer";
 
 interface ServicesDiscoveryProps {
+  catalogHref?: string;
   list: CustomerServiceList | null;
   query: CustomerServicesQuery;
   status: "error" | "success";
 }
 
 export function ServicesDiscovery({
+  catalogHref = CUSTOMER_PATHS.services,
   list,
   query,
   status,
@@ -44,21 +46,27 @@ export function ServicesDiscovery({
       <p className="mt-4 max-w-prose text-body text-muted-foreground">
         {customerSurfaceCopy.services.description}
       </p>
-      <ServicesDiscoverySearch query={query} />
+      <ServicesDiscoverySearch catalogHref={catalogHref} query={query} />
       {status === "error" ? (
-        <ServicesDiscoveryError query={query} />
+        <ServicesDiscoveryError catalogHref={catalogHref} query={query} />
       ) : (
-        <ServicesDiscoveryResults list={list} query={query} />
+        <ServicesDiscoveryResults
+          catalogHref={catalogHref}
+          list={list}
+          query={query}
+        />
       )}
     </section>
   );
 }
 
 interface ServicesDiscoveryErrorProps {
+  catalogHref: string;
   query: CustomerServicesQuery;
 }
 
 function ServicesDiscoveryError({
+  catalogHref,
   query,
 }: ServicesDiscoveryErrorProps): ReactElement {
   return (
@@ -69,7 +77,7 @@ function ServicesDiscoveryError({
       <p className="mt-2 text-body text-muted-foreground">
         {customerErrorCopy.description}
       </p>
-      <form action={CUSTOMER_PATHS.services} className="mt-8" method="get">
+      <form action={catalogHref} className="mt-8" method="get">
         {query.q === "" ? null : (
           <input
             name={CUSTOMER_SERVICES_SEARCH_PARAM}
@@ -93,16 +101,18 @@ function ServicesDiscoveryError({
 }
 
 interface ServicesDiscoveryResultsProps {
+  catalogHref: string;
   list: CustomerServiceList | null;
   query: CustomerServicesQuery;
 }
 
 function ServicesDiscoveryResults({
+  catalogHref,
   list,
   query,
 }: ServicesDiscoveryResultsProps): ReactElement {
   if (list === null || list.services.length === 0) {
-    return <ServicesDiscoveryEmpty query={query} />;
+    return <ServicesDiscoveryEmpty catalogHref={catalogHref} query={query} />;
   }
 
   return (
@@ -117,16 +127,22 @@ function ServicesDiscoveryResults({
           </li>
         ))}
       </ul>
-      <ServicesDiscoveryPagination pagination={list.pagination} query={query} />
+      <ServicesDiscoveryPagination
+        catalogHref={catalogHref}
+        pagination={list.pagination}
+        query={query}
+      />
     </>
   );
 }
 
 interface ServicesDiscoveryEmptyProps {
+  catalogHref: string;
   query: CustomerServicesQuery;
 }
 
 function ServicesDiscoveryEmpty({
+  catalogHref,
   query,
 }: ServicesDiscoveryEmptyProps): ReactElement {
   const isSearchEmpty = query.q !== "";
@@ -141,7 +157,7 @@ function ServicesDiscoveryEmpty({
         <p className="mt-8">
           <Link
             className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            href={CUSTOMER_PATHS.services}
+            href={catalogHref}
           >
             {customerServicesCopy.browseAll}
           </Link>
