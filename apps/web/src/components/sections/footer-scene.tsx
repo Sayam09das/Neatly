@@ -10,12 +10,26 @@ import {
   landingNavLinks,
   landingServices,
 } from "@/config/landing";
+import { getCustomerFooterUtilityNav } from "@/lib/customer/footer";
+import type {
+  CustomerNavbarArea,
+  CustomerNavbarSession,
+} from "@/lib/customer/navbar";
 import { FooterContact } from "./footer-contact";
 import { FooterLink } from "./footer-link";
 import { useFooterAnimation } from "./use-footer-animation";
 
-export function FooterScene(): ReactElement {
+interface FooterSceneProps {
+  area?: CustomerNavbarArea;
+  session?: CustomerNavbarSession | null;
+}
+
+export function FooterScene({
+  area = "public",
+  session = null,
+}: FooterSceneProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
+  const utilityNav = getCustomerFooterUtilityNav(session, area);
 
   useFooterAnimation({ rootRef });
 
@@ -83,7 +97,25 @@ export function FooterScene(): ReactElement {
               ))}
             </ul>
           </nav>
-          <FooterContact />
+          {utilityNav === null ? (
+            <FooterContact />
+          ) : (
+            <nav aria-labelledby={utilityNav.headingId} data-footer-column>
+              <h3
+                className="text-label text-secondary-foreground uppercase"
+                id={utilityNav.headingId}
+              >
+                {utilityNav.heading}
+              </h3>
+              <ul className="mt-5 flex flex-col gap-1">
+                {utilityNav.links.map((item) => (
+                  <li key={`${item.href}:${item.label}`}>
+                    <FooterLink href={item.href}>{item.label}</FooterLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
       <div
@@ -106,7 +138,7 @@ export function FooterScene(): ReactElement {
             {landingFooter.legalLinks.map((item) => (
               <li key={item.href}>
                 <Link
-                  className="inline-flex min-h-touch items-center text-caption text-secondary-foreground/50 transition-colors duration-normal ease-standard hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                  className="inline-flex min-h-touch items-center text-caption text-secondary-foreground/50 motion-safe:transition-colors motion-safe:duration-normal motion-safe:ease-standard hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
                   href={item.href}
                 >
                   {item.label}

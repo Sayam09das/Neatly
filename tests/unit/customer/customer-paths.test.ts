@@ -10,6 +10,7 @@ import {
 } from "@/config/customer";
 import {
   customerAccountMenuItems,
+  customerFooterAccountLinks,
   customerHeaderNavigation,
   customerNavigation,
   getCustomerNavItems,
@@ -66,6 +67,13 @@ describe("customer navigation", (): void => {
       CUSTOMER_PATHS.bookings,
     ]);
     expect(customerAccountMenuItems.map((item) => item.href)).toEqual([
+      CUSTOMER_PATHS.profile,
+      CUSTOMER_PATHS.settings,
+      CUSTOMER_PATHS.notifications,
+    ]);
+    expect(customerFooterAccountLinks.map((item) => item.href)).toEqual([
+      CUSTOMER_PATHS.dashboard,
+      CUSTOMER_PATHS.bookings,
       CUSTOMER_PATHS.profile,
       CUSTOMER_PATHS.settings,
       CUSTOMER_PATHS.notifications,

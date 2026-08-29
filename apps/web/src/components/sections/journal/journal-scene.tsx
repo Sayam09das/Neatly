@@ -4,12 +4,17 @@ import { Button } from "@neatly/ui";
 import Link from "next/link";
 import { type ReactElement, useRef } from "react";
 import { HeadingAccent } from "@/components/sections/heading-accent";
-import { landingBlogHighlights, landingCtas } from "@/config/landing";
+import {
+  getPublishedLandingCta,
+  landingBlogHighlights,
+  landingCtas,
+} from "@/config/landing";
 import { JournalFeaturedCard, JournalSlotCard } from "./journal-cards";
 import { useJournalAnimation } from "./use-journal-animation";
 
 export function JournalScene(): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
+  const readJournal = getPublishedLandingCta(landingCtas.readJournal);
 
   useJournalAnimation({ rootRef });
 
@@ -50,13 +55,13 @@ export function JournalScene(): ReactElement {
           ))}
         </ul>
       </div>
-      <div className="mt-10 flex justify-center" data-journal-cta>
-        <Button asChild variant="outline">
-          <Link href={landingCtas.readJournal.href}>
-            {landingCtas.readJournal.label}
-          </Link>
-        </Button>
-      </div>
+      {readJournal === null ? null : (
+        <div className="mt-10 flex justify-center" data-journal-cta>
+          <Button asChild variant="outline">
+            <Link href={readJournal.href}>{readJournal.label}</Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

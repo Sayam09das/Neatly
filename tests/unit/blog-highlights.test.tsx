@@ -54,8 +54,9 @@ describe("BlogHighlights", (): void => {
       screen.getAllByText(landingBlogHighlights.slotPendingTitle),
     ).toHaveLength(landingBlogHighlights.reservedCount);
     expect(
-      screen.getByRole("link", { name: landingCtas.readJournal.label }),
-    ).toHaveAttribute("href", landingCtas.readJournal.href);
+      screen.queryByRole("link", { name: landingCtas.readJournal.label }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/blog"]')).toBeNull();
     expect(screen.queryByText(/ultimate/i)).not.toBeInTheDocument();
     expect(screen.queryByText("%")).not.toBeInTheDocument();
   });

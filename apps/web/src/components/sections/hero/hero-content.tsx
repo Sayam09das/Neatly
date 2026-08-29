@@ -8,8 +8,15 @@ import { motionDuration } from "@/animations/config/durations";
 import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
 import { fadeUp } from "@/animations/motion/variants";
 import { landingCtas, landingHero } from "@/config/landing";
+import type { HomeCta } from "@/lib/customer/home";
 
-export function HeroContent(): ReactElement {
+interface HeroContentProps {
+  secondaryAction: HomeCta;
+}
+
+export function HeroContent({
+  secondaryAction,
+}: HeroContentProps): ReactElement {
   const prefersReducedMotion = useReducedMotion();
   const emphasisIndex = landingHero.heading.indexOf(landingHero.emphasis);
   const headingLead =
@@ -69,9 +76,9 @@ export function HeroContent(): ReactElement {
           </Button>
           <Link
             className="inline-flex min-h-touch items-center text-body-small text-secondary-foreground/80 underline-offset-4 transition-colors duration-normal ease-standard hover:text-secondary-foreground hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            href={landingCtas.secondary.href}
+            href={secondaryAction.href}
           >
-            {landingHero.secondaryActionLabel}
+            {secondaryAction.label}
           </Link>
         </div>
         <ul className="flex flex-col gap-1.5 text-caption text-secondary-foreground/75 sm:flex-row sm:flex-wrap sm:gap-x-5">

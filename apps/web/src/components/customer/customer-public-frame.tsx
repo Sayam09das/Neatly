@@ -28,7 +28,7 @@ export async function CustomerPublicFrame({
       >
         {children}
       </main>
-      <SiteFooter />
+      <SiteFooter session={session} />
     </>
   );
 }

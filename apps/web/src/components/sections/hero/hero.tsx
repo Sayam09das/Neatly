@@ -13,9 +13,19 @@ import { HeroBackground } from "@/components/sections/hero/hero-background";
 import { HeroContent } from "@/components/sections/hero/hero-content";
 import { HeroCurve } from "@/components/sections/hero/hero-curve";
 import { QuoteForm } from "@/components/sections/hero/quote-form";
-import { landingHero } from "@/config/landing";
+import { landingCtas, landingHero } from "@/config/landing";
+import type { HomeCta } from "@/lib/customer/home";
 
-export function Hero(): ReactElement {
+interface HeroProps {
+  secondaryAction?: HomeCta;
+}
+
+export function Hero({
+  secondaryAction = {
+    href: landingCtas.secondary.href,
+    label: landingHero.secondaryActionLabel,
+  },
+}: HeroProps): ReactElement {
   const pinRef = useRef<HTMLDivElement>(null);
 
   useGsap(
@@ -45,7 +55,7 @@ export function Hero(): ReactElement {
         <HeroBackground />
         <div className="relative z-base mx-auto flex h-full min-h-svh max-w-page flex-col justify-start px-gutter pt-24 pb-24 md:pt-28 md:pb-28 lg:justify-center lg:pt-28 lg:pb-32 xl:pt-32">
           <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)] lg:items-center lg:gap-12 xl:gap-16">
-            <HeroContent />
+            <HeroContent secondaryAction={secondaryAction} />
             <div className="hidden lg:block">
               <QuoteForm />
             </div>

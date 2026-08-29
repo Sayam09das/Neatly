@@ -31,7 +31,6 @@ import {
 } from "@/config/customer-nav";
 import {
   getPublishedPhone,
-  landingFooter,
   landingNavLinks,
   navbarCta,
 } from "@/config/landing";
@@ -129,13 +128,9 @@ export function MobileNav({
             </ul>
           </nav>
           <Separator className="bg-secondary-foreground/15" />
-          <div className="flex flex-col gap-3">
-            <p className="text-label text-secondary-foreground/70">Call</p>
-            {phone === null ? (
-              <p className="text-body-small text-secondary-foreground/80">
-                {landingFooter.placeholderContact.phone}
-              </p>
-            ) : (
+          {phone === null ? null : (
+            <div className="flex flex-col gap-3">
+              <p className="text-label text-secondary-foreground/70">Call</p>
               <SheetClose asChild>
                 <a
                   className="inline-flex min-h-touch items-center gap-2 rounded-sm text-body text-secondary-foreground transition-colors duration-normal ease-standard hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
@@ -145,8 +140,8 @@ export function MobileNav({
                   {phone}
                 </a>
               </SheetClose>
-            )}
-          </div>
+            </div>
+          )}
           {session !== null ? (
             <>
               <Separator className="bg-secondary-foreground/15" />

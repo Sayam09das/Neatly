@@ -3,12 +3,17 @@
 import { Button } from "@neatly/ui";
 import Link from "next/link";
 import { type ReactElement, useRef } from "react";
-import { landingCtas, landingFeaturedWork } from "@/config/landing";
+import {
+  getPublishedLandingCta,
+  landingCtas,
+  landingFeaturedWork,
+} from "@/config/landing";
 import { PortfolioCarousel } from "./portfolio-carousel";
 import { useWorkAnimation } from "./use-work-animation";
 
 export function WorkScene(): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
+  const viewWork = getPublishedLandingCta(landingCtas.viewWork);
 
   useWorkAnimation({ rootRef });
 
@@ -52,13 +57,13 @@ export function WorkScene(): ReactElement {
         >
           {landingFeaturedWork.emptyMessage}
         </p>
-        <div className="mt-8" data-work-cta>
-          <Button asChild variant="outline">
-            <Link href={landingCtas.viewWork.href}>
-              {landingCtas.viewWork.label}
-            </Link>
-          </Button>
-        </div>
+        {viewWork === null ? null : (
+          <div className="mt-8" data-work-cta>
+            <Button asChild variant="outline">
+              <Link href={viewWork.href}>{viewWork.label}</Link>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

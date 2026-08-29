@@ -16,6 +16,10 @@ import { WhyNeatly } from "@/components/sections/why-neatly";
 import { WordMarquee } from "@/components/sections/word-marquee";
 import { FeaturedWork } from "@/components/sections/work";
 import { TEMPORARY_COPY_NOTE } from "@/config/landing";
+import {
+  getHomeAccountCta,
+  getHomeHeroSecondaryCta,
+} from "@/lib/customer/home";
 import type { CustomerNavbarSession } from "@/lib/customer/navbar";
 
 interface LandingPageProps {
@@ -25,6 +29,9 @@ interface LandingPageProps {
 export function LandingPage({
   session = null,
 }: LandingPageProps): ReactElement {
+  const accountCta = getHomeAccountCta(session);
+  const heroSecondaryAction = getHomeHeroSecondaryCta(session);
+
   return (
     <>
       <a
@@ -36,7 +43,7 @@ export function LandingPage({
       <Navbar session={session} />
       <main id="main-content">
         <p className="sr-only">{TEMPORARY_COPY_NOTE}</p>
-        <Hero />
+        <Hero secondaryAction={heroSecondaryAction} />
         <WhyNeatly />
         <ServicesSection />
         <TrustIndicators />
@@ -46,11 +53,11 @@ export function LandingPage({
         <TrustSection />
         <Statistics />
         <Testimonials />
-        <FinalCta />
+        <FinalCta accountCta={accountCta} />
         <BlogHighlights />
         <ClosingBand>
           <Newsletter />
-          <SiteFooter surface="photo" />
+          <SiteFooter session={session} surface="photo" />
         </ClosingBand>
       </main>
     </>

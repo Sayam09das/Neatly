@@ -26,6 +26,11 @@ export const customerAccountMenuItems: readonly CustomerNavItem[] = [
   { href: CUSTOMER_PATHS.notifications, label: "Notifications" },
 ] as const;
 
+export const customerFooterAccountLinks: readonly CustomerNavItem[] = [
+  ...customerHeaderNavigation,
+  ...customerAccountMenuItems,
+];
+
 export function getCustomerNavItems(): readonly CustomerNavItem[] {
   return customerNavigation;
 }

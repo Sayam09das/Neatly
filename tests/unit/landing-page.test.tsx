@@ -3,7 +3,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { LandingPage } from "@/components/landing-page";
+import { CUSTOMER_PATHS, customerSurfaceCopy } from "@/config/customer";
 import {
+  landingCtas,
   landingHowItWorks,
   landingServices,
   landingStatistics,
@@ -76,4 +78,43 @@ describe("landing content", (): void => {
     expect(landingTestimonials.intro).toMatch(/never be invented/i);
     expect(landingTestimonials.items).toHaveLength(0);
   });
+
+  it("uses existing public routes and omits unpublished marketing indexes", (): void => {
+    render(<LandingPage />);
+
+    expect(
+      screen.getAllByRole("link", { name: landingCtas.primary.label })[0],
+    ).toHaveAttribute("href", landingCtas.primary.href);
+    expect(
+      screen.getAllByRole("link", { name: landingCtas.secondary.label })[0],
+    ).toHaveAttribute("href", landingCtas.secondary.href);
+    expect(document.querySelector('a[href="/portfolio"]')).toBeNull();
+    expect(document.querySelector('a[href="/blog"]')).toBeNull();
+    expect(document.querySelector('a[href="/contact"]')).toBeNull();
+  }, 15000);
+
+  it("adds a customer account action without exposing admin navigation", (): void => {
+    render(
+      <LandingPage
+        session={{
+          identity: { email: "ada@neatly.example", name: "Ada" },
+          role: "CUSTOMER",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getAllByRole("link", {
+        name: customerSurfaceCopy.dashboard.title,
+      }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", {
+        name: customerSurfaceCopy.dashboard.title,
+      })[0],
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
+    expect(
+      screen.queryByRole("link", { name: "Admin" }),
+    ).not.toBeInTheDocument();
+  }, 15000);
 });

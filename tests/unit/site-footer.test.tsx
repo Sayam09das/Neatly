@@ -3,6 +3,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { SiteFooter } from "@/components/sections/site-footer";
+import { AUTH_ADMIN_HOME_PATH, AUTH_REGISTER_ALIAS_PATH } from "@/config/auth";
+import {
+  CUSTOMER_LOGIN_PATH,
+  CUSTOMER_PATHS,
+  customerNavbarCopy,
+} from "@/config/customer";
+import { customerFooterAccountLinks } from "@/config/customer-nav";
 import {
   landingCtas,
   landingFooter,
@@ -11,9 +18,10 @@ import {
 } from "@/config/landing";
 
 describe("SiteFooter", (): void => {
-  it("renders brand, nav, services, and contact without invented social links", (): void => {
+  it("renders brand, public nav, and support without invented contact or social links", (): void => {
     render(<SiteFooter />);
 
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "Neatly" }),
     ).toBeInTheDocument();
@@ -42,9 +50,14 @@ describe("SiteFooter", (): void => {
     expect(
       screen.getByRole("heading", {
         level: 3,
-        name: landingFooter.contactHeading,
+        name: landingFooter.supportHeading,
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        name: landingFooter.contactHeading,
+      }),
+    ).not.toBeInTheDocument();
 
     for (const item of landingNavLinks) {
       expect(screen.getByRole("link", { name: item.label })).toHaveAttribute(
@@ -60,27 +73,87 @@ describe("SiteFooter", (): void => {
       );
     }
 
-    expect(screen.getByText(landingFooter.emailLabel)).toBeInTheDocument();
-    expect(screen.getByText(landingFooter.hoursLabel)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", {
-        name: landingFooter.placeholderContact.email,
-      }),
-    ).toHaveAttribute(
-      "href",
-      `mailto:${landingFooter.placeholderContact.email}`,
-    );
+      screen.getByRole("link", { name: customerNavbarCopy.loginLabel }),
+    ).toHaveAttribute("href", CUSTOMER_LOGIN_PATH);
     expect(
-      screen.getByRole("link", {
-        name: landingFooter.placeholderContact.phone,
-      }),
-    ).toHaveAttribute("href", `tel:${landingFooter.placeholderContact.phone}`);
+      screen.getByRole("link", { name: landingFooter.registerLabel }),
+    ).toHaveAttribute("href", AUTH_REGISTER_ALIAS_PATH);
+    expect(
+      screen.queryByRole("link", { name: "Dashboard" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("hello@neatly.com")).not.toBeInTheDocument();
+    expect(screen.queryByText("+1 (800) 555-6328")).not.toBeInTheDocument();
+    expect(screen.queryByText("100 Main Street")).not.toBeInTheDocument();
     expect(screen.getByText(landingFooter.copyright)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
     expect(
       screen.queryByRole("link", { name: /facebook/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /instagram/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("exposes account routes for an authenticated customer and hides guest auth links", (): void => {
+    render(
+      <SiteFooter
+        session={{
+          identity: { email: "ada@neatly.example", name: "Ada" },
+          role: "CUSTOMER",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: landingFooter.accountHeading,
+      }),
+    ).toBeInTheDocument();
+
+    for (const item of customerFooterAccountLinks) {
+      expect(screen.getByRole("link", { name: item.label })).toHaveAttribute(
+        "href",
+        item.href,
+      );
+    }
+
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+      "href",
+      CUSTOMER_PATHS.dashboard,
+    );
+    expect(
+      screen.queryByRole("link", { name: customerNavbarCopy.loginLabel }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("ada@neatly.example")).not.toBeInTheDocument();
+  });
+
+  it("keeps admin visitors on public support without customer account links", (): void => {
+    render(
+      <SiteFooter
+        session={{
+          identity: { email: "ops@neatly.example", name: "Ops" },
+          role: "ADMIN",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: customerNavbarCopy.adminLabel }),
+    ).toHaveAttribute("href", AUTH_ADMIN_HOME_PATH);
+    expect(
+      screen.queryByRole("link", { name: "Dashboard" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: customerNavbarCopy.loginLabel }),
     ).not.toBeInTheDocument();
   });
 
@@ -107,9 +180,7 @@ describe("SiteFooter", (): void => {
       screen.getByRole("heading", { level: 2, name: "Neatly" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", {
-        name: landingFooter.placeholderContact.email,
-      }),
+      screen.getByRole("link", { name: customerNavbarCopy.loginLabel }),
     ).toBeInTheDocument();
   });
 });

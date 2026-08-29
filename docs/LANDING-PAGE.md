@@ -41,18 +41,19 @@ No extra SaaS bands (logos, pricing, team photos, 3D product shots).
 | :--- | :--- | :--- | :--- |
 | Primary | Get a Quote | `/quote` | Navbar |
 | Primary | Request a free quote | `/quote` | Hero, final CTA |
-| Secondary | Explore services | `/services` | Hero, services |
-| Contextual | View our work | `/portfolio` | Featured work |
-| Contextual | Read the journal | `/blog` | Blog highlights |
+| Secondary | Explore services | `/services` | Hero (guests and admins), services |
+| Account | Your account | `/dashboard` | Hero secondary and final CTA text link for authenticated customers |
+| Contextual | View our work | unpublished | Featured work (omitted until `/portfolio` exists) |
+| Contextual | Read the journal | unpublished | Blog highlights (omitted until `/blog` exists) |
 | Capture | Subscribe | none yet | Newsletter (disabled) |
 
-Do not alternate “Get started” / “Learn more”. Routes that are not built yet still use the PRD hrefs so later pages can land in the right place.
+Do not alternate “Get started” / “Learn more”. Home links only to routes that exist. Do not invent `/portfolio`, `/blog`, or `/contact` hrefs before those pages ship.
 
 ## Section briefs
 
 ### Navbar
 - **Purpose:** Brand, primary navigation, quote action.
-- **Content:** Replaceable wordmark + mark, About / Services / Portfolio / Blog / Contact, optional published phone, “Get a Quote”.
+- **Content:** Replaceable wordmark + mark, About / Services, optional published phone, “Get a Quote”. Portfolio, Blog, and Contact stay out of the public nav until those routes exist.
 - **CTA:** Navbar quote (`navbarCta`) to `/quote`.
 - **Hierarchy:** Logo left, links center, actions right on `lg`. Logo + menu control below `lg`.
 - **Responsive:** Sticky header. Desktop row from `lg`. Mobile Sheet with links, phone slot, and full-width CTA.
@@ -180,13 +181,13 @@ Do not alternate “Get started” / “Learn more”. Routes that are not built
 
 ### Site footer
 - **Purpose:** Contact, explore, services, legal—the last utility surface after the newsletter.
-- **Content:** Brand mark + promise, Explore from primary nav, Services from published landing categories, Get in touch as labeled email / phone / hours / address. Quote text link. Social stays pending until real profile URLs exist in site settings. Privacy/terms in the bottom bar. No invented social URLs. Phone is not a `tel:` link until `getPublishedPhone()` returns a real number.
+- **Content:** Brand mark + promise, Explore from primary nav, Services from published landing categories, Support (Log in, Register, quote) until site settings publish real contact details. Quote text link. Social stays pending until real profile URLs exist in site settings. Privacy/terms in the bottom bar. No invented social URLs. Do not render placeholder email, phone, hours, or address as live contact. Authenticated customers see an Account column instead of Support.
 - **CTA:** Text link to Request a free quote. Not a second banner.
-- **Hierarchy:** `h2` brand (visually the logo lockup), `h3` Explore / Services / Get in touch. Legal heading is visually hidden for the bottom links.
+- **Hierarchy:** `h2` brand (visually the logo lockup), `h3` Explore / Services / Support or Account. Legal heading is visually hidden for the bottom links.
 - **Responsive:** Brand stack, then 1 → 2 → 3 utility columns (`sm`, `lg`). Bottom bar stacks, then splits from `sm`.
-- **Media:** Transparent over `ClosingBand`. Same `01_notes.jpeg` as Email notes — not a second image and not a solid `bg-secondary` slab.
+- **Media:** Transparent over `ClosingBand`. Same `01_notes.jpeg` as Email notes — not a second image and not a solid `bg-secondary` slab. Public service/quote frames and the account shell use the solid `bg-secondary` surface.
 - **Motion intent:** GSAP ScrollTrigger story (brand → rule `scaleX` → staggered columns → legal bar). CSS hover color + slight translate on links. Reduced motion skips GSAP. Lenis remains the global scroller. No pinning. No Swiper. No invented social icons.
-- **A11y:** `<footer>` landmark (inside `<main>` so one photograph can span both sections). Labeled navs. Render a `tel:` control only when `getPublishedPhone()` returns a real number. Replace placeholders before launch.
+- **A11y:** `<footer>` landmark (inside `<main>` on the landing/about photograph band). Labeled navs. Render a `tel:` control only when `getPublishedPhone()` returns a real number. Replace placeholders before launch.
 
 ## Layout and spacing
 
@@ -207,11 +208,11 @@ Breakpoints: mobile-first `sm` `md` `lg` `xl` `2xl`. Sticky mobile quote chrome 
 
 ## Performance
 
-Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, section GSAP/Motion scenes, Featured Work Swiper gallery, testimonial carousel (only when two or more published reviews exist), newsletter form chrome. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. Do not construct a second `Lenis()` instance. No database or API calls on `/` in this step.
+Server Components by default. Keep JS at the leaf: navbar Sheet/scroll/active route, Hero motion and quote form, section GSAP/Motion scenes, Featured Work Swiper gallery, testimonial carousel (only when two or more published reviews exist), newsletter form chrome. Lenis already wraps the tree from providers. Do not mark `LandingPage` as a client component. Do not construct a second `Lenis()` instance. Home may read the session cookie for navbar/footer/CTAs. Do not fetch dashboard, bookings, notifications, or admin metrics from `/`.
 
 ## SEO
 
-One `h1`. Section `h2`s in document order. Layout metadata from Step 10 remains the homepage title/description. JSON-LD `LocalBusiness` waits for real NAP data. Do not keyword-stuff temporary copy.
+One `h1`. Section `h2`s in document order. Home exports `landingMetadata` (title, description, Open Graph, canonical when `NEXT_PUBLIC_SITE_URL` is set). JSON-LD `LocalBusiness` / `CleaningService` includes name, description, and site URL. Telephone, email, address, and hours are added only from `getPublishedContact()`. Do not keyword-stuff temporary copy. Do not invent NAP fields.
 
 ## What this step does not include
 

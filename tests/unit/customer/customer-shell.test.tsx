@@ -50,19 +50,20 @@ describe("CustomerShell", (): void => {
       screen.getByRole("link", { name: customerShellCopy.skipToContent }),
     ).toHaveAttribute("href", `#${CUSTOMER_MAIN_CONTENT_ID}`);
     expect(
-      screen.getByRole("link", { name: customerShellCopy.brandLabel }),
+      screen.getAllByRole("link", { name: customerShellCopy.brandLabel })[0],
     ).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
-      "href",
-      CUSTOMER_PATHS.dashboard,
-    );
-    expect(screen.getByRole("link", { name: "Bookings" })).toHaveAttribute(
-      "href",
-      CUSTOMER_PATHS.bookings,
-    );
     expect(
-      screen.getByRole("link", { name: customerNavbarCopy.notificationsLabel }),
+      screen.getAllByRole("link", { name: "Dashboard" })[0],
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
+    expect(
+      screen.getAllByRole("link", { name: "Bookings" })[0],
+    ).toHaveAttribute("href", CUSTOMER_PATHS.bookings);
+    expect(
+      screen.getAllByRole("link", {
+        name: customerNavbarCopy.notificationsLabel,
+      })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: customerNavbarCopy.accountMenuLabel }),
     ).toBeInTheDocument();

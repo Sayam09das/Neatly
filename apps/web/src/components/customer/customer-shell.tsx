@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { CustomerNavbar } from "@/components/customer/customer-navbar";
+import { SiteFooter } from "@/components/sections/site-footer";
 import { CUSTOMER_MAIN_CONTENT_ID, customerShellCopy } from "@/config/customer";
 import type { CustomerNavbarIdentity } from "@/lib/customer/navbar";
 
@@ -34,6 +35,11 @@ export function CustomerShell({
           {children}
         </div>
       </main>
+      <SiteFooter
+        area="account"
+        session={{ identity, role: "customer" }}
+        surface="solid"
+      />
     </div>
   );
 }

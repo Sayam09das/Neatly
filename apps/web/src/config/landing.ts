@@ -1,32 +1,35 @@
 import { APP_NAME } from "@neatly/config";
+import { CUSTOMER_PATHS } from "@/config/customer";
 
 export const TEMPORARY_COPY_NOTE =
   "Temporary copy until site settings, services, portfolio, testimonials, and blog are published from the CMS. Do not treat this as live business data.";
 
 export const navbarCta = {
-  href: "/quote",
+  href: CUSTOMER_PATHS.quote,
   label: "Get a Quote",
 } as const;
 
+const unpublishedLandingRoute: string | null = null;
+
 export const landingCtas = {
   primary: {
-    href: "/quote",
+    href: CUSTOMER_PATHS.quote,
     label: "Request a free quote",
   },
   secondary: {
-    href: "/services",
+    href: CUSTOMER_PATHS.services,
     label: "Explore services",
   },
   viewWork: {
-    href: "/portfolio",
+    href: unpublishedLandingRoute,
     label: "View our work",
   },
   readJournal: {
-    href: "/blog",
+    href: unpublishedLandingRoute,
     label: "Read the journal",
   },
   contact: {
-    href: "/contact",
+    href: unpublishedLandingRoute,
     label: "Contact",
   },
   subscribe: {
@@ -36,11 +39,22 @@ export const landingCtas = {
 
 export const landingNavLinks = [
   { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/blog", label: "Blog" },
-  { href: "/contact", label: "Contact" },
+  { href: CUSTOMER_PATHS.services, label: "Services" },
 ] as const;
+
+export function getPublishedLandingCta(cta: {
+  href: string | null;
+  label: string;
+}): { href: string; label: string } | null {
+  if (cta.href === null) {
+    return null;
+  }
+
+  return {
+    href: cta.href,
+    label: cta.label,
+  };
+}
 
 export const landingHero = {
   description: `${APP_NAME} is a professional residential and commercial cleaning service. Work is done by vetted, insured teams with a clear scope and a satisfaction guarantee.`,
@@ -81,6 +95,23 @@ export const landingHero = {
     "Satisfaction guarantee",
   ],
 };
+
+const landingHeroPosterFrame = landingHero.frames.at(0);
+
+if (landingHeroPosterFrame === undefined) {
+  throw new Error("Landing hero requires a poster frame.");
+}
+
+export const landingMetadata = {
+  description: landingHero.description,
+  openGraphImage: {
+    alt: `${APP_NAME} professional residential and commercial cleaning`,
+    height: landingHeroPosterFrame.height,
+    src: landingHeroPosterFrame.src,
+    width: landingHeroPosterFrame.width,
+  },
+  title: APP_NAME,
+} as const;
 
 export const heroQuoteForm = {
   description:
@@ -248,7 +279,7 @@ export const landingServices = {
     {
       number: "01",
       featured: true,
-      href: "/services",
+      href: CUSTOMER_PATHS.services,
       title: "Residential cleaning",
       description:
         "Regular maintenance for apartments and single-family homes. Recurring or one-time, with inclusions stated before you request a quote.",
@@ -263,7 +294,7 @@ export const landingServices = {
     {
       number: "02",
       featured: false,
-      href: "/services",
+      href: CUSTOMER_PATHS.services,
       title: "Deep cleaning",
       description:
         "Detail work beyond a standard visit, including baseboards, interior appliances, and scrubbing where the published checklist includes them.",
@@ -278,7 +309,7 @@ export const landingServices = {
     {
       number: "03",
       featured: false,
-      href: "/services",
+      href: CUSTOMER_PATHS.services,
       title: "Commercial cleaning",
       description:
         "Offices, studios, and small workplaces. Scope is set per property so expectations stay explicit.",
@@ -617,6 +648,7 @@ export const landingMarquee = {
 };
 
 export const landingFooter = {
+  accountHeading: "Account",
   addressLabel: "Address",
   contactHeading: "Get in touch",
   copyright: `© 2026 ${APP_NAME}`,
@@ -631,27 +663,64 @@ export const landingFooter = {
   ],
   phoneLabel: "Phone",
   placeholderContact: {
-    address: "100 Main Street, Suite 400, New York, NY 10001",
-    email: "hello@neatly.com",
-    hours: "Mon – Sat: 8:00 AM – 6:00 PM",
-    phone: "+1 (800) 555-6328",
+    address: "[Development Placeholder: Insert Real Business Address]",
+    email: "[Development Placeholder: Insert Real Business Email]",
+    hours: "[Development Placeholder: Insert Real Business Hours]",
+    phone: "[Development Placeholder: Insert Real Business Phone]",
   },
   quoteHint: "Ready for a visit?",
+  registerLabel: "Register",
   servicesHeading: "Services",
   socialPending:
     "Social profiles appear here after they are published in site settings.",
+  supportHeading: "Support",
   tagline:
     "Professional residential and commercial cleaning with a clear scope and a satisfaction guarantee.",
 };
 
 const DEVELOPMENT_PLACEHOLDER_PREFIX = "[Development Placeholder";
 
-export function getPublishedPhone(): string | null {
-  const phone = landingFooter.placeholderContact.phone;
-  if (phone.startsWith(DEVELOPMENT_PLACEHOLDER_PREFIX)) {
+export interface PublishedContact {
+  address: string | null;
+  email: string | null;
+  hours: string | null;
+  phone: string | null;
+}
+
+function publishedOrNull(value: string): string | null {
+  const trimmed = value.trim();
+
+  if (trimmed === "" || trimmed.startsWith(DEVELOPMENT_PLACEHOLDER_PREFIX)) {
     return null;
   }
-  return phone;
+
+  return trimmed;
+}
+
+export function getPublishedContact(): PublishedContact {
+  const contact = landingFooter.placeholderContact;
+
+  return {
+    address: publishedOrNull(contact.address),
+    email: publishedOrNull(contact.email),
+    hours: publishedOrNull(contact.hours),
+    phone: publishedOrNull(contact.phone),
+  };
+}
+
+export function hasPublishedContact(): boolean {
+  const contact = getPublishedContact();
+
+  return (
+    contact.address !== null ||
+    contact.email !== null ||
+    contact.hours !== null ||
+    contact.phone !== null
+  );
+}
+
+export function getPublishedPhone(): string | null {
+  return getPublishedContact().phone;
 }
 
 export const landingMotionIntent = {

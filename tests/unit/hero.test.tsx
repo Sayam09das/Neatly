@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { Hero } from "@/components/sections/hero";
 import { HERO_FRAME_COUNT } from "@/components/sections/hero/hero-animation";
+import { CUSTOMER_PATHS, customerSurfaceCopy } from "@/config/customer";
 import { heroQuoteForm, landingCtas, landingHero } from "@/config/landing";
 
 function getPrimaryQuoteForm(): HTMLElement {
@@ -46,6 +47,24 @@ describe("Hero", (): void => {
     expect(
       within(form).getByRole("button", { name: heroQuoteForm.submitLabel }),
     ).toBeEnabled();
+  });
+
+  it("can point the secondary action at the customer account route", (): void => {
+    render(
+      <Hero
+        secondaryAction={{
+          href: CUSTOMER_PATHS.dashboard,
+          label: customerSurfaceCopy.dashboard.title,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: customerSurfaceCopy.dashboard.title }),
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
+    expect(
+      screen.queryByRole("link", { name: landingHero.secondaryActionLabel }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders all four cinematic frame slots", (): void => {

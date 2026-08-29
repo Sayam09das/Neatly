@@ -46,7 +46,7 @@ export function AboutPage({ session = null }: AboutPageProps): ReactElement {
         <AboutCta />
         <ClosingBand>
           <Newsletter />
-          <SiteFooter surface="photo" />
+          <SiteFooter session={session} surface="photo" />
         </ClosingBand>
       </main>
     </>
