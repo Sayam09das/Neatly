@@ -4,6 +4,7 @@ export const CATALOG_SORT_FIELDS = ["createdAt", "name", "sortOrder"] as const;
 
 export interface CatalogRecord {
   benefits: string[];
+  coverImageUrl: string | null;
   coverMediaId: string | null;
   createdAt: Date;
   excludedTasks: string[];

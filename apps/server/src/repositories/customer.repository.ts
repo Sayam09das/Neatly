@@ -26,6 +26,7 @@ export interface CustomerRepository {
 }
 
 function toRecord(row: {
+  _count?: { bookings: number };
   address: string | null;
   avatarMediaId: string | null;
   createdAt: Date;
@@ -40,6 +41,7 @@ function toRecord(row: {
   return {
     address: row.address,
     avatarMediaId: row.avatarMediaId,
+    bookingCount: row._count?.bookings ?? 0,
     createdAt: row.createdAt,
     email: row.email,
     id: row.id,
@@ -68,24 +70,42 @@ function orderBy(
   }
 }
 
+const CUSTOMER_COUNT = {
+  include: {
+    _count: {
+      select: { bookings: true },
+    },
+  },
+} as const;
+
 export class PrismaCustomerRepository implements CustomerRepository {
   public async findById(id: string): Promise<CustomerRecord | null> {
-    const row = await prisma.customer.findUnique({ where: { id } });
+    const row = await prisma.customer.findUnique({
+      ...CUSTOMER_COUNT,
+      where: { id },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async findByEmail(email: string): Promise<CustomerRecord | null> {
-    const row = await prisma.customer.findUnique({ where: { email } });
+    const row = await prisma.customer.findUnique({
+      ...CUSTOMER_COUNT,
+      where: { email },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async findByUserId(userId: string): Promise<CustomerRecord | null> {
-    const row = await prisma.customer.findUnique({ where: { userId } });
+    const row = await prisma.customer.findUnique({
+      ...CUSTOMER_COUNT,
+      where: { userId },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async create(input: CreateCustomerInput): Promise<CustomerRecord> {
     const row = await prisma.customer.create({
+      ...CUSTOMER_COUNT,
       data: {
         address: input.address ?? null,
         avatarMediaId: input.avatarMediaId ?? null,
@@ -104,6 +124,7 @@ export class PrismaCustomerRepository implements CustomerRepository {
   ): Promise<CustomerRecord | null> {
     try {
       const row = await prisma.customer.update({
+        ...CUSTOMER_COUNT,
         data: input,
         where: { id },
       });
@@ -120,6 +141,18 @@ export class PrismaCustomerRepository implements CustomerRepository {
     const search = query.search?.trim();
     const where: Prisma.CustomerWhereInput = {
       ...(query.status === undefined ? {} : { status: query.status }),
+      ...(query.createdFrom === undefined && query.createdTo === undefined
+        ? {}
+        : {
+            createdAt: {
+              ...(query.createdFrom === undefined
+                ? {}
+                : { gte: query.createdFrom }),
+              ...(query.createdTo === undefined
+                ? {}
+                : { lte: query.createdTo }),
+            },
+          }),
       ...(search === undefined || search === ""
         ? {}
         : {
@@ -133,6 +166,7 @@ export class PrismaCustomerRepository implements CustomerRepository {
     const [total, rows] = await prisma.$transaction([
       prisma.customer.count({ where }),
       prisma.customer.findMany({
+        ...CUSTOMER_COUNT,
         orderBy: orderBy(query.sort),
         skip: pagination.skip,
         take: pagination.limit,

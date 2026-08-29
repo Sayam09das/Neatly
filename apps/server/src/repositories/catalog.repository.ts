@@ -26,6 +26,7 @@ export interface CatalogRepository {
 
 function toRecord(row: {
   benefits: string[];
+  coverMedia: { url: string } | null;
   coverMediaId: string | null;
   createdAt: Date;
   excludedTasks: string[];
@@ -45,6 +46,7 @@ function toRecord(row: {
 }): CatalogRecord {
   return {
     benefits: row.benefits,
+    coverImageUrl: row.coverMedia?.url ?? null,
     coverMediaId: row.coverMediaId,
     createdAt: row.createdAt,
     excludedTasks: row.excludedTasks,
@@ -64,6 +66,10 @@ function toRecord(row: {
   };
 }
 
+const CATALOG_INCLUDE = {
+  coverMedia: { select: { url: true } },
+} as const;
+
 function orderBy(
   sort: SortQuery | undefined,
 ): Prisma.ServiceOrderByWithRelationInput {
@@ -81,12 +87,18 @@ function orderBy(
 
 export class PrismaCatalogRepository implements CatalogRepository {
   public async findById(id: string): Promise<CatalogRecord | null> {
-    const row = await prisma.service.findUnique({ where: { id } });
+    const row = await prisma.service.findUnique({
+      include: CATALOG_INCLUDE,
+      where: { id },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async findBySlug(slug: string): Promise<CatalogRecord | null> {
-    const row = await prisma.service.findUnique({ where: { slug } });
+    const row = await prisma.service.findUnique({
+      include: CATALOG_INCLUDE,
+      where: { slug },
+    });
     return row === null ? null : toRecord(row);
   }
 
@@ -115,6 +127,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
         slug: input.slug,
         sortOrder: input.sortOrder ?? 0,
       },
+      include: CATALOG_INCLUDE,
     });
     return toRecord(row);
   }
@@ -136,6 +149,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
               ? undefined
               : (input.includedTasks as Prisma.InputJsonValue),
         },
+        include: CATALOG_INCLUDE,
         where: { id },
       });
       return toRecord(row);
@@ -159,6 +173,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
     const [total, rows] = await prisma.$transaction([
       prisma.service.count({ where }),
       prisma.service.findMany({
+        include: CATALOG_INCLUDE,
         orderBy: orderBy(query.sort),
         skip: pagination.skip,
         take: pagination.limit,

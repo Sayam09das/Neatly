@@ -7,14 +7,22 @@ export const BOOKING_SORT_FIELDS = [
   "status",
 ] as const;
 
+export interface BookingParty {
+  id: string;
+  name: string;
+}
+
 export interface BookingRecord {
+  cleaner: BookingParty | null;
   cleanerId: string | null;
   createdAt: Date;
+  customer: BookingParty | null;
   customerId: string | null;
   id: string;
   notes: string | null;
   quoteRequestId: string | null;
   scheduledAt: Date | null;
+  service: BookingParty | null;
   serviceAddress: string | null;
   serviceId: string | null;
   status: BookingStatus;
@@ -41,7 +49,10 @@ export interface BookingListQuery {
   cleanerId?: string;
   customerId?: string;
   pagination?: PaginationQuery;
+  scheduledFrom?: Date;
+  scheduledTo?: Date;
   search?: string;
+  serviceId?: string;
   sort?: SortQuery;
   status?: BookingStatus;
 }

@@ -10,6 +10,7 @@ import type { CleanerRepository } from "../../../apps/server/src/repositories/cl
 import type { CustomerRepository } from "../../../apps/server/src/repositories/customer.repository.ts";
 import type { NotificationRepository } from "../../../apps/server/src/repositories/notification.repository.ts";
 import type { ReviewRepository } from "../../../apps/server/src/repositories/review.repository.ts";
+import type { SettingsRepository } from "../../../apps/server/src/repositories/settings.repository.ts";
 import type { UserRepository } from "../../../apps/server/src/repositories/user.repository.ts";
 import { AdminService } from "../../../apps/server/src/services/admin/admin.service.ts";
 import { BookingService } from "../../../apps/server/src/services/bookings/booking.service.ts";
@@ -54,6 +55,11 @@ import type {
   ReviewRecord,
   UpdateReviewInput,
 } from "../../../apps/server/src/services/reviews/review.types.ts";
+import { SettingsService } from "../../../apps/server/src/services/settings/settings.service.ts";
+import type {
+  SettingsRecord,
+  UpdateSettingsInput,
+} from "../../../apps/server/src/services/settings/settings.types.ts";
 import { UserService } from "../../../apps/server/src/services/users/user.service.ts";
 import type {
   UpdateUserProfileInput,
@@ -68,6 +74,7 @@ export class InMemoryDomainStore {
   public readonly customers = new Map<string, CustomerRecord>();
   public readonly notifications = new Map<string, NotificationRecord>();
   public readonly reviews = new Map<string, ReviewRecord>();
+  public settings: SettingsRecord | null = null;
   public readonly users = new Map<string, UserProfile>();
 }
 
@@ -80,6 +87,7 @@ export interface DomainHarness {
   dashboard: DashboardService;
   notifications: NotificationService;
   reviews: ReviewService;
+  settings: SettingsService;
   store: InMemoryDomainStore;
   users: UserService;
 }
@@ -93,6 +101,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
   const reviewRepo = new InMemoryReviewRepository(store);
   const notificationRepo = new InMemoryNotificationRepository(store);
   const userRepo = new InMemoryUserRepository(store);
+  const settingsRepo = new InMemorySettingsRepository(store);
 
   const customers = new CustomerService(customerRepo);
   const cleaners = new CleanerService(cleanerRepo);
@@ -106,6 +115,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
   const reviews = new ReviewService(reviewRepo);
   const notifications = new NotificationService(notificationRepo, now);
   const users = new UserService(userRepo);
+  const settings = new SettingsService(settingsRepo);
   const dashboard = new DashboardService(
     customerRepo,
     cleanerRepo,
@@ -131,6 +141,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
     dashboard,
     notifications,
     reviews,
+    settings,
     store,
     users,
   };
@@ -144,7 +155,8 @@ export class InMemoryCustomerRepository implements CustomerRepository {
   }
 
   public async findById(id: string): Promise<CustomerRecord | null> {
-    return this.store.customers.get(id) ?? null;
+    const row = this.store.customers.get(id);
+    return row === undefined ? null : withCustomerCount(this.store, row);
   }
 
   public async findByEmail(email: string): Promise<CustomerRecord | null> {
@@ -166,9 +178,10 @@ export class InMemoryCustomerRepository implements CustomerRepository {
     const row: CustomerRecord = {
       address: input.address ?? null,
       avatarMediaId: input.avatarMediaId ?? null,
+      bookingCount: 0,
       createdAt: now,
       email: input.email,
-      id: randomUUID(),
+      id: createId(),
       name: input.name,
       phone: input.phone ?? null,
       status: "ACTIVE",
@@ -207,6 +220,17 @@ export class InMemoryCustomerRepository implements CustomerRepository {
         return false;
       }
 
+      if (
+        query.createdFrom !== undefined &&
+        row.createdAt < query.createdFrom
+      ) {
+        return false;
+      }
+
+      if (query.createdTo !== undefined && row.createdAt > query.createdTo) {
+        return false;
+      }
+
       if (search === undefined || search === "") {
         return true;
       }
@@ -217,13 +241,16 @@ export class InMemoryCustomerRepository implements CustomerRepository {
       );
     });
 
-    return page(filtered, query, (left, right) =>
-      compareValues(
-        valueByField(left, query.sort?.field, "createdAt"),
-        valueByField(right, query.sort?.field, "createdAt"),
-        query.sort,
-        "desc",
-      ),
+    return page(
+      filtered.map((row) => withCustomerCount(this.store, row)),
+      query,
+      (left, right) =>
+        compareValues(
+          valueByField(left, query.sort?.field, "createdAt"),
+          valueByField(right, query.sort?.field, "createdAt"),
+          query.sort,
+          "desc",
+        ),
     );
   }
 
@@ -271,7 +298,7 @@ export class InMemoryCleanerRepository implements CleanerRepository {
     const row: CleanerRecord = {
       createdAt: now,
       email: input.email ?? null,
-      id: randomUUID(),
+      id: createId(),
       name: input.name,
       phone: input.phone ?? null,
       status: "ACTIVE",
@@ -365,12 +392,13 @@ export class InMemoryCatalogRepository implements CatalogRepository {
     const now = new Date();
     const row: CatalogRecord = {
       benefits: input.benefits ?? [],
+      coverImageUrl: null,
       coverMediaId: input.coverMediaId ?? null,
       createdAt: now,
       excludedTasks: input.excludedTasks ?? [],
       faqs: input.faqs ?? null,
       fullDescription: input.fullDescription,
-      id: randomUUID(),
+      id: createId(),
       includedTasks: input.includedTasks ?? [],
       isActive: true,
       isFeatured: input.isFeatured ?? false,
@@ -466,13 +494,16 @@ export class InMemoryBookingRepository implements BookingRepository {
   ): Promise<BookingRecord> {
     const now = new Date();
     const row: BookingRecord = {
+      cleaner: party(this.store.cleaners.get(input.cleanerId ?? "")),
       cleanerId: input.cleanerId ?? null,
       createdAt: now,
+      customer: party(this.store.customers.get(input.customerId)),
       customerId: input.customerId,
-      id: randomUUID(),
+      id: createId(),
       notes: input.notes ?? null,
       quoteRequestId: input.quoteRequestId ?? null,
       scheduledAt: input.scheduledAt ?? null,
+      service: party(this.store.catalog.get(input.serviceId)),
       serviceAddress: input.serviceAddress ?? null,
       serviceId: input.serviceId,
       status: input.status ?? "PENDING",
@@ -515,11 +546,11 @@ export class InMemoryBookingRepository implements BookingRepository {
       return null;
     }
 
-    const row: BookingRecord = {
+    const row: BookingRecord = withBookingParties(this.store, {
       ...current,
       ...omitUndefined(data),
       updatedAt: new Date(),
-    };
+    });
     this.store.bookings.set(id, row);
     return row;
   }
@@ -540,7 +571,25 @@ export class InMemoryBookingRepository implements BookingRepository {
         return false;
       }
 
+      if (query.serviceId !== undefined && row.serviceId !== query.serviceId) {
+        return false;
+      }
+
       if (query.status !== undefined && row.status !== query.status) {
+        return false;
+      }
+
+      if (
+        query.scheduledFrom !== undefined &&
+        (row.scheduledAt === null || row.scheduledAt < query.scheduledFrom)
+      ) {
+        return false;
+      }
+
+      if (
+        query.scheduledTo !== undefined &&
+        (row.scheduledAt === null || row.scheduledAt > query.scheduledTo)
+      ) {
         return false;
       }
 
@@ -603,7 +652,7 @@ export class InMemoryReviewRepository implements ReviewRepository {
       createdAt: now,
       customerName: input.customerName,
       customerRole: input.customerRole ?? null,
-      id: randomUUID(),
+      id: createId(),
       isActive: true,
       isFeatured: input.isFeatured ?? false,
       rating: input.rating,
@@ -640,6 +689,28 @@ export class InMemoryReviewRepository implements ReviewRepository {
     const search = query.search?.trim().toLowerCase();
     const filtered = [...this.store.reviews.values()].filter((row) => {
       if (query.active !== undefined && row.isActive !== query.active) {
+        return false;
+      }
+
+      if (
+        query.category !== undefined &&
+        row.serviceCategory !== query.category
+      ) {
+        return false;
+      }
+
+      if (query.rating !== undefined && row.rating !== query.rating) {
+        return false;
+      }
+
+      if (
+        query.createdFrom !== undefined &&
+        row.createdAt < query.createdFrom
+      ) {
+        return false;
+      }
+
+      if (query.createdTo !== undefined && row.createdAt > query.createdTo) {
         return false;
       }
 
@@ -688,7 +759,7 @@ export class InMemoryNotificationRepository implements NotificationRepository {
   ): Promise<NotificationRecord> {
     const row: NotificationRecord = {
       createdAt: new Date(),
-      id: randomUUID(),
+      id: createId(),
       isRead: false,
       message: input.message,
       readAt: null,
@@ -818,6 +889,34 @@ export class InMemoryUserRepository implements UserRepository {
   }
 }
 
+export class InMemorySettingsRepository implements SettingsRepository {
+  private readonly store: InMemoryDomainStore;
+
+  public constructor(store: InMemoryDomainStore) {
+    this.store = store;
+  }
+
+  public async find(): Promise<SettingsRecord | null> {
+    return this.store.settings;
+  }
+
+  public async update(
+    input: UpdateSettingsInput,
+  ): Promise<SettingsRecord | null> {
+    if (this.store.settings === null) {
+      return null;
+    }
+
+    const row: SettingsRecord = {
+      ...this.store.settings,
+      ...omitUndefined(input),
+      updatedAt: new Date(),
+    };
+    this.store.settings = row;
+    return row;
+  }
+}
+
 function page<T>(
   items: readonly T[],
   query: { pagination?: PaginationQuery },
@@ -891,9 +990,49 @@ function countWhere<T>(
   return items.filter(predicate).length;
 }
 
+function createId(): string {
+  return `c${randomUUID().replaceAll("-", "").slice(0, 24)}`;
+}
+
 function omitUndefined<T extends object>(input: T): Partial<T> {
   const entries = Object.entries(input).filter(
     ([, value]) => value !== undefined,
   );
   return Object.fromEntries(entries) as Partial<T>;
+}
+
+function withCustomerCount(
+  store: InMemoryDomainStore,
+  row: CustomerRecord,
+): CustomerRecord {
+  return {
+    ...row,
+    bookingCount: [...store.bookings.values()].filter(
+      (booking) => booking.customerId === row.id,
+    ).length,
+  };
+}
+
+function party(
+  row: { id: string; name: string } | undefined,
+): { id: string; name: string } | null {
+  return row === undefined ? null : { id: row.id, name: row.name };
+}
+
+function withBookingParties(
+  store: InMemoryDomainStore,
+  row: BookingRecord,
+): BookingRecord {
+  return {
+    ...row,
+    cleaner: party(
+      row.cleanerId === null ? undefined : store.cleaners.get(row.cleanerId),
+    ),
+    customer: party(
+      row.customerId === null ? undefined : store.customers.get(row.customerId),
+    ),
+    service: party(
+      row.serviceId === null ? undefined : store.catalog.get(row.serviceId),
+    ),
+  };
 }

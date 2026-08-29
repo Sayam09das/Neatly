@@ -35,32 +35,44 @@ export interface BookingRepository {
 }
 
 function toRecord(row: {
+  cleaner: { id: string; name: string } | null;
   cleanerId: string | null;
   createdAt: Date;
+  customer: { id: string; name: string } | null;
   customerId: string | null;
   id: string;
   notes: string | null;
   quoteRequestId: string | null;
   scheduledAt: Date | null;
+  service: { id: string; name: string } | null;
   serviceAddress: string | null;
   serviceId: string | null;
   status: BookingStatus;
   updatedAt: Date;
 }): BookingRecord {
   return {
+    cleaner: row.cleaner,
     cleanerId: row.cleanerId,
     createdAt: row.createdAt,
+    customer: row.customer,
     customerId: row.customerId,
     id: row.id,
     notes: row.notes,
     quoteRequestId: row.quoteRequestId,
     scheduledAt: row.scheduledAt,
+    service: row.service,
     serviceAddress: row.serviceAddress,
     serviceId: row.serviceId,
     status: row.status,
     updatedAt: row.updatedAt,
   };
 }
+
+const BOOKING_INCLUDE = {
+  cleaner: { select: { id: true, name: true } },
+  customer: { select: { id: true, name: true } },
+  service: { select: { id: true, name: true } },
+} as const;
 
 function orderBy(
   sort: SortQuery | undefined,
@@ -79,14 +91,20 @@ function orderBy(
 
 export class PrismaBookingRepository implements BookingRepository {
   public async findById(id: string): Promise<BookingRecord | null> {
-    const row = await prisma.booking.findUnique({ where: { id } });
+    const row = await prisma.booking.findUnique({
+      include: BOOKING_INCLUDE,
+      where: { id },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async findByQuoteRequestId(
     quoteRequestId: string,
   ): Promise<BookingRecord | null> {
-    const row = await prisma.booking.findUnique({ where: { quoteRequestId } });
+    const row = await prisma.booking.findUnique({
+      include: BOOKING_INCLUDE,
+      where: { quoteRequestId },
+    });
     return row === null ? null : toRecord(row);
   }
 
@@ -104,6 +122,7 @@ export class PrismaBookingRepository implements BookingRepository {
         serviceId: input.serviceId,
         status: input.status,
       },
+      include: BOOKING_INCLUDE,
     });
     return toRecord(row);
   }
@@ -115,6 +134,7 @@ export class PrismaBookingRepository implements BookingRepository {
     try {
       const row = await prisma.booking.update({
         data: input,
+        include: BOOKING_INCLUDE,
         where: { id },
       });
       return toRecord(row);
@@ -138,7 +158,10 @@ export class PrismaBookingRepository implements BookingRepository {
         return null;
       }
 
-      const row = await tx.booking.findUnique({ where: { id } });
+      const row = await tx.booking.findUnique({
+        include: BOOKING_INCLUDE,
+        where: { id },
+      });
       return row === null ? null : toRecord(row);
     });
   }
@@ -153,7 +176,20 @@ export class PrismaBookingRepository implements BookingRepository {
       ...(query.customerId === undefined
         ? {}
         : { customerId: query.customerId }),
+      ...(query.serviceId === undefined ? {} : { serviceId: query.serviceId }),
       ...(query.status === undefined ? {} : { status: query.status }),
+      ...(query.scheduledFrom === undefined && query.scheduledTo === undefined
+        ? {}
+        : {
+            scheduledAt: {
+              ...(query.scheduledFrom === undefined
+                ? {}
+                : { gte: query.scheduledFrom }),
+              ...(query.scheduledTo === undefined
+                ? {}
+                : { lte: query.scheduledTo }),
+            },
+          }),
       ...(search === undefined || search === ""
         ? {}
         : {
@@ -167,6 +203,7 @@ export class PrismaBookingRepository implements BookingRepository {
     const [total, rows] = await prisma.$transaction([
       prisma.booking.count({ where }),
       prisma.booking.findMany({
+        include: BOOKING_INCLUDE,
         orderBy: orderBy(query.sort),
         skip: pagination.skip,
         take: pagination.limit,
@@ -179,6 +216,7 @@ export class PrismaBookingRepository implements BookingRepository {
 
   public async listRecent(limit: number): Promise<BookingRecord[]> {
     const rows = await prisma.booking.findMany({
+      include: BOOKING_INCLUDE,
       orderBy: { createdAt: "desc" },
       take: limit,
     });

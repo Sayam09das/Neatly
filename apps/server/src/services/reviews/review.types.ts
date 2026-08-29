@@ -42,7 +42,11 @@ export interface UpdateReviewInput {
 
 export interface ReviewListQuery {
   active?: boolean;
+  category?: ServiceCategory;
+  createdFrom?: Date;
+  createdTo?: Date;
   pagination?: PaginationQuery;
+  rating?: number;
   search?: string;
   sort?: SortQuery;
 }

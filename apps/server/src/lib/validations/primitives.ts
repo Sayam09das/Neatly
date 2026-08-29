@@ -88,7 +88,7 @@ export const serviceCategorySchema = z.nativeEnum(ServiceCategory, {
   error: "This value is not allowed.",
 });
 
-const pageSchema = z.preprocess(
+export const pageSchema = z.preprocess(
   (value: unknown): unknown =>
     value === undefined || value === "" ? PAGINATION_DEFAULT_PAGE : value,
   z.coerce
@@ -97,7 +97,7 @@ const pageSchema = z.preprocess(
     .min(1, { error: "Enter a positive whole number." }),
 );
 
-const limitSchema = z.preprocess(
+export const limitSchema = z.preprocess(
   (value: unknown): unknown =>
     value === undefined || value === "" ? PAGINATION_DEFAULT_LIMIT : value,
   z.coerce

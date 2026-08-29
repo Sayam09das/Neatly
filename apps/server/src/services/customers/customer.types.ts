@@ -11,6 +11,7 @@ export const CUSTOMER_SORT_FIELDS = [
 export interface CustomerRecord {
   address: string | null;
   avatarMediaId: string | null;
+  bookingCount: number;
   createdAt: Date;
   email: string;
   id: string;
@@ -39,6 +40,8 @@ export interface UpdateCustomerInput {
 }
 
 export interface CustomerListQuery {
+  createdFrom?: Date;
+  createdTo?: Date;
   pagination?: PaginationQuery;
   search?: string;
   sort?: SortQuery;

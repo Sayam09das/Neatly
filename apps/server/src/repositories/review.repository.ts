@@ -112,6 +112,22 @@ export class PrismaReviewRepository implements ReviewRepository {
     const search = query.search?.trim();
     const where: Prisma.TestimonialWhereInput = {
       ...(query.active === undefined ? {} : { isActive: query.active }),
+      ...(query.category === undefined
+        ? {}
+        : { serviceCategory: query.category }),
+      ...(query.rating === undefined ? {} : { rating: query.rating }),
+      ...(query.createdFrom === undefined && query.createdTo === undefined
+        ? {}
+        : {
+            createdAt: {
+              ...(query.createdFrom === undefined
+                ? {}
+                : { gte: query.createdFrom }),
+              ...(query.createdTo === undefined
+                ? {}
+                : { lte: query.createdTo }),
+            },
+          }),
       ...(search === undefined || search === ""
         ? {}
         : {

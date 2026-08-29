@@ -14,6 +14,10 @@ export const PAGINATION_MAX_LIMIT = 100;
 export const SORT_DIRECTIONS = ["asc", "desc"] as const;
 export const SEARCH_QUERY_MAX_LENGTH = 120;
 export const VALIDATION_FAILED_MESSAGE = "Validation failed.";
+export const ADMIN_MUTATION_RATE_LIMIT_MAX = 60;
+export const ADMIN_MUTATION_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+export const ADMIN_TEXT_MAX_LENGTH = 200;
+export const ADMIN_LONG_TEXT_MAX_LENGTH = 8_000;
 
 export const API_ERROR_CODES = {
   CONFLICT: "CONFLICT",
