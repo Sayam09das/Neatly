@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { ReactElement } from "react";
-import { CustomerSurface } from "@/components/customer/customer-surface";
-import { customerSurfaceCopy } from "@/config/customer";
+import { CustomerBookingDetails } from "@/components/customer/bookings/customer-booking-details";
+import { CustomerRefreshErrorState } from "@/components/customer/customer-refresh-error";
+import { CUSTOMER_LOGIN_PATH, customerSurfaceCopy } from "@/config/customer";
+import { requireCustomerPage } from "@/lib/auth/current-user";
+import { loadCustomerBooking } from "@/lib/customer/booking";
+import { readCustomerSessionToken } from "@/lib/customer/session-token";
 
 export const metadata: Metadata = {
   title: customerSurfaceCopy.bookingDetail.title,
@@ -15,16 +19,29 @@ interface CustomerBookingDetailPageProps {
 export default async function CustomerBookingDetailPage({
   params,
 }: CustomerBookingDetailPageProps): Promise<ReactElement> {
+  await requireCustomerPage();
   const { id } = await params;
 
   if (id.trim() === "") {
     notFound();
   }
 
-  return (
-    <CustomerSurface
-      description={customerSurfaceCopy.bookingDetail.description}
-      heading={customerSurfaceCopy.bookingDetail.heading}
-    />
+  const result = await loadCustomerBooking(
+    id,
+    await readCustomerSessionToken(),
   );
+
+  if (!result.ok && result.unauthorized) {
+    redirect(CUSTOMER_LOGIN_PATH);
+  }
+
+  if (!result.ok && result.notFound) {
+    notFound();
+  }
+
+  if (!result.ok) {
+    return <CustomerRefreshErrorState />;
+  }
+
+  return <CustomerBookingDetails booking={result.booking} />;
 }

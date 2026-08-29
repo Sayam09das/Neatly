@@ -36,7 +36,11 @@ import {
   type BookingRecord,
   type CreateBookingInput,
   type CreateCustomerBookingInput,
+  CUSTOMER_OVERVIEW_RECENT_LIMIT,
+  CUSTOMER_UPCOMING_EXCLUDED_STATUSES,
+  type CustomerBookingListQuery,
   type CustomerBookingView,
+  type CustomerOverview,
   toCustomerBookingView,
   type UpdateBookingInput,
 } from "./booking.types.ts";
@@ -163,6 +167,91 @@ export class BookingService {
     }
 
     return toCustomerBookingView(booking);
+  }
+
+  public async listForCustomer(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+    query: CustomerBookingListQuery = {},
+  ): Promise<ListResult<CustomerBookingView>> {
+    this.assertCustomerActor(actor, identity);
+    const customer = await this.customers.findByUserId(identity.id);
+    const pagination = resolvePagination(query.pagination);
+
+    if (customer === null) {
+      return toListResult([], 0, pagination);
+    }
+
+    const scoped = this.toScopedCustomerListQuery(customer.id, query);
+    const sort = resolveSort(scoped.sort, BOOKING_SORT_FIELDS);
+    const result = await this.bookings.list({ ...scoped, pagination, sort });
+    return toListResult(
+      result.items.map(toCustomerBookingView),
+      result.total,
+      pagination,
+    );
+  }
+
+  public async getCustomerOverview(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+  ): Promise<CustomerOverview> {
+    this.assertCustomerActor(actor, identity);
+    const customer = await this.customers.findByUserId(identity.id);
+
+    if (customer === null) {
+      return emptyCustomerOverview();
+    }
+
+    const now = new Date();
+    const upcomingQuery: BookingListQuery = {
+      customerId: customer.id,
+      excludeStatuses: CUSTOMER_UPCOMING_EXCLUDED_STATUSES,
+      pagination: { limit: 1, page: 1, skip: 0 },
+      scheduledFrom: now,
+      sort: { direction: "asc", field: "scheduledAt" },
+    };
+
+    const [upcoming, recent, pending, completed, all] = await Promise.all([
+      this.bookings.list(upcomingQuery),
+      this.bookings.list({
+        customerId: customer.id,
+        pagination: {
+          limit: CUSTOMER_OVERVIEW_RECENT_LIMIT,
+          page: 1,
+          skip: 0,
+        },
+        sort: { direction: "desc", field: "createdAt" },
+      }),
+      this.bookings.list({
+        customerId: customer.id,
+        pagination: { limit: 1, page: 1, skip: 0 },
+        status: "PENDING",
+      }),
+      this.bookings.list({
+        customerId: customer.id,
+        pagination: { limit: 1, page: 1, skip: 0 },
+        status: "COMPLETED",
+      }),
+      this.bookings.list({
+        customerId: customer.id,
+        pagination: { limit: 1, page: 1, skip: 0 },
+      }),
+    ]);
+
+    return {
+      recentBookings: recent.items.map(toCustomerBookingView),
+      summary: {
+        completed: completed.total,
+        pending: pending.total,
+        total: all.total,
+        upcoming: upcoming.total,
+      },
+      upcomingBooking:
+        upcoming.items[0] === undefined
+          ? null
+          : toCustomerBookingView(upcoming.items[0]),
+    };
   }
 
   public async getById(actor: Actor, id: string): Promise<BookingRecord> {
@@ -360,6 +449,31 @@ export class BookingService {
     throw new AuthorizationError();
   }
 
+  private toScopedCustomerListQuery(
+    customerId: string,
+    query: CustomerBookingListQuery,
+  ): BookingListQuery {
+    const now = new Date();
+    const upcoming = query.window === "upcoming";
+
+    return {
+      customerId,
+      excludeStatuses:
+        upcoming && query.status === undefined
+          ? CUSTOMER_UPCOMING_EXCLUDED_STATUSES
+          : undefined,
+      pagination: query.pagination,
+      scheduledFrom: upcoming ? now : undefined,
+      scheduledTo: query.window === "past" ? now : undefined,
+      search: query.search,
+      sort: {
+        direction: upcoming ? "asc" : "desc",
+        field: "scheduledAt",
+      },
+      status: query.status,
+    };
+  }
+
   private assertCustomerActor(
     actor: Actor,
     identity: SessionCustomerIdentity,
@@ -466,6 +580,19 @@ export class BookingService {
 
     return quote.id;
   }
+}
+
+function emptyCustomerOverview(): CustomerOverview {
+  return {
+    recentBookings: [],
+    summary: {
+      completed: 0,
+      pending: 0,
+      total: 0,
+      upcoming: 0,
+    },
+    upcomingBooking: null,
+  };
 }
 
 function emptyToNull(value: string | null | undefined): string | null {

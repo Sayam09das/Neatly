@@ -41,6 +41,7 @@ interface CustomerMobileNavProps {
   onLogout: () => void;
   pathname: string;
   presentation: CustomerNavbarPresentation;
+  showAccountLinks?: boolean;
   tone?: "account" | "public";
 }
 
@@ -49,6 +50,7 @@ export function CustomerMobileNav({
   onLogout,
   pathname,
   presentation,
+  showAccountLinks = true,
   tone = "account",
 }: CustomerMobileNavProps): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
@@ -169,7 +171,8 @@ export function CustomerMobileNav({
                   {identity.email}
                 </p>
               </div>
-              {presentation.showAdmin || presentation.mode === "customer" ? (
+              {presentation.showAdmin ||
+              (presentation.mode === "customer" && showAccountLinks) ? (
                 <ul className="flex flex-col gap-1">
                   {presentation.showAdmin ? (
                     <li>
@@ -183,7 +186,7 @@ export function CustomerMobileNav({
                       </SheetClose>
                     </li>
                   ) : null}
-                  {presentation.mode === "customer"
+                  {presentation.mode === "customer" && showAccountLinks
                     ? customerAccountMenuItems.map((item) => (
                         <li key={item.href}>
                           <SheetClose asChild>

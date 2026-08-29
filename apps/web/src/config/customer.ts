@@ -26,6 +26,7 @@ export const CUSTOMER_API_PREFIX = "/api/v1/customer";
 export const CUSTOMER_API_PATHS = {
   booking: `${CUSTOMER_API_PREFIX}/bookings/:id`,
   bookings: `${CUSTOMER_API_PREFIX}/bookings`,
+  dashboard: `${CUSTOMER_API_PREFIX}/dashboard`,
   notifications: `${CUSTOMER_API_PREFIX}/notifications`,
   profile: `${CUSTOMER_API_PREFIX}/me`,
   quotes: `${CUSTOMER_API_PREFIX}/quotes`,
@@ -33,6 +34,15 @@ export const CUSTOMER_API_PATHS = {
   service: `${CUSTOMER_API_PREFIX}/services/:slug`,
   services: `${CUSTOMER_API_PREFIX}/services`,
 } as const;
+
+export const CUSTOMER_BOOKINGS_SEARCH_PARAM = "q";
+export const CUSTOMER_BOOKINGS_STATUS_PARAM = "status";
+export const CUSTOMER_BOOKINGS_WINDOW_PARAM = "window";
+export const CUSTOMER_BOOKINGS_PAGE_PARAM = "page";
+export const CUSTOMER_BOOKINGS_SEARCH_INPUT_ID = "customer-bookings-search";
+export const CUSTOMER_BOOKINGS_STATUS_INPUT_ID = "customer-bookings-status";
+export const CUSTOMER_BOOKINGS_WINDOW_INPUT_ID = "customer-bookings-window";
+export const CUSTOMER_BOOKING_REQUEST_TIMEOUT_MS = 8_000;
 
 export const CUSTOMER_SERVICES_SEARCH_PARAM = "q";
 export const CUSTOMER_SERVICES_PAGE_PARAM = "page";
@@ -142,10 +152,9 @@ export const customerSurfaceCopy = {
     title: "My bookings",
   },
   dashboard: {
-    description:
-      "Your bookings, updates, and account details will appear here.",
-    heading: "Your account",
-    title: "Your account",
+    description: "A concise view of your bookings and what needs attention.",
+    heading: "Overview",
+    title: "Overview",
   },
   help: {
     description: "Help for bookings and your account will appear here.",
@@ -351,6 +360,73 @@ export const customerBookingConfirmationCopy = {
   statusLabel: "Status",
   addressHeading: "Address",
   serviceHeading: "Service",
+} as const;
+
+export const customerDashboardCopy = {
+  attentionBody:
+    "These bookings are waiting for Neatly to review. Nothing is confirmed until the status changes.",
+  attentionHeading: "Needs attention",
+  attentionPending: "awaiting review",
+  bookAction: "Book a cleaning",
+  greetingFallback: "Welcome",
+  greetingNamed: "Welcome, {name}",
+  nextBookingEmptyAction: "Browse services",
+  nextBookingEmptyDescription:
+    "When you have an upcoming visit, it will appear here.",
+  nextBookingEmptyTitle: "No upcoming bookings",
+  nextBookingHeading: "Upcoming booking",
+  quickActionsHeading: "Continue",
+  quoteAction: "Request a quote",
+  recentEmpty: "Recent bookings will appear here after you submit a request.",
+  recentHeading: "Recent bookings",
+  servicesAction: "Browse services",
+  summaryCompleted: "Completed",
+  summaryHeading: "Your bookings",
+  summaryPending: "Pending",
+  summaryTotal: "Total",
+  summaryUpcoming: "Upcoming",
+  viewBooking: "View booking",
+} as const;
+
+export const customerBookingsCopy = {
+  allStatuses: "All statuses",
+  allWindows: "Any time",
+  clearFilters: "Clear filters",
+  description: "View the bookings linked to your account.",
+  filterLabel: "Status",
+  filteredEmptyDescription:
+    "No bookings match these filters. Clear them to see your full list.",
+  filteredEmptyTitle: "No bookings match your filters.",
+  heading: "My bookings",
+  loadError: "We could not load your bookings. Please try again.",
+  paginationLabel: "Booking pages",
+  paginationNext: "Next",
+  paginationPrevious: "Previous",
+  searchLabel: "Search bookings",
+  searchPlaceholder: "Search by reference or service",
+  tableCaption: "Your bookings",
+  viewBooking: "View",
+  windowLabel: "Schedule",
+  windowPast: "Past",
+  windowUpcoming: "Upcoming",
+} as const;
+
+export const customerBookingDetailCopy = {
+  addressHeading: "Address",
+  backToBookings: "Back to bookings",
+  breadcrumbBookings: "My bookings",
+  breadcrumbCurrent: "Booking",
+  breadcrumbDashboard: "Overview",
+  breadcrumbLabel: "Booking location",
+  createdHeading: "Requested",
+  heading: "Booking",
+  linkedQuote: "This booking is linked to a quote request.",
+  notesHeading: "Notes",
+  referenceLabel: "Booking reference",
+  scheduleHeading: "Schedule",
+  serviceHeading: "Service",
+  statusLabel: "Status",
+  unnamedService: "This booking does not include a service name.",
 } as const;
 
 export const customerBookingStatusLabels = {

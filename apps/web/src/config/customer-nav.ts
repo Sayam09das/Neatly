@@ -5,31 +5,28 @@ export interface CustomerNavItem {
   label: string;
 }
 
-export const customerNavigation: readonly CustomerNavItem[] = [
+export const customerAppNavigation: readonly CustomerNavItem[] = [
   { href: CUSTOMER_PATHS.dashboard, label: "Overview" },
   { href: CUSTOMER_PATHS.bookings, label: "Bookings" },
-  { href: CUSTOMER_PATHS.profile, label: "Profile" },
-  { href: CUSTOMER_PATHS.settings, label: "Settings" },
-  { href: CUSTOMER_PATHS.notifications, label: "Notifications" },
-  { href: CUSTOMER_PATHS.reviews, label: "Reviews" },
-  { href: CUSTOMER_PATHS.help, label: "Help" },
+  { href: CUSTOMER_PATHS.services, label: "Services" },
 ] as const;
 
+export const customerNavigation: readonly CustomerNavItem[] =
+  customerAppNavigation;
+
 export const customerHeaderNavigation: readonly CustomerNavItem[] = [
-  { href: CUSTOMER_PATHS.dashboard, label: "Dashboard" },
+  { href: CUSTOMER_PATHS.dashboard, label: "Overview" },
   { href: CUSTOMER_PATHS.bookings, label: "Bookings" },
 ] as const;
 
 export const customerAccountMenuItems: readonly CustomerNavItem[] = [
-  { href: CUSTOMER_PATHS.profile, label: "Profile" },
-  { href: CUSTOMER_PATHS.settings, label: "Settings" },
-  { href: CUSTOMER_PATHS.notifications, label: "Notifications" },
+  { href: CUSTOMER_PATHS.bookings, label: "Bookings" },
 ] as const;
 
 export const customerFooterAccountLinks: readonly CustomerNavItem[] = [
-  ...customerHeaderNavigation,
-  ...customerAccountMenuItems,
-];
+  { href: CUSTOMER_PATHS.dashboard, label: "Overview" },
+  { href: CUSTOMER_PATHS.bookings, label: "Bookings" },
+] as const;
 
 export function getCustomerNavItems(): readonly CustomerNavItem[] {
   return customerNavigation;

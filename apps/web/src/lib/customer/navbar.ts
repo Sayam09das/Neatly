@@ -1,5 +1,8 @@
 import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
-import { customerHeaderNavigation } from "@/config/customer-nav";
+import {
+  customerAppNavigation,
+  customerHeaderNavigation,
+} from "@/config/customer-nav";
 import { landingNavLinks } from "@/config/landing";
 import type { AuthUser } from "@/types/auth";
 
@@ -109,11 +112,10 @@ export function getCustomerNavbarPresentation(
   return {
     accountLinks: customerHeaderNavigation,
     mode,
-    primaryLinks:
-      area === "public" ? landingNavLinks : customerHeaderNavigation,
+    primaryLinks: area === "public" ? landingNavLinks : customerAppNavigation,
     showAdmin: false,
     showLogin: false,
-    showNotifications: true,
+    showNotifications: false,
     showQuote: area === "public",
     showUserMenu: true,
   };

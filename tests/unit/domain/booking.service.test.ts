@@ -211,4 +211,69 @@ describe("BookingService", (): void => {
       ),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  it("lists and summarizes only the session customer's bookings", async (): Promise<void> => {
+    const { bookings, catalog, customers, offering } = await seedBookingGraph();
+    const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
+    const identity = {
+      email: "ada@neatly.example",
+      id: "customer-a",
+      name: "Ada",
+    };
+    const otherOffering = await catalog.create(admin, {
+      fullDescription: "Office",
+      name: "Office Clean",
+      shortDescription: "Desks",
+    });
+    const own = await bookings.createForCustomer(actor, identity, {
+      scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+      serviceAddress: "12 Harbour Street",
+      serviceId: offering.id,
+    });
+    const otherActor: Actor = { id: "customer-b", role: "CUSTOMER" };
+    await customers.create(admin, {
+      email: "other@neatly.example",
+      name: "Other",
+      userId: "customer-b",
+    });
+    await bookings.createForCustomer(
+      otherActor,
+      {
+        email: "other@neatly.example",
+        id: "customer-b",
+        name: "Other",
+      },
+      {
+        scheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        serviceAddress: "99 Other Lane",
+        serviceId: otherOffering.id,
+      },
+    );
+
+    const listed = await bookings.listForCustomer(actor, identity, {});
+    expect(listed.items.map((item) => item.id)).toEqual([own.id]);
+    expect(listed.pagination.total).toBe(1);
+    expect(JSON.stringify(listed)).not.toContain("cleaner");
+    expect(JSON.stringify(listed)).not.toContain("customerId");
+
+    const overview = await bookings.getCustomerOverview(actor, identity);
+    expect(overview.upcomingBooking?.id).toBe(own.id);
+    expect(overview.summary.total).toBe(1);
+    expect(overview.summary.pending).toBe(1);
+    expect(overview.summary.upcoming).toBe(1);
+    expect(overview.recentBookings).toHaveLength(1);
+
+    const emptyActor: Actor = { id: "customer-c", role: "CUSTOMER" };
+    const empty = await bookings.listForCustomer(
+      emptyActor,
+      {
+        email: "new@neatly.example",
+        id: "customer-c",
+        name: "New",
+      },
+      {},
+    );
+    expect(empty.items).toEqual([]);
+    expect(empty.pagination.total).toBe(0);
+  });
 });

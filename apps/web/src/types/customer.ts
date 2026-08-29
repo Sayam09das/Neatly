@@ -72,6 +72,33 @@ export interface CustomerBookingSummary {
   status: CustomerBookingStatus;
 }
 
+export interface CustomerBookingSummaryCounts {
+  completed: number;
+  pending: number;
+  total: number;
+  upcoming: number;
+}
+
+export interface CustomerOverview {
+  recentBookings: CustomerBookingView[];
+  summary: CustomerBookingSummaryCounts;
+  upcomingBooking: CustomerBookingView | null;
+}
+
+export interface CustomerBookingPagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CustomerBookingList {
+  items: CustomerBookingView[];
+  pagination: CustomerBookingPagination;
+}
+
+export type CustomerBookingWindow = "upcoming" | "past";
+
 export interface CustomerNotification {
   createdAt: string | null;
   id: string;

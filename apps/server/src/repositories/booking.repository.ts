@@ -177,7 +177,12 @@ export class PrismaBookingRepository implements BookingRepository {
         ? {}
         : { customerId: query.customerId }),
       ...(query.serviceId === undefined ? {} : { serviceId: query.serviceId }),
-      ...(query.status === undefined ? {} : { status: query.status }),
+      ...(query.status !== undefined
+        ? { status: query.status }
+        : query.excludeStatuses === undefined ||
+            query.excludeStatuses.length === 0
+          ? {}
+          : { status: { notIn: [...query.excludeStatuses] } }),
       ...(query.scheduledFrom === undefined && query.scheduledTo === undefined
         ? {}
         : {
@@ -196,6 +201,7 @@ export class PrismaBookingRepository implements BookingRepository {
             OR: [
               { id: { contains: search, mode: "insensitive" } },
               { customerId: { contains: search, mode: "insensitive" } },
+              { service: { name: { contains: search, mode: "insensitive" } } },
             ],
           }),
     };

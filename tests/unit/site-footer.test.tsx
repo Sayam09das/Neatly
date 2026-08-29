@@ -126,7 +126,7 @@ describe("SiteFooter", (): void => {
       );
     }
 
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "href",
       CUSTOMER_PATHS.dashboard,
     );

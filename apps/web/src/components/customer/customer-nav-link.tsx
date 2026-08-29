@@ -2,12 +2,13 @@ import { cn } from "@neatly/utils";
 import Link from "next/link";
 import type { ReactElement } from "react";
 
-export type CustomerNavLinkTone = "account" | "public";
+export type CustomerNavLinkTone = "account" | "public" | "sidebar";
 
 interface CustomerNavLinkProps {
   href: string;
   isActive: boolean;
   label: string;
+  onNavigate?: () => void;
   tone?: CustomerNavLinkTone;
 }
 
@@ -15,9 +16,11 @@ export function CustomerNavLink({
   href,
   isActive,
   label,
+  onNavigate,
   tone = "account",
 }: CustomerNavLinkProps): ReactElement {
   const isPublic = tone === "public";
+  const isSidebar = tone === "sidebar";
 
   return (
     <Link
@@ -29,6 +32,7 @@ export function CustomerNavLink({
         isPublic
           ? "focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
           : "px-3 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        isSidebar && "w-full justify-start",
         isPublic
           ? isActive
             ? "text-primary underline decoration-primary underline-offset-8"
@@ -38,6 +42,7 @@ export function CustomerNavLink({
             : "text-muted-foreground hover:text-foreground",
       )}
       href={href}
+      onClick={onNavigate}
     >
       {label}
     </Link>

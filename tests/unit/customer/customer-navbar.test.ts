@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
-import { customerHeaderNavigation } from "@/config/customer-nav";
+import { customerAppNavigation } from "@/config/customer-nav";
 import { landingNavLinks } from "@/config/landing";
 import {
   getAdminHomeHref,
@@ -71,8 +71,8 @@ describe("customer navbar presentation", (): void => {
       },
       "account",
     );
-    expect(customer.primaryLinks).toEqual(customerHeaderNavigation);
-    expect(customer.showNotifications).toBe(true);
+    expect(customer.primaryLinks).toEqual(customerAppNavigation);
+    expect(customer.showNotifications).toBe(false);
     expect(customer.showLogin).toBe(false);
     expect(customer.showQuote).toBe(false);
   });

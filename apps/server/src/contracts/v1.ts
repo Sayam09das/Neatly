@@ -38,6 +38,7 @@ export const API_PATHS = {
   authVerifyEmail: `${API_PREFIX}/auth/verify-email`,
   customerBooking: `${API_PREFIX}/customer/bookings/:id`,
   customerBookings: `${API_PREFIX}/customer/bookings`,
+  customerDashboard: `${API_PREFIX}/customer/dashboard`,
   customerQuotes: `${API_PREFIX}/customer/quotes`,
   customerService: `${API_PREFIX}/customer/services/:slug`,
   customerServices: `${API_PREFIX}/customer/services`,

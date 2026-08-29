@@ -30,7 +30,7 @@ const shellIdentity = {
 };
 
 describe("CustomerShell", (): void => {
-  it("renders landmarks, skip link, and account navigation without business records", (): void => {
+  it("renders the account shell without admin tools or mock records", (): void => {
     render(
       <CustomerShell identity={shellIdentity}>
         <h1>Your account</h1>
@@ -50,27 +50,24 @@ describe("CustomerShell", (): void => {
       screen.getByRole("link", { name: customerShellCopy.skipToContent }),
     ).toHaveAttribute("href", `#${CUSTOMER_MAIN_CONTENT_ID}`);
     expect(
-      screen.getAllByRole("link", { name: customerShellCopy.brandLabel })[0],
-    ).toHaveAttribute("href", "/");
-    expect(
-      screen.getAllByRole("link", { name: "Dashboard" })[0],
+      screen.getAllByRole("link", { name: "Overview" })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
     expect(
       screen.getAllByRole("link", { name: "Bookings" })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.bookings);
     expect(
-      screen.getAllByRole("link", {
+      screen.getAllByRole("link", { name: "Services" })[0],
+    ).toHaveAttribute("href", CUSTOMER_PATHS.services);
+    expect(
+      screen.queryByRole("link", {
         name: customerNavbarCopy.notificationsLabel,
-      })[0],
-    ).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
-    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+      }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: customerNavbarCopy.accountMenuLabel }),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: customerShellCopy.logoutLabel }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText(shellIdentity.email)).not.toBeInTheDocument();
     expect(screen.queryByText(/booking_#/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
   });

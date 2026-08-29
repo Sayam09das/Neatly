@@ -46,13 +46,20 @@ function PageLoadingSkeleton(): ReactElement {
   return (
     <>
       <div className="max-w-prose space-y-3">
-        <Skeleton className="h-8 w-48 max-w-full" />
+        <Skeleton className="h-10 w-64 max-w-full" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3 max-w-full" />
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-48 w-full max-w-2xl" />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+      <div className="max-w-2xl space-y-3">
+        <Skeleton className="h-6 w-40 max-w-full" />
+        <Skeleton className="h-16 w-full" />
       </div>
     </>
   );

@@ -2,6 +2,8 @@ import { API_PATHS } from "../../contracts/v1.ts";
 import {
   createCustomerBookingController,
   getCustomerBookingController,
+  getCustomerOverviewController,
+  listCustomerBookingsController,
 } from "../../controllers/customer/bookings.controller.ts";
 import { createPublicQuoteController } from "../../controllers/customer/quotes.controller.ts";
 import {
@@ -9,7 +11,10 @@ import {
   listPublicServicesController,
 } from "../../controllers/customer/services.controller.ts";
 import type { RouteDefinition } from "../../lib/router.ts";
-import { createCustomerBookingBodySchema } from "../../lib/validations/customer-booking.schema.ts";
+import {
+  createCustomerBookingBodySchema,
+  customerBookingListQuerySchema,
+} from "../../lib/validations/customer-booking.schema.ts";
 import { idParamSchema } from "../../lib/validations/primitives.ts";
 import {
   publicCatalogListQuerySchema,
@@ -46,6 +51,18 @@ export const customerRoutes: readonly RouteDefinition[] = [
       validateBody(createPublicQuoteBodySchema),
     ],
     path: API_PATHS.customerQuotes,
+  },
+  {
+    handler: getCustomerOverviewController,
+    method: "GET",
+    middleware: [requireAuth],
+    path: API_PATHS.customerDashboard,
+  },
+  {
+    handler: listCustomerBookingsController,
+    method: "GET",
+    middleware: [requireAuth, validateQuery(customerBookingListQuerySchema)],
+    path: API_PATHS.customerBookings,
   },
   {
     handler: createCustomerBookingController,

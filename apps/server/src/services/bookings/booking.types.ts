@@ -78,9 +78,19 @@ export interface UpdateBookingInput {
   serviceAddress?: string | null;
 }
 
+export const CUSTOMER_BOOKING_WINDOWS = ["upcoming", "past"] as const;
+export const CUSTOMER_OVERVIEW_RECENT_LIMIT = 5;
+export const CUSTOMER_UPCOMING_EXCLUDED_STATUSES = [
+  "CANCELLED",
+  "COMPLETED",
+] as const;
+
+export type CustomerBookingWindow = (typeof CUSTOMER_BOOKING_WINDOWS)[number];
+
 export interface BookingListQuery {
   cleanerId?: string;
   customerId?: string;
+  excludeStatuses?: readonly BookingStatus[];
   pagination?: PaginationQuery;
   scheduledFrom?: Date;
   scheduledTo?: Date;
@@ -88,6 +98,26 @@ export interface BookingListQuery {
   serviceId?: string;
   sort?: SortQuery;
   status?: BookingStatus;
+}
+
+export interface CustomerBookingListQuery {
+  pagination?: PaginationQuery;
+  search?: string;
+  status?: BookingStatus;
+  window?: CustomerBookingWindow;
+}
+
+export interface CustomerBookingSummaryCounts {
+  completed: number;
+  pending: number;
+  total: number;
+  upcoming: number;
+}
+
+export interface CustomerOverview {
+  recentBookings: CustomerBookingView[];
+  summary: CustomerBookingSummaryCounts;
+  upcomingBooking: CustomerBookingView | null;
 }
 
 export interface BookingStatusCounts {

@@ -14,9 +14,13 @@ import { sendSuccess } from "../../lib/http.ts";
 import {
   getValidatedBody,
   getValidatedParams,
+  getValidatedQuery,
   type RequestContext,
 } from "../../lib/request-context.ts";
-import type { CreateCustomerBookingBody } from "../../lib/validations/customer-booking.schema.ts";
+import type {
+  CreateCustomerBookingBody,
+  CustomerBookingListQueryInput,
+} from "../../lib/validations/customer-booking.schema.ts";
 
 export async function createCustomerBookingController(
   _req: IncomingMessage,
@@ -38,6 +42,34 @@ export async function createCustomerBookingController(
     title: ADMIN_EVENT_COPY.bookingCreated.title,
     type: "BOOKING_CREATED",
   });
+}
+
+export async function listCustomerBookingsController(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  context: RequestContext,
+): Promise<void> {
+  const result = await getDomainServices().bookings.listForCustomer(
+    customerActorFromContext(context),
+    sessionCustomerIdentityFromContext(context),
+    getValidatedQuery<CustomerBookingListQueryInput>(context),
+  );
+  sendSuccess(res, {
+    items: result.items,
+    pagination: result.pagination,
+  });
+}
+
+export async function getCustomerOverviewController(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  context: RequestContext,
+): Promise<void> {
+  const overview = await getDomainServices().bookings.getCustomerOverview(
+    customerActorFromContext(context),
+    sessionCustomerIdentityFromContext(context),
+  );
+  sendSuccess(res, { overview });
 }
 
 export async function getCustomerBookingController(

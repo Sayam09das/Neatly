@@ -1,6 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { CustomerNavbar } from "@/components/customer/customer-navbar";
-import { SiteFooter } from "@/components/sections/site-footer";
+import { CustomerAppChrome } from "@/components/customer/customer-app-chrome";
 import { CUSTOMER_MAIN_CONTENT_ID, customerShellCopy } from "@/config/customer";
 import type { CustomerNavbarIdentity } from "@/lib/customer/navbar";
 
@@ -24,10 +23,10 @@ export function CustomerShell({
       >
         {customerShellCopy.skipToContent}
       </a>
-      <CustomerNavbar identity={identity} />
+      <CustomerAppChrome identity={identity} />
       <main
         aria-label={customerShellCopy.mainLabel}
-        className="min-w-0 flex-1"
+        className="min-w-0 flex-1 lg:pl-64"
         data-slot="customer-main"
         id={CUSTOMER_MAIN_CONTENT_ID}
       >
@@ -35,11 +34,6 @@ export function CustomerShell({
           {children}
         </div>
       </main>
-      <SiteFooter
-        area="account"
-        session={{ identity, role: "customer" }}
-        surface="solid"
-      />
     </div>
   );
 }

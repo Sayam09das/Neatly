@@ -173,11 +173,13 @@ describe("Navbar", (): void => {
     );
 
     expect(
-      screen.getAllByRole("link", { name: "Dashboard" })[0],
+      screen.getAllByRole("link", { name: "Overview" })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
     expect(
-      screen.getByRole("link", { name: customerNavbarCopy.notificationsLabel }),
-    ).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
+      screen.queryByRole("link", {
+        name: customerNavbarCopy.notificationsLabel,
+      }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: customerNavbarCopy.adminLabel }),
     ).not.toBeInTheDocument();

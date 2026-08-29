@@ -629,6 +629,10 @@ export class InMemoryBookingRepository implements BookingRepository {
         return false;
       }
 
+      if (query.excludeStatuses?.includes(row.status)) {
+        return false;
+      }
+
       if (
         query.scheduledFrom !== undefined &&
         (row.scheduledAt === null || row.scheduledAt < query.scheduledFrom)
@@ -649,7 +653,8 @@ export class InMemoryBookingRepository implements BookingRepository {
 
       return (
         row.id.toLowerCase().includes(search) ||
-        (row.customerId ?? "").toLowerCase().includes(search)
+        (row.customerId ?? "").toLowerCase().includes(search) ||
+        (row.service?.name ?? "").toLowerCase().includes(search)
       );
     });
 
