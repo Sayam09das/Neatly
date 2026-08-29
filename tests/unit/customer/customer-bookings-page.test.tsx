@@ -21,6 +21,7 @@ const emptyQuery: CustomerBookingsQuery = {
 };
 
 const booking = {
+  actions: { canCancel: true, canUpdate: true },
   id: "booking_own_1",
   linkedToQuote: false,
   notes: null,

@@ -61,7 +61,7 @@ export function CustomerAppChrome({
             <CustomerUserMenu
               identity={identity}
               onLogout={logout}
-              showAccountLinks={false}
+              showAccountLinks
               showAdmin={false}
             />
             <CustomerMobileNav
@@ -69,7 +69,7 @@ export function CustomerAppChrome({
               onLogout={logout}
               pathname={pathname}
               presentation={presentation}
-              showAccountLinks={false}
+              showAccountLinks
             />
           </div>
         </div>

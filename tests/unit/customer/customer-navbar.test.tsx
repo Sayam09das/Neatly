@@ -64,8 +64,14 @@ describe("CustomerAppChrome", (): void => {
     );
 
     expect(await screen.findByText(identity.email)).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Profile" })).toBeNull();
-    expect(screen.queryByRole("menuitem", { name: "Settings" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Profile" })).toHaveAttribute(
+      "href",
+      CUSTOMER_PATHS.profile,
+    );
+    expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+      "href",
+      CUSTOMER_PATHS.settings,
+    );
     expect(
       screen.queryByRole("menuitem", { name: "Notifications" }),
     ).toBeNull();

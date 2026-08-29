@@ -2,6 +2,7 @@ import {
   type Actor,
   assertOwnerOrAdmin,
   requireAdminActor,
+  type SessionCustomerIdentity,
 } from "../../lib/domain/actor.ts";
 import { customerNotFound } from "../../lib/domain/errors.ts";
 import {
@@ -10,7 +11,11 @@ import {
   resolveSort,
   toListResult,
 } from "../../lib/domain/list.ts";
-import { ConflictError, ValidationError } from "../../lib/errors.ts";
+import {
+  AuthorizationError,
+  ConflictError,
+  ValidationError,
+} from "../../lib/errors.ts";
 import { parseWithSchema } from "../../lib/validations/parse.ts";
 import { emailSchema } from "../../lib/validations/primitives.ts";
 import type { CustomerRepository } from "../../repositories/customer.repository.ts";
@@ -18,9 +23,12 @@ import {
   type CreateCustomerInput,
   CUSTOMER_SORT_FIELDS,
   type CustomerListQuery,
+  type CustomerProfileView,
   type CustomerRecord,
   type CustomerStats,
+  toCustomerProfileView,
   type UpdateCustomerInput,
+  type UpdateCustomerProfileInput,
 } from "./customer.types.ts";
 
 export class CustomerService {
@@ -156,6 +164,83 @@ export class CustomerService {
       inactive: total - active,
       total,
     };
+  }
+
+  public async getForSession(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+  ): Promise<CustomerProfileView> {
+    this.assertCustomerActor(actor, identity);
+    const customer = await this.ensureForSession(identity);
+    return toCustomerProfileView(customer);
+  }
+
+  public async updateForSession(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+    input: UpdateCustomerProfileInput,
+  ): Promise<CustomerProfileView> {
+    this.assertCustomerActor(actor, identity);
+    const customer = await this.ensureForSession(identity);
+    const updated = await this.customers.update(customer.id, {
+      address:
+        input.address === undefined ? undefined : emptyToNull(input.address),
+      name: input.name === undefined ? undefined : requireName(input.name),
+      phone: input.phone === undefined ? undefined : emptyToNull(input.phone),
+    });
+
+    if (updated === null) {
+      throw customerNotFound();
+    }
+
+    return toCustomerProfileView(updated);
+  }
+
+  public async ensureForSession(
+    identity: SessionCustomerIdentity,
+  ): Promise<CustomerRecord> {
+    const byUser = await this.customers.findByUserId(identity.id);
+
+    if (byUser !== null) {
+      if (byUser.status !== "ACTIVE") {
+        throw new ConflictError("This customer is not active.");
+      }
+
+      return byUser;
+    }
+
+    const byEmail = await this.customers.findByEmail(identity.email);
+
+    if (byEmail !== null) {
+      if (byEmail.userId !== null && byEmail.userId !== identity.id) {
+        throw new ConflictError("This account cannot be used.");
+      }
+
+      const linked = await this.customers.update(byEmail.id, {
+        userId: identity.id,
+      });
+
+      if (linked === null || linked.status !== "ACTIVE") {
+        throw new ConflictError("This customer is not active.");
+      }
+
+      return linked;
+    }
+
+    return this.customers.create({
+      email: identity.email,
+      name: identity.name,
+      userId: identity.id,
+    });
+  }
+
+  private assertCustomerActor(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+  ): void {
+    if (actor.id !== identity.id || actor.role !== "CUSTOMER") {
+      throw new AuthorizationError();
+    }
   }
 }
 

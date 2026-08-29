@@ -54,3 +54,31 @@ export interface CustomerStats {
   inactive: number;
   total: number;
 }
+
+export interface CustomerProfileView {
+  address: string | null;
+  email: string;
+  id: string;
+  name: string;
+  phone: string | null;
+  status: CustomerStatus;
+}
+
+export interface UpdateCustomerProfileInput {
+  address?: string | null;
+  name?: string;
+  phone?: string | null;
+}
+
+export function toCustomerProfileView(
+  record: CustomerRecord,
+): CustomerProfileView {
+  return {
+    address: record.address,
+    email: record.email,
+    id: record.id,
+    name: record.name,
+    phone: record.phone,
+    status: record.status,
+  };
+}

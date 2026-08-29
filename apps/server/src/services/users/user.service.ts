@@ -72,6 +72,18 @@ export class UserService {
     return updated;
   }
 
+  public async updateOwnName(actor: Actor, name: string): Promise<UserProfile> {
+    const updated = await this.users.update(actor.id, {
+      name: requireName(name),
+    });
+
+    if (updated === null) {
+      throw userNotFound();
+    }
+
+    return updated;
+  }
+
   public async setStatus(
     actor: Actor,
     id: string,

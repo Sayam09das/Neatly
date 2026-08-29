@@ -13,6 +13,7 @@ export interface ReviewRepository {
   countActive(): Promise<number>;
   countTotal(): Promise<number>;
   create(input: CreateReviewInput): Promise<ReviewRecord>;
+  findByBookingId(bookingId: string): Promise<ReviewRecord | null>;
   findById(id: string): Promise<ReviewRecord | null>;
   list(
     query: ReviewListQuery,
@@ -25,8 +26,10 @@ export interface ReviewRepository {
 
 function toRecord(row: {
   avatarMediaId: string | null;
+  bookingId: string | null;
   content: string;
   createdAt: Date;
+  customerId: string | null;
   customerName: string;
   customerRole: string | null;
   id: string;
@@ -39,8 +42,10 @@ function toRecord(row: {
 }): ReviewRecord {
   return {
     avatarMediaId: row.avatarMediaId,
+    bookingId: row.bookingId,
     content: row.content,
     createdAt: row.createdAt,
+    customerId: row.customerId,
     customerName: row.customerName,
     customerRole: row.customerRole,
     id: row.id,
@@ -74,13 +79,23 @@ export class PrismaReviewRepository implements ReviewRepository {
     return row === null ? null : toRecord(row);
   }
 
+  public async findByBookingId(
+    bookingId: string,
+  ): Promise<ReviewRecord | null> {
+    const row = await prisma.testimonial.findUnique({ where: { bookingId } });
+    return row === null ? null : toRecord(row);
+  }
+
   public async create(input: CreateReviewInput): Promise<ReviewRecord> {
     const row = await prisma.testimonial.create({
       data: {
         avatarMediaId: input.avatarMediaId ?? null,
+        bookingId: input.bookingId ?? null,
         content: input.content,
+        customerId: input.customerId ?? null,
         customerName: input.customerName,
         customerRole: input.customerRole ?? null,
+        isActive: input.isActive ?? true,
         isFeatured: input.isFeatured ?? false,
         rating: input.rating,
         serviceCategory: input.serviceCategory ?? null,
@@ -112,6 +127,10 @@ export class PrismaReviewRepository implements ReviewRepository {
     const search = query.search?.trim();
     const where: Prisma.TestimonialWhereInput = {
       ...(query.active === undefined ? {} : { isActive: query.active }),
+      ...(query.bookingId === undefined ? {} : { bookingId: query.bookingId }),
+      ...(query.customerId === undefined
+        ? {}
+        : { customerId: query.customerId }),
       ...(query.category === undefined
         ? {}
         : { serviceCategory: query.category }),

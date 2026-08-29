@@ -10,6 +10,7 @@ import {
 import type { CustomerBookingView } from "@/types/customer";
 
 const booking: CustomerBookingView = {
+  actions: { canCancel: true, canUpdate: true },
   id: "bk_10482",
   linkedToQuote: true,
   notes: null,

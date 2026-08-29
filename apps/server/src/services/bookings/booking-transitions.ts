@@ -28,3 +28,11 @@ export function assertBookingTransition(
     throw invalidBookingTransition();
   }
 }
+
+export function customerMayCancelBooking(status: BookingStatus): boolean {
+  return canTransitionBookingStatus(status, "CANCELLED");
+}
+
+export function customerMayUpdateBooking(status: BookingStatus): boolean {
+  return status !== "COMPLETED" && status !== "CANCELLED";
+}

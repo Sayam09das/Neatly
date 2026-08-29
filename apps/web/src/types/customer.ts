@@ -55,7 +55,13 @@ export interface CustomerBooking {
   status: CustomerBookingStatus;
 }
 
+export interface CustomerBookingActions {
+  canCancel: boolean;
+  canUpdate: boolean;
+}
+
 export interface CustomerBookingView {
+  actions: CustomerBookingActions;
   id: string;
   linkedToQuote: boolean;
   notes: string | null;
@@ -109,12 +115,42 @@ export interface CustomerNotification {
   title: string;
 }
 
+export type CustomerReviewStatus = "pending" | "published";
+
 export interface CustomerReview {
+  bookingId: string;
   content: string;
-  createdAt: string | null;
+  createdAt: string;
   id: string;
   rating: number;
-  serviceCategory: CustomerServiceCategory | null;
+  serviceName: string | null;
+  status: CustomerReviewStatus;
+}
+
+export interface CustomerEligibleBooking {
+  id: string;
+  scheduledAt: string | null;
+  service: { id: string; name: string } | null;
+  status: "COMPLETED";
+}
+
+export interface CustomerReviewWorkspace {
+  eligibleBookings: CustomerEligibleBooking[];
+  reviews: CustomerReview[];
+}
+
+export interface CustomerAccountSession {
+  createdAt: string;
+  current: boolean;
+  expiresAt: string;
+  id: string;
+}
+
+export interface CustomerAccount {
+  email: string;
+  emailVerified: boolean;
+  sessions: CustomerAccountSession[];
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 }
 
 export interface CustomerService {

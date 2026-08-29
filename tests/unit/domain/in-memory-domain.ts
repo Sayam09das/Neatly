@@ -124,7 +124,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
     catalogRepo,
     quoteRepo,
   );
-  const reviews = new ReviewService(reviewRepo);
+  const reviews = new ReviewService(reviewRepo, customerRepo, bookingRepo);
   const notifications = new NotificationService(notificationRepo, now);
   const users = new UserService(userRepo);
   const settings = new SettingsService(settingsRepo);
@@ -699,16 +699,38 @@ export class InMemoryReviewRepository implements ReviewRepository {
     return this.store.reviews.get(id) ?? null;
   }
 
+  public async findByBookingId(
+    bookingId: string,
+  ): Promise<ReviewRecord | null> {
+    return (
+      [...this.store.reviews.values()].find(
+        (review) => review.bookingId === bookingId,
+      ) ?? null
+    );
+  }
+
   public async create(input: CreateReviewInput): Promise<ReviewRecord> {
     const now = new Date();
+    if (input.bookingId !== undefined && input.bookingId !== null) {
+      const existing = [...this.store.reviews.values()].find(
+        (review) => review.bookingId === input.bookingId,
+      );
+
+      if (existing !== undefined) {
+        throw new Error("A review already exists for this booking.");
+      }
+    }
+
     const row: ReviewRecord = {
       avatarMediaId: input.avatarMediaId ?? null,
+      bookingId: input.bookingId ?? null,
       content: input.content,
       createdAt: now,
+      customerId: input.customerId ?? null,
       customerName: input.customerName,
       customerRole: input.customerRole ?? null,
       id: createId(),
-      isActive: true,
+      isActive: input.isActive ?? true,
       isFeatured: input.isFeatured ?? false,
       rating: input.rating,
       serviceCategory: input.serviceCategory ?? null,
@@ -744,6 +766,17 @@ export class InMemoryReviewRepository implements ReviewRepository {
     const search = query.search?.trim().toLowerCase();
     const filtered = [...this.store.reviews.values()].filter((row) => {
       if (query.active !== undefined && row.isActive !== query.active) {
+        return false;
+      }
+
+      if (
+        query.customerId !== undefined &&
+        row.customerId !== query.customerId
+      ) {
+        return false;
+      }
+
+      if (query.bookingId !== undefined && row.bookingId !== query.bookingId) {
         return false;
       }
 

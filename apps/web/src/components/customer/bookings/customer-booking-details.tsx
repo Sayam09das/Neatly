@@ -1,20 +1,23 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 import { BookingStatusBadge } from "@/components/customer/booking-status-badge";
+import { BookingManagement } from "@/components/customer/bookings/booking-management";
 import {
   CUSTOMER_PATHS,
   customerBookingConfirmationCopy,
   customerBookingDetailCopy,
 } from "@/config/customer";
 import { formatCustomerSchedule } from "@/lib/customer/schedule";
-import type { CustomerBookingView } from "@/types/customer";
+import type { CustomerBookingView, CustomerReview } from "@/types/customer";
 
 interface CustomerBookingDetailsProps {
   booking: CustomerBookingView;
+  review: CustomerReview | null;
 }
 
 export function CustomerBookingDetails({
   booking,
+  review,
 }: CustomerBookingDetailsProps): ReactElement {
   const schedule = formatCustomerSchedule(booking.scheduledAt);
 
@@ -112,6 +115,23 @@ export function CustomerBookingDetails({
           {customerBookingDetailCopy.linkedQuote}
         </p>
       ) : null}
+      {booking.status === "COMPLETED" ? (
+        <p className="mt-8">
+          <Link
+            className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            href={
+              review === null
+                ? `${CUSTOMER_PATHS.reviews}?booking=${encodeURIComponent(booking.id)}`
+                : CUSTOMER_PATHS.reviews
+            }
+          >
+            {review === null
+              ? customerBookingDetailCopy.leaveReview
+              : customerBookingDetailCopy.viewReview}
+          </Link>
+        </p>
+      ) : null}
+      <BookingManagement booking={booking} />
       <section className="mt-10">
         <h2 className="text-h2 text-foreground tracking-tight">
           {customerBookingConfirmationCopy.nextStepsHeading}

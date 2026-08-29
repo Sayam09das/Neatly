@@ -41,3 +41,21 @@ export function toCustomerBookingPayload(
     serviceId: values.serviceId,
   };
 }
+
+export const customerBookingUpdateSchema = customerBookingFormSchema.omit({
+  serviceId: true,
+});
+
+export type CustomerBookingUpdateValues = z.infer<
+  typeof customerBookingUpdateSchema
+>;
+
+export function toCustomerBookingUpdatePayload(
+  values: CustomerBookingUpdateValues,
+): Record<string, unknown> {
+  return {
+    notes: values.notes.trim() === "" ? null : values.notes.trim(),
+    scheduledAt: `${values.scheduledDate}T${values.scheduledTime}:00.000Z`,
+    serviceAddress: values.serviceAddress.trim(),
+  };
+}

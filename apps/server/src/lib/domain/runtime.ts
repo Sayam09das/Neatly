@@ -65,7 +65,7 @@ export function createPrismaDomainServices(): DomainServices {
     catalogRepo,
     quoteRepo,
   );
-  const reviews = new ReviewService(reviewRepo);
+  const reviews = new ReviewService(reviewRepo, customerRepo, bookingRepo);
   const notifications = new NotificationService(notificationRepo);
   const users = new UserService(userRepo);
   const dashboard = new DashboardService(

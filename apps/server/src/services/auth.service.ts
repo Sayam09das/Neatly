@@ -46,6 +46,20 @@ export interface AuthServiceOptions {
   verifyLimiter?: MemoryRateLimiter;
 }
 
+export interface CustomerAccountSessionView {
+  createdAt: string;
+  current: boolean;
+  expiresAt: string;
+  id: string;
+}
+
+export interface CustomerAccountView {
+  email: string;
+  emailVerified: boolean;
+  sessions: readonly CustomerAccountSessionView[];
+  status: AuthUser["status"];
+}
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -212,6 +226,107 @@ export class AuthService {
     await this.repository.deleteSessionByTokenHash(
       hashAuthToken(sessionToken, this.sessionSecret),
     );
+  }
+
+  public async getAccountSecurity(
+    userId: string,
+    sessionToken: string | undefined,
+  ): Promise<CustomerAccountView> {
+    const user = await this.repository.findUserById(userId);
+
+    if (user === null) {
+      throw new AuthError("UNAUTHORIZED", AUTH_ERROR_MESSAGES.UNAUTHORIZED);
+    }
+
+    const currentHash =
+      sessionToken === undefined || sessionToken.trim() === ""
+        ? null
+        : hashAuthToken(sessionToken, this.sessionSecret);
+    const now = this.now().getTime();
+    const sessions = await this.repository.listSessionsByUserId(user.id);
+
+    return {
+      email: user.email,
+      emailVerified: user.emailVerifiedAt !== null,
+      sessions: sessions
+        .filter((session) => session.expiresAt.getTime() > now)
+        .map((session) => ({
+          createdAt: session.createdAt.toISOString(),
+          current: currentHash !== null && session.tokenHash === currentHash,
+          expiresAt: session.expiresAt.toISOString(),
+          id: session.id,
+        })),
+      status: user.status,
+    };
+  }
+
+  public async changeOwnPassword(
+    userId: string,
+    sessionToken: string | undefined,
+    input: { currentPassword: string; password: string },
+    context: AuthServiceContext,
+  ): Promise<void> {
+    if (!this.resetLimiter.consume(`password:${userId}:${context.ip}`)) {
+      throw new AuthError("RATE_LIMITED", AUTH_ERROR_MESSAGES.RATE_LIMITED);
+    }
+
+    const user = await this.repository.findUserById(userId);
+
+    if (user === null) {
+      throw new AuthError("UNAUTHORIZED", AUTH_ERROR_MESSAGES.UNAUTHORIZED);
+    }
+
+    const matches = await verifyPassword(
+      input.currentPassword,
+      user.passwordHash,
+    );
+
+    if (!matches) {
+      throw new AuthError("INVALID_INPUT", "Current password is incorrect.", [
+        { field: "currentPassword", issue: "Current password is incorrect." },
+      ]);
+    }
+
+    if (input.password === input.currentPassword) {
+      throw new AuthError("INVALID_INPUT", "Choose a different password.", [
+        { field: "password", issue: "Choose a different password." },
+      ]);
+    }
+
+    const passwordHash = await hashPassword(input.password);
+    await this.repository.updatePasswordHash(user.id, passwordHash);
+
+    if (sessionToken !== undefined && sessionToken.trim() !== "") {
+      await this.repository.deleteSessionsForUserExcept(
+        user.id,
+        hashAuthToken(sessionToken, this.sessionSecret),
+      );
+      return;
+    }
+
+    await this.repository.deleteSessionsForUser(user.id);
+  }
+
+  public async revokeOwnSession(
+    userId: string,
+    sessionId: string,
+  ): Promise<void> {
+    const deleted = await this.repository.deleteSessionById(sessionId, userId);
+
+    if (!deleted) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+  }
+
+  public async logoutAllOwnSessions(userId: string): Promise<void> {
+    await this.repository.deleteSessionsForUser(userId);
+  }
+
+  public async requestOwnEmailVerification(
+    email: string,
+    context: AuthServiceContext,
+  ): Promise<{ message: string }> {
+    return this.requestEmailVerification({ email }, context);
   }
 
   public async requestPasswordReset(

@@ -142,4 +142,88 @@ describe("Customer booking read APIs", (): void => {
     expect(overviewBody.data.overview.summary.total).toBe(1);
     expect(overviewBody.data.overview.summary.pending).toBe(1);
   });
+
+  it("cancels and updates only the session customer's eligible booking", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    mockedDomain.mockReturnValue(harness as never);
+    const offering = await harness.catalog.create(admin, {
+      fullDescription: "Home",
+      name: "Home Refresh",
+      shortDescription: "Weekly",
+    });
+    const created = await harness.bookings.createForCustomer(
+      { id: sessionUser.id, role: "CUSTOMER" },
+      {
+        email: sessionUser.email,
+        id: sessionUser.id,
+        name: sessionUser.name,
+      },
+      {
+        scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        serviceAddress: "12 Harbour Street",
+        serviceId: offering.id,
+      },
+    );
+
+    const rejected = await dispatchApi(
+      withAuth({
+        body: JSON.stringify({
+          customerId: "clother000000000000000001",
+          notes: "ignored",
+          status: "COMPLETED",
+        }),
+        method: "PATCH",
+        url: `${API_PATHS.customerBookings}/${created.id}`,
+      }),
+    );
+    expect(rejected.statusCode).toBe(HTTP_STATUS.BAD_REQUEST);
+
+    const updated = await dispatchApi(
+      withAuth({
+        body: JSON.stringify({
+          notes: "Side entrance",
+          serviceAddress: "14 Harbour Street",
+        }),
+        method: "PATCH",
+        url: `${API_PATHS.customerBookings}/${created.id}`,
+      }),
+    );
+    const updatedBody = parseJsonBody(updated.body) as Envelope<{
+      booking: { notes: string; status: string };
+    }>;
+    expect(updated.statusCode).toBe(HTTP_STATUS.OK);
+    expect(updatedBody.data.booking.notes).toBe("Side entrance");
+    expect(updatedBody.data.booking.status).toBe("PENDING");
+
+    mockedAuth.mockReturnValue({
+      resolveSession: vi.fn().mockResolvedValue({
+        ...sessionUser,
+        email: "other@neatly.example",
+        id: "customer-b",
+        name: "Other",
+      }),
+    } as never);
+    const stolen = await dispatchApi(
+      withAuth({
+        method: "POST",
+        url: `${API_PATHS.customerBookings}/${created.id}/cancel`,
+      }),
+    );
+    expect(stolen.statusCode).toBe(HTTP_STATUS.NOT_FOUND);
+
+    mockedAuth.mockReturnValue({
+      resolveSession: vi.fn().mockResolvedValue(sessionUser),
+    } as never);
+    const cancelled = await dispatchApi(
+      withAuth({
+        method: "POST",
+        url: `${API_PATHS.customerBookings}/${created.id}/cancel`,
+      }),
+    );
+    const cancelledBody = parseJsonBody(cancelled.body) as Envelope<{
+      booking: { status: string };
+    }>;
+    expect(cancelled.statusCode).toBe(HTTP_STATUS.OK);
+    expect(cancelledBody.data.booking.status).toBe("CANCELLED");
+  });
 });

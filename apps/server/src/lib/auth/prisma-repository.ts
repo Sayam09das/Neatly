@@ -34,16 +34,18 @@ function toUserRecord(user: {
 }
 
 function toSessionRecord(session: {
+  createdAt: Date;
   expiresAt: Date;
   id: string;
   tokenHash: string;
   userId: string;
 }): AuthSessionRecord {
   return {
-    id: session.id,
-    userId: session.userId,
-    tokenHash: session.tokenHash,
+    createdAt: session.createdAt,
     expiresAt: session.expiresAt,
+    id: session.id,
+    tokenHash: session.tokenHash,
+    userId: session.userId,
   };
 }
 
@@ -160,6 +162,33 @@ export class PrismaAuthRepository implements AuthRepository {
     return session === null ? null : toSessionRecord(session);
   }
 
+  public async findSessionById(id: string): Promise<AuthSessionRecord | null> {
+    const session = await prisma.session.findUnique({
+      where: { id },
+    });
+
+    return session === null ? null : toSessionRecord(session);
+  }
+
+  public async listSessionsByUserId(
+    userId: string,
+  ): Promise<readonly AuthSessionRecord[]> {
+    const sessions = await prisma.session.findMany({
+      orderBy: { createdAt: "desc" },
+      where: { userId },
+    });
+
+    return sessions.map(toSessionRecord);
+  }
+
+  public async deleteSessionById(id: string, userId: string): Promise<boolean> {
+    const result = await prisma.session.deleteMany({
+      where: { id, userId },
+    });
+
+    return result.count === 1;
+  }
+
   public async deleteSessionByTokenHash(tokenHash: string): Promise<void> {
     await prisma.session.deleteMany({
       where: { tokenHash },
@@ -169,6 +198,18 @@ export class PrismaAuthRepository implements AuthRepository {
   public async deleteSessionsForUser(userId: string): Promise<void> {
     await prisma.session.deleteMany({
       where: { userId },
+    });
+  }
+
+  public async deleteSessionsForUserExcept(
+    userId: string,
+    keepTokenHash: string,
+  ): Promise<void> {
+    await prisma.session.deleteMany({
+      where: {
+        tokenHash: { not: keepTokenHash },
+        userId,
+      },
     });
   }
 

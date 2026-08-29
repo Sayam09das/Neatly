@@ -6,6 +6,7 @@ import { CustomerRefreshErrorState } from "@/components/customer/customer-refres
 import { CUSTOMER_LOGIN_PATH, customerSurfaceCopy } from "@/config/customer";
 import { requireCustomerPage } from "@/lib/auth/current-user";
 import { loadCustomerBooking } from "@/lib/customer/booking";
+import { loadCustomerReviews } from "@/lib/customer/reviews";
 import { readCustomerSessionToken } from "@/lib/customer/session-token";
 
 export const metadata: Metadata = {
@@ -26,10 +27,11 @@ export default async function CustomerBookingDetailPage({
     notFound();
   }
 
-  const result = await loadCustomerBooking(
-    id,
-    await readCustomerSessionToken(),
-  );
+  const sessionToken = await readCustomerSessionToken();
+  const [result, reviews] = await Promise.all([
+    loadCustomerBooking(id, sessionToken),
+    loadCustomerReviews(sessionToken),
+  ]);
 
   if (!result.ok && result.unauthorized) {
     redirect(CUSTOMER_LOGIN_PATH);
@@ -43,5 +45,9 @@ export default async function CustomerBookingDetailPage({
     return <CustomerRefreshErrorState />;
   }
 
-  return <CustomerBookingDetails booking={result.booking} />;
+  const review = reviews.ok
+    ? (reviews.workspace.reviews.find((item) => item.bookingId === id) ?? null)
+    : null;
+
+  return <CustomerBookingDetails booking={result.booking} review={review} />;
 }

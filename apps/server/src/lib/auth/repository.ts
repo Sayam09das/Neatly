@@ -12,6 +12,7 @@ export interface AuthUserRecord {
 }
 
 export interface AuthSessionRecord {
+  createdAt: Date;
   expiresAt: Date;
   id: string;
   tokenHash: string;
@@ -82,8 +83,15 @@ export interface AuthRepository {
   createUser(input: CreateUserRecordInput): Promise<AuthUserRecord>;
   deleteEmailVerificationTokensForUser(userId: string): Promise<void>;
   deletePasswordResetTokensForUser(userId: string): Promise<void>;
+  deleteSessionById(id: string, userId: string): Promise<boolean>;
   deleteSessionByTokenHash(tokenHash: string): Promise<void>;
   deleteSessionsForUser(userId: string): Promise<void>;
+  deleteSessionsForUserExcept(
+    userId: string,
+    keepTokenHash: string,
+  ): Promise<void>;
+  findSessionById(id: string): Promise<AuthSessionRecord | null>;
+  listSessionsByUserId(userId: string): Promise<readonly AuthSessionRecord[]>;
   findEmailVerificationTokenByHash(
     tokenHash: string,
   ): Promise<AuthEmailVerificationRecord | null>;

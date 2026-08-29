@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Actor } from "../../../apps/server/src/lib/domain/actor.ts";
 import {
+  ConflictError,
   NotFoundError,
   ValidationError,
 } from "../../../apps/server/src/lib/errors.ts";
@@ -48,5 +49,91 @@ describe("ReviewService", (): void => {
     await expect(reviews.getById("missing")).rejects.toBeInstanceOf(
       NotFoundError,
     );
+  });
+
+  it("creates one customer review per completed owned booking", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    const customer = await harness.customers.create(admin, {
+      email: "ada@neatly.example",
+      name: "Ada",
+      userId: "customer-a",
+    });
+    const offering = await harness.catalog.create(admin, {
+      fullDescription: "Home",
+      name: "Home Refresh",
+      shortDescription: "Weekly",
+    });
+    const booking = await harness.bookings.create(admin, {
+      customerId: customer.id,
+      serviceId: offering.id,
+    });
+    await harness.bookings.changeStatus(admin, booking.id, "CONFIRMED");
+    const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
+    const identity = {
+      email: "ada@neatly.example",
+      id: "customer-a",
+      name: "Ada",
+    };
+
+    await expect(
+      harness.reviews.createForCustomer(actor, identity, {
+        bookingId: booking.id,
+        content: "The team was careful and on time.",
+        rating: 5,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+
+    await harness.bookings.assignCleaner(
+      admin,
+      booking.id,
+      (
+        await harness.cleaners.create(admin, {
+          email: "mia@neatly.example",
+          name: "Mia",
+        })
+      ).id,
+    );
+    await harness.bookings.changeStatus(admin, booking.id, "IN_PROGRESS");
+    await harness.bookings.complete(admin, booking.id);
+
+    const created = await harness.reviews.createForCustomer(actor, identity, {
+      bookingId: booking.id,
+      content: "The team was careful and on time.",
+      rating: 5,
+    });
+    expect(created.status).toBe("pending");
+    expect(created.bookingId).toBe(booking.id);
+    expect(created.serviceName).toBe("Home Refresh");
+
+    await expect(
+      harness.reviews.createForCustomer(actor, identity, {
+        bookingId: booking.id,
+        content: "A second review should not save.",
+        rating: 4,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+
+    const stranger: Actor = { id: "customer-b", role: "CUSTOMER" };
+    await harness.customers.create(admin, {
+      email: "other@neatly.example",
+      name: "Other",
+      userId: "customer-b",
+    });
+    await expect(
+      harness.reviews.updateForCustomer(
+        stranger,
+        {
+          email: "other@neatly.example",
+          id: "customer-b",
+          name: "Other",
+        },
+        created.id,
+        { rating: 1 },
+      ),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    const workspace = await harness.reviews.listForCustomer(actor, identity);
+    expect(workspace.reviews.map((item) => item.id)).toEqual([created.id]);
+    expect(workspace.eligibleBookings).toEqual([]);
   });
 });

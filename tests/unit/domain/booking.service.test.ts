@@ -276,4 +276,68 @@ describe("BookingService", (): void => {
     expect(empty.items).toEqual([]);
     expect(empty.pagination.total).toBe(0);
   });
+
+  it("lets the owner cancel or update an eligible booking and rejects IDOR", async (): Promise<void> => {
+    const { bookings, customers, offering } = await seedBookingGraph();
+    const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
+    const identity = {
+      email: "ada@neatly.example",
+      id: "customer-a",
+      name: "Ada",
+    };
+    const created = await bookings.createForCustomer(actor, identity, {
+      scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      serviceAddress: "12 Harbour Street",
+      serviceId: offering.id,
+    });
+    expect(created.actions.canCancel).toBe(true);
+    expect(created.actions.canUpdate).toBe(true);
+
+    const nextSchedule = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);
+    const updated = await bookings.updateForCustomer(
+      actor,
+      identity,
+      created.id,
+      {
+        notes: "Side entrance",
+        scheduledAt: nextSchedule,
+        serviceAddress: "14 Harbour Street",
+      },
+    );
+    expect(updated.notes).toBe("Side entrance");
+    expect(updated.serviceAddress).toBe("14 Harbour Street");
+    expect(updated.status).toBe("PENDING");
+
+    const stranger: Actor = { id: "customer-b", role: "CUSTOMER" };
+    await customers.create(admin, {
+      email: "other@neatly.example",
+      name: "Other",
+      userId: "customer-b",
+    });
+    await expect(
+      bookings.cancelForCustomer(
+        stranger,
+        {
+          email: "other@neatly.example",
+          id: "customer-b",
+          name: "Other",
+        },
+        created.id,
+      ),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    const cancelled = await bookings.cancelForCustomer(
+      actor,
+      identity,
+      created.id,
+    );
+    expect(cancelled.status).toBe("CANCELLED");
+    expect(cancelled.actions.canCancel).toBe(false);
+    expect(cancelled.actions.canUpdate).toBe(false);
+    await expect(
+      bookings.updateForCustomer(actor, identity, created.id, {
+        notes: "too late",
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
 });

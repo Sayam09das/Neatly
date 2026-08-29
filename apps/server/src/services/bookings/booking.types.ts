@@ -1,5 +1,9 @@
 import type { BookingStatus } from "@prisma/client";
 import type { PaginationQuery, SortQuery } from "../../lib/query.ts";
+import {
+  customerMayCancelBooking,
+  customerMayUpdateBooking,
+} from "./booking-transitions.ts";
 
 export const BOOKING_SORT_FIELDS = [
   "createdAt",
@@ -47,7 +51,13 @@ export interface CreateCustomerBookingInput {
   serviceId: string;
 }
 
+export interface CustomerBookingActions {
+  canCancel: boolean;
+  canUpdate: boolean;
+}
+
 export interface CustomerBookingView {
+  actions: CustomerBookingActions;
   id: string;
   linkedToQuote: boolean;
   notes: string | null;
@@ -61,6 +71,10 @@ export function toCustomerBookingView(
   record: BookingRecord,
 ): CustomerBookingView {
   return {
+    actions: {
+      canCancel: customerMayCancelBooking(record.status),
+      canUpdate: customerMayUpdateBooking(record.status),
+    },
     id: record.id,
     linkedToQuote: record.quoteRequestId !== null,
     notes: record.notes,

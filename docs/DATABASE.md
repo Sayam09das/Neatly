@@ -278,6 +278,8 @@ Stores authentic customer feedback and ratings.
 | Field Name | Data Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | String (UUID / CUID) | Primary Key, Default: Auto | Unique review identifier |
+| `customerId` | String | NULLABLE, FK (`Customer`) | Session customer who submitted a booking review |
+| `bookingId` | String | NULLABLE, UNIQUE, FK (`Booking`) | Completed booking this review belongs to |
 | `customerName` | String | NOT NULL | Customer name (e.g., "Sarah M.") |
 | `customerRole` | String | NULLABLE | Location or context (e.g., "Homeowner in Westside") |
 | `rating` | Integer | NOT NULL, Default: `5` | Star rating (Range: 1 to 5) |
@@ -413,6 +415,8 @@ Central registry tracking uploaded image assets stored in cloud object storage.
 | `BlogPost` | Many-to-One (Optional)| `MediaAsset` | `coverMediaId` | `SET NULL` |
 | `Service` | Many-to-One (Optional)| `MediaAsset` | `coverMediaId` | `SET NULL` |
 | `Testimonial` | Many-to-One (Optional)| `MediaAsset` | `avatarMediaId` | `SET NULL` |
+| `Testimonial` | Many-to-One (Optional)| `Customer` | `customerId` | `RESTRICT` |
+| `Testimonial` | One-to-One (Optional)| `Booking` | `bookingId` | `RESTRICT` |
 
 ---
 

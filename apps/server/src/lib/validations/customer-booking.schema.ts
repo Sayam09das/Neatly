@@ -66,3 +66,34 @@ export const customerBookingListQuerySchema = z
 export type CustomerBookingListQueryInput = z.infer<
   typeof customerBookingListQuerySchema
 >;
+
+export const updateCustomerBookingBodySchema = z
+  .strictObject({
+    notes: z
+      .string()
+      .trim()
+      .max(
+        CUSTOMER_BOOKING_NOTES_MAX_LENGTH,
+        "Keep notes under 1,000 characters.",
+      )
+      .optional()
+      .nullable(),
+    scheduledAt: dateTimeSchema.optional(),
+    serviceAddress: z
+      .string()
+      .trim()
+      .min(CUSTOMER_BOOKING_ADDRESS_MIN_LENGTH, "Enter the service address.")
+      .max(CUSTOMER_BOOKING_ADDRESS_MAX_LENGTH, "Use a shorter address.")
+      .optional(),
+  })
+  .refine(
+    (value) =>
+      value.notes !== undefined ||
+      value.scheduledAt !== undefined ||
+      value.serviceAddress !== undefined,
+    { message: "Provide at least one booking field to update." },
+  );
+
+export type UpdateCustomerBookingBody = z.infer<
+  typeof updateCustomerBookingBodySchema
+>;

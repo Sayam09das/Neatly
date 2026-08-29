@@ -16,6 +16,7 @@ const identity = {
 };
 
 const upcoming = {
+  actions: { canCancel: true, canUpdate: true },
   id: "booking_own_1",
   linkedToQuote: false,
   notes: null,

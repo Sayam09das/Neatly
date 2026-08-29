@@ -44,7 +44,11 @@ import {
   toCustomerBookingView,
   type UpdateBookingInput,
 } from "./booking.types.ts";
-import { assertBookingTransition } from "./booking-transitions.ts";
+import {
+  assertBookingTransition,
+  customerMayCancelBooking,
+  customerMayUpdateBooking,
+} from "./booking-transitions.ts";
 
 export class BookingService {
   private readonly bookings: BookingRepository;
@@ -154,19 +158,69 @@ export class BookingService {
     id: string,
   ): Promise<CustomerBookingView> {
     this.assertCustomerActor(actor, identity);
-    const booking = await this.bookings.findById(id);
-
-    if (booking === null) {
-      throw bookingNotFound();
-    }
-
-    const customer = await this.customers.findByUserId(identity.id);
-
-    if (customer === null || booking.customerId !== customer.id) {
-      throw bookingNotFound();
-    }
-
+    const booking = await this.requireOwnedCustomerBooking(identity, id);
     return toCustomerBookingView(booking);
+  }
+
+  public async cancelForCustomer(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+    id: string,
+  ): Promise<CustomerBookingView> {
+    this.assertCustomerActor(actor, identity);
+    const booking = await this.requireOwnedCustomerBooking(identity, id);
+
+    if (!customerMayCancelBooking(booking.status)) {
+      throw new ConflictError("This booking can no longer be cancelled.");
+    }
+
+    assertBookingTransition(booking.status, "CANCELLED");
+    const updated = await this.bookings.compareAndUpdate(
+      booking.id,
+      booking.status,
+      { status: "CANCELLED" },
+    );
+
+    if (updated === null) {
+      throw bookingConflict();
+    }
+
+    return toCustomerBookingView(updated);
+  }
+
+  public async updateForCustomer(
+    actor: Actor,
+    identity: SessionCustomerIdentity,
+    id: string,
+    input: UpdateBookingInput,
+  ): Promise<CustomerBookingView> {
+    this.assertCustomerActor(actor, identity);
+    const booking = await this.requireOwnedCustomerBooking(identity, id);
+
+    if (!customerMayUpdateBooking(booking.status)) {
+      throw new ConflictError("This booking can no longer be updated.");
+    }
+
+    if (input.scheduledAt !== undefined && input.scheduledAt !== null) {
+      this.assertFutureSchedule(input.scheduledAt);
+    }
+
+    const updated = await this.bookings.compareAndUpdate(
+      booking.id,
+      booking.status,
+      {
+        notes: input.notes,
+        scheduledAt: input.scheduledAt,
+        serviceAddress: input.serviceAddress,
+        status: booking.status,
+      },
+    );
+
+    if (updated === null) {
+      throw bookingConflict();
+    }
+
+    return toCustomerBookingView(updated);
   }
 
   public async listForCustomer(
@@ -367,6 +421,25 @@ export class BookingService {
     bookingId: string,
   ): Promise<BookingRecord> {
     return this.changeStatus(actor, bookingId, "COMPLETED");
+  }
+
+  private async requireOwnedCustomerBooking(
+    identity: SessionCustomerIdentity,
+    id: string,
+  ): Promise<BookingRecord> {
+    const booking = await this.bookings.findById(id);
+
+    if (booking === null) {
+      throw bookingNotFound();
+    }
+
+    const customer = await this.customers.findByUserId(identity.id);
+
+    if (customer === null || booking.customerId !== customer.id) {
+      throw bookingNotFound();
+    }
+
+    return booking;
   }
 
   private async requireBooking(id: string): Promise<BookingRecord> {

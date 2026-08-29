@@ -20,6 +20,7 @@ import {
 import type {
   CreateCustomerBookingBody,
   CustomerBookingListQueryInput,
+  UpdateCustomerBookingBody,
 } from "../../lib/validations/customer-booking.schema.ts";
 
 export async function createCustomerBookingController(
@@ -84,4 +85,42 @@ export async function getCustomerBookingController(
     id,
   );
   sendSuccess(res, { booking });
+}
+
+export async function updateCustomerBookingController(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  context: RequestContext,
+): Promise<void> {
+  const { id } = getValidatedParams<{ id: string }>(context);
+  const booking = await getDomainServices().bookings.updateForCustomer(
+    customerActorFromContext(context),
+    sessionCustomerIdentityFromContext(context),
+    id,
+    getValidatedBody<UpdateCustomerBookingBody>(context),
+  );
+  sendSuccess(res, { booking });
+}
+
+export async function cancelCustomerBookingController(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  context: RequestContext,
+): Promise<void> {
+  const { id } = getValidatedParams<{ id: string }>(context);
+  const actor = customerActorFromContext(context);
+  const booking = await getDomainServices().bookings.cancelForCustomer(
+    actor,
+    sessionCustomerIdentityFromContext(context),
+    id,
+  );
+  sendSuccess(res, { booking });
+  await publishAdminDomainEvent(actor, {
+    entityId: booking.id,
+    message: ADMIN_EVENT_COPY.bookingCancelled.message,
+    relatedHref: ADMIN_APP_HREFS.bookings,
+    relatedLabel: ADMIN_EVENT_COPY.bookingCancelled.relatedLabel,
+    title: ADMIN_EVENT_COPY.bookingCancelled.title,
+    type: "BOOKING_CANCELLED",
+  });
 }

@@ -32,6 +32,10 @@ const bookingPartySchema = z.object({
 });
 
 export const customerBookingViewSchema = z.object({
+  actions: z.object({
+    canCancel: z.boolean(),
+    canUpdate: z.boolean(),
+  }),
   id: z.string().min(1),
   linkedToQuote: z.boolean(),
   notes: z.string().nullable(),
@@ -119,6 +123,60 @@ export type CustomerBookingLoadResult =
   | { booking: CustomerBookingView; ok: true }
   | { notFound: true; ok: false; unauthorized: false }
   | { notFound: false; ok: false; unauthorized: boolean };
+
+export async function updateCustomerBooking(
+  id: string,
+  payload: Record<string, unknown>,
+): Promise<JsonApiResult<CustomerBookingView>> {
+  const result = await customerRequest<unknown>(
+    withCustomerApiId(CUSTOMER_API_PATHS.booking, id),
+    {
+      body: JSON.stringify(payload),
+      method: "PATCH",
+    },
+  );
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const parsed = bookingPayloadSchema.safeParse(result.data);
+
+  if (!parsed.success) {
+    return bookingLoadFailure;
+  }
+
+  return {
+    data: parsed.data.booking,
+    ok: true,
+    status: result.status,
+  };
+}
+
+export async function cancelCustomerBooking(
+  id: string,
+): Promise<JsonApiResult<CustomerBookingView>> {
+  const result = await customerRequest<unknown>(
+    withCustomerApiId(CUSTOMER_API_PATHS.bookingCancel, id),
+    { method: "POST" },
+  );
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const parsed = bookingPayloadSchema.safeParse(result.data);
+
+  if (!parsed.success) {
+    return bookingLoadFailure;
+  }
+
+  return {
+    data: parsed.data.booking,
+    ok: true,
+    status: result.status,
+  };
+}
 
 export async function createCustomerBooking(
   payload: Record<string, unknown>,

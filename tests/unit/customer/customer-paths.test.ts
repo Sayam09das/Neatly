@@ -53,6 +53,7 @@ describe("customer navigation", (): void => {
     expect(getCustomerNavItems().map((item) => item.href)).toEqual([
       CUSTOMER_PATHS.dashboard,
       CUSTOMER_PATHS.bookings,
+      CUSTOMER_PATHS.reviews,
       CUSTOMER_PATHS.services,
     ]);
     expect(customerNavigation.some((item) => /\d/.test(item.label))).toBe(
@@ -63,7 +64,8 @@ describe("customer navigation", (): void => {
       CUSTOMER_PATHS.bookings,
     ]);
     expect(customerAccountMenuItems.map((item) => item.href)).toEqual([
-      CUSTOMER_PATHS.bookings,
+      CUSTOMER_PATHS.profile,
+      CUSTOMER_PATHS.settings,
     ]);
     expect(customerFooterAccountLinks.map((item) => item.href)).toEqual([
       CUSTOMER_PATHS.dashboard,

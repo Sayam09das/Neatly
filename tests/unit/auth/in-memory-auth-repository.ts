@@ -73,6 +73,7 @@ export class InMemoryAuthRepository implements AuthRepository {
     input: CreateSessionRecordInput,
   ): Promise<AuthSessionRecord> {
     const session: AuthSessionRecord = {
+      createdAt: new Date(),
       expiresAt: input.expiresAt,
       id: randomUUID(),
       tokenHash: input.tokenHash,
@@ -100,9 +101,53 @@ export class InMemoryAuthRepository implements AuthRepository {
     }
   }
 
+  public async findSessionById(id: string): Promise<AuthSessionRecord | null> {
+    return this.sessions.find((session) => session.id === id) ?? null;
+  }
+
+  public async listSessionsByUserId(
+    userId: string,
+  ): Promise<readonly AuthSessionRecord[]> {
+    return this.sessions
+      .filter((session) => session.userId === userId)
+      .sort(
+        (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
+      );
+  }
+
+  public async deleteSessionById(id: string, userId: string): Promise<boolean> {
+    const index = this.sessions.findIndex(
+      (session) => session.id === id && session.userId === userId,
+    );
+
+    if (index < 0) {
+      return false;
+    }
+
+    this.sessions.splice(index, 1);
+    return true;
+  }
+
   public async deleteSessionsForUser(userId: string): Promise<void> {
     for (let index = this.sessions.length - 1; index >= 0; index -= 1) {
       if (this.sessions[index]?.userId === userId) {
+        this.sessions.splice(index, 1);
+      }
+    }
+  }
+
+  public async deleteSessionsForUserExcept(
+    userId: string,
+    keepTokenHash: string,
+  ): Promise<void> {
+    for (let index = this.sessions.length - 1; index >= 0; index -= 1) {
+      const session = this.sessions[index];
+
+      if (
+        session !== undefined &&
+        session.userId === userId &&
+        session.tokenHash !== keepTokenHash
+      ) {
         this.sessions.splice(index, 1);
       }
     }

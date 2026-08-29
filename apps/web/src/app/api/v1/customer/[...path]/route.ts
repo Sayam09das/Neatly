@@ -28,10 +28,17 @@ export async function POST(
   return proxyCustomerRequest(request, context, "POST");
 }
 
+export async function PATCH(
+  request: Request,
+  context: CustomerProxyContext,
+): Promise<Response> {
+  return proxyCustomerRequest(request, context, "PATCH");
+}
+
 async function proxyCustomerRequest(
   request: Request,
   context: CustomerProxyContext,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PATCH",
 ): Promise<Response> {
   const requestId = getRequestId(request);
 
