@@ -34,5 +34,7 @@ export const config = {
     "/booking",
     "/booking/:path*",
     "/services/:slug/apply",
+    "/cleaner",
+    "/cleaner/:path*",
   ],
 };

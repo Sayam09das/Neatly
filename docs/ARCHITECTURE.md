@@ -319,6 +319,29 @@ PostgreSQL
 * **Identity:** `requireAuth` resolves the session user. Customer portal actors use `customerActorFromContext()` (`role: "CUSTOMER"`). Ownership is `Customer.userId` / session email, never `customerId` from the client.
 * **Contracts:** JSON `{ success, data, error, timestamp }`, `Cache-Control: no-store`, `x-request-id`. Customer routes live under `/api/v1/customer/*`.
 
+### 9.3 Cleaner application foundation
+
+The cleaner workspace lives under `/cleaner` in `apps/web`. It reuses the existing session cookie (`neatly_session`), `AuthService`, and JSON envelope helpers. It does not introduce a second backend, JWT stack, or a `CLEANER` `UserRole`. Prisma `UserRole` stays admin-only. A cleaner is an authenticated user whose `Cleaner.userId` matches the session and whose `Cleaner.status` is `ACTIVE`.
+
+```text
+/cleaner (Protected; cookie presence in middleware is UX-only)
+├── /cleaner
+├── /cleaner/jobs
+├── /cleaner/jobs/:id
+├── /cleaner/schedule
+└── /cleaner/availability
+```
+
+Earnings, reviews, notifications, profile, settings, and help remain reserved in `CLEANER_PATHS` and are not linked until those pages exist.
+
+* **Authentication:** Unauthenticated `/cleaner` requests redirect to `/login` with a safe `next` path. The same login form is reused. Logout uses the existing session logout action.
+* **Authorization:** `requireCleanerPage()` calls `GET /api/v1/cleaner/me`. Admin operators are denied and sent to `/admin`. Users without an active linked cleaner are denied and sent to `/dashboard`. The backend is authoritative; hiding UI is not a security boundary.
+* **API:** Session-scoped cleaner routes are `GET /api/v1/cleaner/me`, `GET /api/v1/cleaner/dashboard`, `GET /api/v1/cleaner/jobs`, `GET /api/v1/cleaner/jobs/:id`, `POST /api/v1/cleaner/jobs/:id/start`, `POST /api/v1/cleaner/jobs/:id/complete`, `GET /api/v1/cleaner/schedule`, and `GET|PATCH /api/v1/cleaner/availability`. Clients cannot pass `cleanerId` or `userId`. Job status labels reuse `BookingStatus` (`PENDING`, `CONFIRMED`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`). There is no `ACCEPTED` or `EN_ROUTE` status. Customer email and phone are not included on cleaner job views.
+* **Job workflow:** The domain state machine in `booking-transitions.ts` is authoritative. A cleaner may start an `ASSIGNED` job (`ASSIGNED` → `IN_PROGRESS`) and complete an in-progress job (`IN_PROGRESS` → `COMPLETED`). There is no cleaner accept step. Cancelled and completed jobs have no workflow actions. Mutations require an active session cleaner, assignment ownership, and a valid transition. Another cleaner's job returns 404. Invalid or concurrent transitions return a conflict. The UI refreshes from the server after success or rejection and does not invent transition history. `updatedAt` may be shown as last updated.
+* **Schedule:** `GET /api/v1/cleaner/schedule?date=YYYY-MM-DD` returns the session cleaner's jobs for that UTC day, a Monday-start week of job counts, and the next upcoming assignment. Duration and end time are omitted because `Booking` does not store them.
+* **Availability:** `Cleaner.availability` is optional JSON `{ week: [{ day, available, start, end }] }` with one window per weekday. Missing data defaults to unavailable. Availability never cancels or edits bookings. If upcoming assigned jobs fall on unavailable weekdays, the API returns a warning list only.
+* **Layout:** `CleanerShell` provides the skip link, sticky header, desktop sidebar, mobile navigation drawer, and main landmark. Navigation uses one config (`cleaner-nav.ts`) and only renders routes that exist. The notification control is an empty-state entry point until a cleaner notification API exists. No unread or job-count badges are fabricated.
+
 ---
 
 ## 10. DOMAIN MODULES SPECIFICATION

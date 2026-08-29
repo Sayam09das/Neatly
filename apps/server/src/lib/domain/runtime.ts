@@ -55,7 +55,7 @@ export function createPrismaDomainServices(): DomainServices {
   const settingsRepo = new PrismaSettingsRepository();
 
   const customers = new CustomerService(customerRepo);
-  const cleaners = new CleanerService(cleanerRepo);
+  const cleaners = new CleanerService(cleanerRepo, bookingRepo);
   const catalog = new CatalogService(catalogRepo);
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(

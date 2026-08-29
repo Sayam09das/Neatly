@@ -7,13 +7,16 @@ import {
   AUTH_CUSTOMER_HOME_PATH,
   AUTH_SESSION_COOKIE_NAME,
 } from "@/config/auth";
+import { CLEANER_LOGIN_PATH } from "@/config/cleaner";
 import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import { isAdminOperatorRole, requireRole } from "@/lib/auth/authorization";
 import { createClearedSessionCookie } from "@/lib/auth/cookies";
 import { AUTH_ERROR_MESSAGES, AuthError } from "@/lib/auth/errors";
 import { getAuthService } from "@/lib/auth/runtime";
 import { toAuthSession } from "@/lib/auth/session-state";
+import { loadCleanerSession } from "@/lib/cleaner/session";
 import type { AuthSession, AuthUser, AuthUserRole } from "@/types/auth";
+import type { CleanerProfile } from "@/types/cleaner";
 
 export { requireRole } from "@/lib/auth/authorization";
 
@@ -75,6 +78,34 @@ export async function requireCustomerPage(): Promise<AuthUser> {
   }
 
   return user;
+}
+
+export async function requireCleanerPage(): Promise<CleanerProfile> {
+  const user = await getCurrentUser();
+
+  if (user === null) {
+    redirect(CLEANER_LOGIN_PATH);
+  }
+
+  if (isAdminOperatorRole(user.role)) {
+    redirect(AUTH_ADMIN_HOME_PATH);
+  }
+
+  const session = await loadCleanerSession(await readSessionToken());
+
+  if (!session.ok && session.unauthorized) {
+    redirect(CLEANER_LOGIN_PATH);
+  }
+
+  if (!session.ok && session.forbidden) {
+    redirect(AUTH_CUSTOMER_HOME_PATH);
+  }
+
+  if (!session.ok) {
+    throw new Error("Unable to verify cleaner access.");
+  }
+
+  return session.profile;
 }
 
 export async function redirectAuthenticatedAdmin(): Promise<void> {

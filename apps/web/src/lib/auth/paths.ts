@@ -3,6 +3,7 @@ import {
   AUTH_ENTRY_PATHS,
   AUTH_PUBLIC_ADMIN_PATHS,
 } from "@/config/auth";
+import { CLEANER_HOME_PATH, CLEANER_LOGIN_PATH } from "@/config/cleaner";
 import {
   CUSTOMER_HOME_PATH,
   CUSTOMER_LOGIN_PATH,
@@ -42,6 +43,13 @@ export function isCustomerServiceApplyPath(pathname: string): boolean {
   );
 }
 
+export function isProtectedCleanerPath(pathname: string): boolean {
+  return (
+    pathname === CLEANER_HOME_PATH ||
+    pathname.startsWith(`${CLEANER_HOME_PATH}/`)
+  );
+}
+
 export function isProtectedCustomerPath(pathname: string): boolean {
   return (
     pathname === CUSTOMER_HOME_PATH ||
@@ -56,6 +64,29 @@ export function isAuthEntryPath(pathname: string): boolean {
   return AUTH_ENTRY_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
+}
+
+export function isSafeCleanerNextPath(candidate: string): boolean {
+  if (
+    !candidate.startsWith("/") ||
+    candidate.includes("://") ||
+    candidate.includes("\\") ||
+    candidate.includes("..") ||
+    candidate.includes("//")
+  ) {
+    return false;
+  }
+
+  const queryIndex = candidate.indexOf("?");
+  const pathname =
+    queryIndex === -1 ? candidate : candidate.slice(0, queryIndex);
+  const search = queryIndex === -1 ? "" : candidate.slice(queryIndex + 1);
+
+  if (search !== "") {
+    return false;
+  }
+
+  return isProtectedCleanerPath(pathname);
 }
 
 export function isSafeCustomerNextPath(candidate: string): boolean {
@@ -109,6 +140,20 @@ export function getEdgeAuthDecision(input: {
   hasSession: boolean;
   pathname: string;
 }): EdgeAuthDecision {
+  if (isProtectedCleanerPath(input.pathname)) {
+    if (input.hasSession) {
+      return { type: "next" };
+    }
+
+    return {
+      type: "redirect",
+      pathname: CLEANER_LOGIN_PATH,
+      ...(isSafeCleanerNextPath(input.pathname)
+        ? { next: input.pathname }
+        : {}),
+    };
+  }
+
   if (isProtectedCustomerPath(input.pathname)) {
     if (input.hasSession) {
       return { type: "next" };

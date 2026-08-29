@@ -114,7 +114,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
   const settingsRepo = new InMemorySettingsRepository(store);
 
   const customers = new CustomerService(customerRepo);
-  const cleaners = new CleanerService(cleanerRepo);
+  const cleaners = new CleanerService(cleanerRepo, bookingRepo);
   const catalog = new CatalogService(catalogRepo);
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
@@ -309,6 +309,7 @@ export class InMemoryCleanerRepository implements CleanerRepository {
   public async create(input: CreateCleanerInput): Promise<CleanerRecord> {
     const now = new Date();
     const row: CleanerRecord = {
+      availability: null,
       createdAt: now,
       email: input.email ?? null,
       id: createId(),
@@ -683,6 +684,8 @@ export class InMemoryBookingRepository implements BookingRepository {
       return (
         row.id.toLowerCase().includes(search) ||
         (row.customerId ?? "").toLowerCase().includes(search) ||
+        (row.customer?.name ?? "").toLowerCase().includes(search) ||
+        (row.serviceAddress ?? "").toLowerCase().includes(search) ||
         (row.service?.name ?? "").toLowerCase().includes(search)
       );
     });

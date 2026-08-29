@@ -1,4 +1,4 @@
-import type { CleanerStatus, Prisma } from "@prisma/client";
+import { type CleanerStatus, Prisma } from "@prisma/client";
 import { prisma } from "../lib/db.ts";
 import { resolvePagination } from "../lib/domain/list.ts";
 import type { SortQuery } from "../lib/query.ts";
@@ -26,6 +26,7 @@ export interface CleanerRepository {
 }
 
 function toRecord(row: {
+  availability: Prisma.JsonValue | null;
   createdAt: Date;
   email: string | null;
   id: string;
@@ -36,6 +37,7 @@ function toRecord(row: {
   userId: string | null;
 }): CleanerRecord {
   return {
+    availability: row.availability,
     createdAt: row.createdAt,
     email: row.email,
     id: row.id,
@@ -98,7 +100,20 @@ export class PrismaCleanerRepository implements CleanerRepository {
   ): Promise<CleanerRecord | null> {
     try {
       const row = await prisma.cleaner.update({
-        data: input,
+        data: {
+          email: input.email,
+          name: input.name,
+          phone: input.phone,
+          status: input.status,
+          ...(input.availability === undefined
+            ? {}
+            : {
+                availability:
+                  input.availability === null
+                    ? Prisma.JsonNull
+                    : (input.availability as Prisma.InputJsonValue),
+              }),
+        },
         where: { id },
       });
       return toRecord(row);

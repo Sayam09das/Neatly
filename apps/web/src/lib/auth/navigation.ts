@@ -1,8 +1,10 @@
 import { AUTH_ADMIN_HOME_PATH, AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
+import { CLEANER_LOGIN_PATH } from "@/config/cleaner";
 import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import {
   isAuthEntryPath,
   isProtectedAdminPath,
+  isProtectedCleanerPath,
   isProtectedCustomerPath,
   isPublicAdminPath,
 } from "@/lib/auth/paths";
@@ -56,6 +58,21 @@ export function getCustomerNavigationDecision(input: {
   return { type: "allow" };
 }
 
+export function getCleanerNavigationDecision(input: {
+  pathname: string;
+  user: AuthUser | null;
+}): AdminNavigationDecision {
+  if (!isProtectedCleanerPath(input.pathname)) {
+    return { type: "allow" };
+  }
+
+  if (input.user === null) {
+    return { type: "redirect", to: CLEANER_LOGIN_PATH };
+  }
+
+  return { type: "allow" };
+}
+
 export function getFrontendAuthRedirect(input: {
   pathname: string;
   status: FrontendAuthStatus;
@@ -67,6 +84,7 @@ export function getFrontendAuthRedirect(input: {
   const isProtectedAdmin =
     isProtectedAdminPath(input.pathname) && !isPublicAdminPath(input.pathname);
   const isProtectedCustomer = isProtectedCustomerPath(input.pathname);
+  const isProtectedCleaner = isProtectedCleanerPath(input.pathname);
   const isEntry = isAuthEntryPath(input.pathname);
 
   if (input.status === "unauthenticated") {
@@ -76,6 +94,10 @@ export function getFrontendAuthRedirect(input: {
 
     if (isProtectedCustomer) {
       return { type: "redirect", to: CUSTOMER_LOGIN_PATH };
+    }
+
+    if (isProtectedCleaner) {
+      return { type: "redirect", to: CLEANER_LOGIN_PATH };
     }
 
     return { type: "allow" };

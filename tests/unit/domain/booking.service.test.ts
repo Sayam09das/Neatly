@@ -340,4 +340,159 @@ describe("BookingService", (): void => {
       }),
     ).rejects.toBeInstanceOf(ConflictError);
   });
+
+  it("lists and summarizes only the session cleaner's jobs", async (): Promise<void> => {
+    const { bookings, cleaner, cleaners, customer, offering } =
+      await seedBookingGraph();
+    const otherCleaner = await cleaners.create(admin, {
+      email: "lee@neatly.example",
+      name: "Lee",
+      userId: "cleaner-b",
+    });
+    const scheduledAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const own = await bookings.create(admin, {
+      cleanerId: cleaner.id,
+      customerId: customer.id,
+      scheduledAt,
+      serviceAddress: "12 Harbour Street",
+      serviceId: offering.id,
+    });
+    await bookings.create(admin, {
+      cleanerId: otherCleaner.id,
+      customerId: customer.id,
+      scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+      serviceAddress: "99 Other Lane",
+      serviceId: offering.id,
+    });
+
+    const actor: Actor = { id: "cleaner-a", role: "CLEANER" };
+    const listed = await bookings.listForCleaner(actor, {});
+    expect(listed.items.map((item) => item.id)).toEqual([own.id]);
+    expect(listed.items[0]?.customerName).toBe("Ada");
+    expect(JSON.stringify(listed)).not.toContain("customerId");
+    expect(JSON.stringify(listed)).not.toContain("@neatly.example");
+
+    const overview = await bookings.getCleanerOverview(actor);
+    expect(overview.nextJob?.id).toBe(own.id);
+    expect(overview.summary.upcoming).toBe(1);
+    expect(overview.summary.inProgress).toBe(0);
+
+    const job = await bookings.getCleanerJob(actor, own.id);
+    expect(job.id).toBe(own.id);
+    expect(job.serviceAddress).toBe("12 Harbour Street");
+
+    const stranger: Actor = { id: "cleaner-b", role: "CLEANER" };
+    await expect(
+      bookings.getCleanerJob(stranger, own.id),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    const emptyActor: Actor = { id: "cleaner-c", role: "CLEANER" };
+    await expect(
+      bookings.listForCleaner(emptyActor, {}),
+    ).rejects.toBeInstanceOf(AuthorizationError);
+  });
+
+  it("lets the assigned cleaner start and complete a job", async (): Promise<void> => {
+    const { bookings, cleaner, customer, offering } = await seedBookingGraph();
+    const created = await bookings.create(admin, {
+      cleanerId: cleaner.id,
+      customerId: customer.id,
+      scheduledAt: new Date("2026-09-04T10:00:00.000Z"),
+      serviceId: offering.id,
+    });
+    const actor: Actor = { id: "cleaner-a", role: "CLEANER" };
+    const job = await bookings.getCleanerJob(actor, created.id);
+    expect(job.actions.canStart).toBe(true);
+    expect(job.actions.canComplete).toBe(false);
+
+    const started = await bookings.startCleanerJob(actor, created.id);
+    expect(started.status).toBe("IN_PROGRESS");
+    expect(started.actions.canStart).toBe(false);
+    expect(started.actions.canComplete).toBe(true);
+
+    const completed = await bookings.completeCleanerJob(actor, created.id);
+    expect(completed.status).toBe("COMPLETED");
+    expect(completed.actions.canStart).toBe(false);
+    expect(completed.actions.canComplete).toBe(false);
+    await expect(
+      bookings.startCleanerJob(actor, created.id),
+    ).rejects.toBeInstanceOf(ConflictError);
+    await expect(
+      bookings.completeCleanerJob(actor, created.id),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it("rejects cleaner workflow mutations that are unauthorized or invalid", async (): Promise<void> => {
+    const { bookings, cleaner, cleaners, customer, offering } =
+      await seedBookingGraph();
+    const otherCleaner = await cleaners.create(admin, {
+      email: "lee@neatly.example",
+      name: "Lee",
+      userId: "cleaner-b",
+    });
+    const assigned = await bookings.create(admin, {
+      cleanerId: cleaner.id,
+      customerId: customer.id,
+      scheduledAt: new Date("2026-09-04T10:00:00.000Z"),
+      serviceId: offering.id,
+    });
+    const cancelled = await bookings.create(admin, {
+      cleanerId: cleaner.id,
+      customerId: customer.id,
+      scheduledAt: new Date("2026-09-05T10:00:00.000Z"),
+      serviceId: offering.id,
+    });
+    await bookings.cancel(admin, cancelled.id);
+    const actor: Actor = { id: "cleaner-a", role: "CLEANER" };
+    const stranger: Actor = { id: "cleaner-b", role: "CLEANER" };
+
+    await expect(
+      bookings.completeCleanerJob(actor, assigned.id),
+    ).rejects.toBeInstanceOf(ConflictError);
+    await expect(
+      bookings.startCleanerJob(stranger, assigned.id),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      bookings.startCleanerJob(
+        { id: "customer-a", role: "CUSTOMER" },
+        assigned.id,
+      ),
+    ).rejects.toBeInstanceOf(AuthorizationError);
+    await expect(
+      bookings.startCleanerJob(actor, cancelled.id),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(otherCleaner.id).not.toBe(cleaner.id);
+  });
+
+  it("returns a date-scoped schedule for the session cleaner", async (): Promise<void> => {
+    const { bookings, cleaner, cleaners, customer, offering } =
+      await seedBookingGraph();
+    const otherCleaner = await cleaners.create(admin, {
+      email: "lee@neatly.example",
+      name: "Lee",
+      userId: "cleaner-b",
+    });
+    const scheduledAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    const own = await bookings.create(admin, {
+      cleanerId: cleaner.id,
+      customerId: customer.id,
+      scheduledAt,
+      serviceId: offering.id,
+    });
+    await bookings.create(admin, {
+      cleanerId: otherCleaner.id,
+      customerId: customer.id,
+      scheduledAt: new Date(scheduledAt.getTime() + 60 * 60 * 1000),
+      serviceId: offering.id,
+    });
+    const actor: Actor = { id: "cleaner-a", role: "CLEANER" };
+    const schedule = await bookings.getCleanerSchedule(actor, scheduledAt);
+    const selected = schedule.week.find((day) => day.date === schedule.date);
+
+    expect(schedule.jobs.map((job) => job.id)).toEqual([own.id]);
+    expect(schedule.summary.jobCount).toBe(1);
+    expect(schedule.nextJob?.id).toBe(own.id);
+    expect(schedule.week).toHaveLength(7);
+    expect(selected?.jobCount).toBe(1);
+  });
 });

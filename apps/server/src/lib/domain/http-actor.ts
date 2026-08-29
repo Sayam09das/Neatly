@@ -18,6 +18,17 @@ export function actorFromContext(context: RequestContext): Actor {
   return actorFromUser(context.user);
 }
 
+export function cleanerActorFromContext(context: RequestContext): Actor {
+  if (context.user === null) {
+    throw new AuthenticationError();
+  }
+
+  return {
+    id: context.user.id,
+    role: "CLEANER",
+  };
+}
+
 export function customerActorFromContext(context: RequestContext): Actor {
   if (context.user === null) {
     throw new AuthenticationError();

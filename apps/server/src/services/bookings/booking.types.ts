@@ -1,6 +1,8 @@
 import type { BookingStatus } from "@prisma/client";
 import type { PaginationQuery, SortQuery } from "../../lib/query.ts";
 import {
+  cleanerMayCompleteJob,
+  cleanerMayStartJob,
   customerMayCancelBooking,
   customerMayUpdateBooking,
 } from "./booking-transitions.ts";
@@ -142,4 +144,84 @@ export interface BookingStatusCounts {
   inProgress: number;
   pending: number;
   total: number;
+}
+
+export const CLEANER_JOB_WINDOWS = ["today", "upcoming", "past"] as const;
+export const CLEANER_OVERVIEW_TODAY_LIMIT = 8;
+export const CLEANER_UPCOMING_EXCLUDED_STATUSES = [
+  "CANCELLED",
+  "COMPLETED",
+] as const;
+
+export type CleanerJobWindow = (typeof CLEANER_JOB_WINDOWS)[number];
+
+export interface CleanerJobActions {
+  canComplete: boolean;
+  canStart: boolean;
+}
+
+export interface CleanerJobView {
+  actions: CleanerJobActions;
+  customerName: string | null;
+  id: string;
+  scheduledAt: string | null;
+  service: BookingParty | null;
+  serviceAddress: string | null;
+  status: BookingStatus;
+  updatedAt: string;
+}
+
+export function toCleanerJobView(record: BookingRecord): CleanerJobView {
+  return {
+    actions: {
+      canComplete: cleanerMayCompleteJob(record.status),
+      canStart: cleanerMayStartJob(record.status),
+    },
+    customerName: record.customer?.name ?? null,
+    id: record.id,
+    scheduledAt:
+      record.scheduledAt === null ? null : record.scheduledAt.toISOString(),
+    service: record.service,
+    serviceAddress: record.serviceAddress,
+    status: record.status,
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+export interface CleanerJobListQuery {
+  pagination?: PaginationQuery;
+  search?: string;
+  status?: BookingStatus;
+  window?: CleanerJobWindow;
+}
+
+export interface CleanerOverviewSummary {
+  assignedToday: number;
+  completedToday: number;
+  inProgress: number;
+  upcoming: number;
+}
+
+export interface CleanerOverview {
+  nextJob: CleanerJobView | null;
+  summary: CleanerOverviewSummary;
+  todayJobs: CleanerJobView[];
+}
+
+export interface CleanerScheduleDay {
+  date: string;
+  jobCount: number;
+}
+
+export interface CleanerScheduleSummary {
+  firstStart: string | null;
+  jobCount: number;
+}
+
+export interface CleanerScheduleView {
+  date: string;
+  jobs: CleanerJobView[];
+  nextJob: CleanerJobView | null;
+  summary: CleanerScheduleSummary;
+  week: CleanerScheduleDay[];
 }

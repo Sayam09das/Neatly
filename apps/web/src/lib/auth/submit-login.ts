@@ -1,5 +1,8 @@
 import { AUTH_ADMIN_HOME_PATH, AUTH_CUSTOMER_HOME_PATH } from "@/config/auth";
-import { isSafeCustomerNextPath } from "@/lib/auth/paths";
+import {
+  isSafeCleanerNextPath,
+  isSafeCustomerNextPath,
+} from "@/lib/auth/paths";
 import type { LoginValues } from "@/lib/validations/auth.schema";
 import type {
   AuthFormBannerCode,
@@ -78,7 +81,10 @@ export function customerPostLoginPath(search = ""): string {
   const query = search.startsWith("?") ? search.slice(1) : search;
   const next = new URLSearchParams(query).get("next");
 
-  if (next !== null && isSafeCustomerNextPath(next)) {
+  if (
+    next !== null &&
+    (isSafeCustomerNextPath(next) || isSafeCleanerNextPath(next))
+  ) {
     return next;
   }
 

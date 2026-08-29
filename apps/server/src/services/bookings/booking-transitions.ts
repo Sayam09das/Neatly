@@ -36,3 +36,11 @@ export function customerMayCancelBooking(status: BookingStatus): boolean {
 export function customerMayUpdateBooking(status: BookingStatus): boolean {
   return status !== "COMPLETED" && status !== "CANCELLED";
 }
+
+export function cleanerMayStartJob(status: BookingStatus): boolean {
+  return canTransitionBookingStatus(status, "IN_PROGRESS");
+}
+
+export function cleanerMayCompleteJob(status: BookingStatus): boolean {
+  return canTransitionBookingStatus(status, "COMPLETED");
+}

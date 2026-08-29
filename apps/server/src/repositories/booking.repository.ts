@@ -201,6 +201,8 @@ export class PrismaBookingRepository implements BookingRepository {
             OR: [
               { id: { contains: search, mode: "insensitive" } },
               { customerId: { contains: search, mode: "insensitive" } },
+              { serviceAddress: { contains: search, mode: "insensitive" } },
+              { customer: { name: { contains: search, mode: "insensitive" } } },
               { service: { name: { contains: search, mode: "insensitive" } } },
             ],
           }),

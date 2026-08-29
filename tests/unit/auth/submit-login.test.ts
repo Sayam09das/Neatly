@@ -38,6 +38,10 @@ describe("customerPostLoginPath", (): void => {
         "?next=%2Fdashboard%2Fservices%2Fdeep-cleaning%2Fapply",
       ),
     ).toBe("/dashboard/services/deep-cleaning/apply");
+    expect(customerPostLoginPath("?next=%2Fcleaner")).toBe("/cleaner");
+    expect(customerPostLoginPath("?next=%2Fcleaner%2Fjobs")).toBe(
+      "/cleaner/jobs",
+    );
     expect(
       customerPostLoginPath("?next=%2Fquote%3Fservice%3Ddeep-cleaning"),
     ).toBe("/quote?service=deep-cleaning");

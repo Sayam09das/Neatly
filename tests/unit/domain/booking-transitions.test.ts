@@ -3,6 +3,8 @@ import { ConflictError } from "../../../apps/server/src/lib/errors.ts";
 import {
   assertBookingTransition,
   canTransitionBookingStatus,
+  cleanerMayCompleteJob,
+  cleanerMayStartJob,
 } from "../../../apps/server/src/services/bookings/booking-transitions.ts";
 
 describe("booking status transitions", (): void => {
@@ -22,5 +24,14 @@ describe("booking status transitions", (): void => {
     expect((): void => {
       assertBookingTransition("COMPLETED", "PENDING");
     }).toThrow(ConflictError);
+  });
+
+  it("limits cleaner workflow actions to start and complete", (): void => {
+    expect(cleanerMayStartJob("ASSIGNED")).toBe(true);
+    expect(cleanerMayStartJob("IN_PROGRESS")).toBe(false);
+    expect(cleanerMayStartJob("CANCELLED")).toBe(false);
+    expect(cleanerMayCompleteJob("IN_PROGRESS")).toBe(true);
+    expect(cleanerMayCompleteJob("ASSIGNED")).toBe(false);
+    expect(cleanerMayCompleteJob("COMPLETED")).toBe(false);
   });
 });
