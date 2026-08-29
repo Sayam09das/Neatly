@@ -1,4 +1,5 @@
 import type { Prisma, UserRole, UserStatus } from "@prisma/client";
+import { AUTH_ADMIN_ROLES } from "../config/auth.ts";
 import { prisma } from "../lib/db.ts";
 import { resolvePagination } from "../lib/domain/list.ts";
 import type { SortQuery } from "../lib/query.ts";
@@ -23,6 +24,7 @@ const USER_PROFILE_SELECT = {
 export interface UserRepository {
   findById(id: string): Promise<UserProfile | null>;
   list(query: UserListQuery): Promise<{ items: UserProfile[]; total: number }>;
+  listAdminIds(): Promise<readonly string[]>;
   update(
     id: string,
     input: UpdateUserProfileInput & { status?: UserStatus },
@@ -69,6 +71,18 @@ function orderBy(
 }
 
 export class PrismaUserRepository implements UserRepository {
+  public async listAdminIds(): Promise<readonly string[]> {
+    const rows = await prisma.user.findMany({
+      select: { id: true },
+      take: 100,
+      where: {
+        role: { in: [...AUTH_ADMIN_ROLES] },
+        status: "ACTIVE",
+      },
+    });
+    return rows.map((row) => row.id);
+  }
+
   public async findById(id: string): Promise<UserProfile | null> {
     const row = await prisma.user.findUnique({
       select: USER_PROFILE_SELECT,

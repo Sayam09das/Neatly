@@ -122,6 +122,28 @@ export async function listAdminNotifications(
   return mapAdminResult(result, mapNotificationList);
 }
 
+export async function countUnreadAdminNotifications(
+  init: RequestInit = {},
+): Promise<AdminApiResult<{ count: number }>> {
+  const result = await listAdminNotifications(
+    {
+      page: 1,
+      query: "",
+      readState: "unread",
+    },
+    init,
+  );
+
+  if (!result.ok) {
+    return result;
+  }
+
+  return {
+    ...result,
+    data: { count: result.data.pagination.total },
+  };
+}
+
 export async function markAdminNotificationRead(
   id: string,
   init: RequestInit = {},

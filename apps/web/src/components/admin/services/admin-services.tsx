@@ -25,6 +25,7 @@ import {
   type AdminQueryState,
   useAdminQuery,
 } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminServiceFilterCatalog,
@@ -83,6 +84,7 @@ function AdminServicesLive({
       ),
     requestKey,
   });
+  useAdminRefresh("services", query.retry);
 
   return (
     <AdminServicesView

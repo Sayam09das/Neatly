@@ -33,6 +33,7 @@ Mutations are rate-limited outside `test` (60 / 15 minutes per user + route).
 | GET/PATCH | `/api/v1/admin/reviews/:id` | |
 | POST | `/api/v1/admin/reviews/:id/hide` | Sets `isActive: false` |
 | GET/POST | `/api/v1/admin/notifications` | List is always scoped to the authenticated admin. Query `recipientId` is ignored. |
+| GET | `/api/v1/admin/notifications/stream` | Authenticated Admin SSE. Heartbeat comments every 25s. Rejects unauthenticated (401) and non-admin (403). |
 | PATCH | `/api/v1/admin/notifications/:id/read` | Own notification; admins may also mark another admin inbox item read at the domain layer |
 | POST | `/api/v1/admin/notifications/read-all` | Marks the caller’s inbox read |
 | GET/PATCH | `/api/v1/admin/settings` | `SiteSettings` row `id=1`. 404 if not seeded (seed does not currently insert this row) |
@@ -55,7 +56,7 @@ Connected UI:
 * Services: create, edit, archive (`POST /services/:id/archive`). Activate stays disabled (no API). Service media is not uploaded from Admin.
 * Bookings: create, edit (notes/schedule/address), status, assign cleaner, cancel (status `CANCELLED` when the backend transition allows it).
 * Reviews: hide. Hard delete stays unavailable.
-* Notifications: mark one read, mark all read. No send UI and no real-time delivery.
+* Notifications: mark one read, mark all read. Real-time delivery uses SSE (`GET /api/v1/admin/notifications/stream`) through the same-origin BFF. The database remains the source of truth.
 * Settings: business contact + notification email persist through `PATCH /settings` when `site_settings` id=1 exists. Profile and password remain unavailable (no Admin `/me` or password PATCH). Appearance stays local theme.
 
 Known gaps (do not invent UI or data for these):
@@ -69,4 +70,12 @@ Known gaps (do not invent UI or data for these):
 * Quote, contact, and blog Admin APIs are not part of this namespace. Dashboard quick actions that point at those screens remain navigation only.
 * Review rating averages in the UI are computed from the current page, not a backend aggregate.
 * Audit logging is not in the schema yet. Important mutations should be audited in a later phase.
-* Real-time notification delivery is phase 34.
+## Real-time Admin notifications (phase 34)
+
+Transport is Server-Sent Events only. There is no Socket.IO, WebSocket, or polling fallback.
+
+Flow: business mutation succeeds → persist inbox rows for other active admins → publish an in-process domain event → connected Admin SSE clients receive `{ eventId, type, entityId, actorId, timestamp, title, message, relatedHref, notificationId }`. The acting admin still receives a refresh event (`notificationId: null`) so other tabs update without a second toast. Receiving an event never marks it read.
+
+The Next.js BFF pipes `GET /api/v1/admin/notifications/stream` without buffering the upstream body. The browser EventSource uses the session cookie; the server derives identity from the session, never from client-supplied ids.
+
+Deployment tradeoff: the connection manager is in-process. Multiple API instances will not share live connections. There is no Redis or worker in this MVP. Missed events are recovered from persisted notifications after reconnect. If a second API instance is added later, replace the in-process publisher with shared pub/sub rather than adding another transport.

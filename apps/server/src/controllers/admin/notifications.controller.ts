@@ -2,6 +2,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { HTTP_STATUS } from "../../config/constants.ts";
 import { actorFromContext } from "../../lib/domain/http-actor.ts";
 import { getDomainServices } from "../../lib/domain/runtime.ts";
+import {
+  ADMIN_APP_HREFS,
+  ADMIN_EVENT_COPY,
+} from "../../lib/events/admin-event-copy.ts";
+import { publishAdminDomainEvent } from "../../lib/events/publisher.ts";
 import { sendSuccess } from "../../lib/http.ts";
 import {
   getValidatedBody,
@@ -35,11 +40,30 @@ export async function createNotificationController(
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
+  const actor = actorFromContext(context);
   const notification = await getDomainServices().notifications.create(
-    actorFromContext(context),
+    actor,
     getValidatedBody<CreateNotificationBody>(context),
   );
   sendSuccess(res, { notification }, { statusCode: HTTP_STATUS.CREATED });
+  await publishAdminDomainEvent(
+    actor,
+    {
+      entityId: notification.id,
+      message: notification.message,
+      relatedHref: notification.relatedHref ?? ADMIN_APP_HREFS.notifications,
+      relatedLabel:
+        notification.relatedLabel ??
+        ADMIN_EVENT_COPY.notificationCreated.relatedLabel,
+      title: notification.title,
+      type: "NOTIFICATION_CREATED",
+    },
+    {
+      notificationId: notification.id,
+      persist: false,
+      recipientIds: [notification.recipientId],
+    },
+  );
 }
 
 export async function markNotificationReadController(

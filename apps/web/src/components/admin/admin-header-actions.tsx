@@ -21,8 +21,10 @@ import { getMotionTransition } from "@/animations/config/motion";
 import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
 import { BellIcon, MenuIcon, UserIcon } from "@/components/admin/admin-icons";
 import { useOptionalAdminNavigation } from "@/components/admin/admin-navigation-provider";
+import { useOptionalAdminRealtime } from "@/components/admin/admin-realtime-provider";
 import { ADMIN_MOBILE_NAV_ID, ADMIN_PATHS } from "@/config/admin-nav";
 import { adminHeaderCopy } from "@/config/admin-ui";
+import { signOutAdmin } from "@/lib/admin/session";
 
 interface AdminHeaderActionsProps {
   actions?: ReactNode;
@@ -33,6 +35,12 @@ export function AdminHeaderActions({
 }: AdminHeaderActionsProps): ReactElement {
   const prefersReducedMotion = useReducedMotion();
   const transition = getMotionTransition(prefersReducedMotion);
+  const realtime = useOptionalAdminRealtime();
+  const unreadCount = realtime?.unreadCount ?? 0;
+  const notificationsLabel =
+    unreadCount > 0
+      ? `${adminHeaderCopy.notificationsLabel}, ${String(unreadCount)} ${adminHeaderCopy.notificationsUnreadLabel}`
+      : adminHeaderCopy.notificationsLabel;
 
   return (
     <motion.div
@@ -47,11 +55,20 @@ export function AdminHeaderActions({
         <TooltipTrigger asChild>
           <Button asChild size="icon" variant="ghost">
             <Link
-              aria-label={adminHeaderCopy.notificationsLabel}
+              aria-label={notificationsLabel}
+              className="relative"
               data-slot="admin-notifications"
               href={ADMIN_PATHS.notifications}
             >
               <BellIcon />
+              {unreadCount > 0 ? (
+                <span
+                  className="absolute top-1 right-1 min-w-4 rounded-full bg-primary px-1 text-center text-[0.625rem] leading-4 font-medium text-primary-foreground"
+                  data-slot="admin-notification-badge"
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </Link>
           </Button>
         </TooltipTrigger>
@@ -135,7 +152,13 @@ function AdminAccountMenu(): ReactElement {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>{adminHeaderCopy.logoutItem}</DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(): void => {
+            void signOutAdmin();
+          }}
+        >
+          {adminHeaderCopy.logoutItem}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

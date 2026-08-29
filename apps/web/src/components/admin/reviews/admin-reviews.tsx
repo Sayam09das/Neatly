@@ -24,6 +24,7 @@ import {
   type AdminQueryState,
   useAdminQuery,
 } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminReviewFilterCatalog,
@@ -86,6 +87,7 @@ function AdminReviewsLive({
       ),
     requestKey,
   });
+  useAdminRefresh("reviews", query.retry);
 
   return (
     <AdminReviewsView

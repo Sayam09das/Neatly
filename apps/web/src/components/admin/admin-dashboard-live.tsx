@@ -10,6 +10,7 @@ import {
   toAdminDashboardViewModel,
 } from "@/lib/admin/dashboard";
 import { useAdminQuery } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 
 export function AdminDashboardLive(): ReactElement {
   const query = useAdminQuery({
@@ -17,6 +18,7 @@ export function AdminDashboardLive(): ReactElement {
     request: (signal) => getAdminDashboard({ signal }),
     requestKey: "admin-dashboard",
   });
+  useAdminRefresh("dashboard", query.retry);
 
   if (query.status === "loading") {
     return (

@@ -2,6 +2,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { HTTP_STATUS } from "../../config/constants.ts";
 import { actorFromContext } from "../../lib/domain/http-actor.ts";
 import { getDomainServices } from "../../lib/domain/runtime.ts";
+import {
+  ADMIN_APP_HREFS,
+  ADMIN_EVENT_COPY,
+} from "../../lib/events/admin-event-copy.ts";
+import { publishAdminDomainEvent } from "../../lib/events/publisher.ts";
 import { sendSuccess } from "../../lib/http.ts";
 import {
   getValidatedBody,
@@ -46,11 +51,20 @@ export async function createCustomerController(
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
+  const actor = actorFromContext(context);
   const customer = await getDomainServices().customers.create(
-    actorFromContext(context),
+    actor,
     getValidatedBody<CreateCustomerBody>(context),
   );
   sendSuccess(res, { customer }, { statusCode: HTTP_STATUS.CREATED });
+  await publishAdminDomainEvent(actor, {
+    entityId: customer.id,
+    message: ADMIN_EVENT_COPY.customerCreated.message,
+    relatedHref: ADMIN_APP_HREFS.customers,
+    relatedLabel: ADMIN_EVENT_COPY.customerCreated.relatedLabel,
+    title: ADMIN_EVENT_COPY.customerCreated.title,
+    type: "CUSTOMER_CREATED",
+  });
 }
 
 export async function updateCustomerController(
@@ -59,12 +73,21 @@ export async function updateCustomerController(
   context: RequestContext,
 ): Promise<void> {
   const { id } = getValidatedParams<{ id: string }>(context);
+  const actor = actorFromContext(context);
   const customer = await getDomainServices().customers.update(
-    actorFromContext(context),
+    actor,
     id,
     getValidatedBody<UpdateCustomerBody>(context),
   );
   sendSuccess(res, { customer });
+  await publishAdminDomainEvent(actor, {
+    entityId: customer.id,
+    message: ADMIN_EVENT_COPY.customerUpdated.message,
+    relatedHref: ADMIN_APP_HREFS.customers,
+    relatedLabel: ADMIN_EVENT_COPY.customerUpdated.relatedLabel,
+    title: ADMIN_EVENT_COPY.customerUpdated.title,
+    type: "CUSTOMER_UPDATED",
+  });
 }
 
 export async function updateCustomerStatusController(
@@ -81,4 +104,12 @@ export async function updateCustomerStatusController(
       ? await customers.deactivate(actor, id)
       : await customers.activate(actor, id);
   sendSuccess(res, { customer });
+  await publishAdminDomainEvent(actor, {
+    entityId: customer.id,
+    message: ADMIN_EVENT_COPY.customerUpdated.message,
+    relatedHref: ADMIN_APP_HREFS.customers,
+    relatedLabel: ADMIN_EVENT_COPY.customerUpdated.relatedLabel,
+    title: ADMIN_EVENT_COPY.customerUpdated.title,
+    type: "CUSTOMER_UPDATED",
+  });
 }

@@ -26,6 +26,7 @@ import {
   type AdminQueryState,
   useAdminQuery,
 } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminCustomerFilterCatalog,
@@ -92,6 +93,7 @@ function AdminCustomersLive({
       ),
     requestKey,
   });
+  useAdminRefresh("customers", query.retry);
   const hasActiveFilters = hasActiveCustomerFilters(filters);
   const presentation = toLiveCustomerPresentation(query, hasActiveFilters);
 

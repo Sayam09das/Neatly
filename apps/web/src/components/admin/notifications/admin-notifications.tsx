@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/admin-dashboard-motion";
 import { FilterIcon } from "@/components/admin/admin-icons";
 import { AdminListPagination } from "@/components/admin/admin-list-pagination";
+import { useOptionalAdminRealtime } from "@/components/admin/admin-realtime-provider";
 import { NotificationsList } from "@/components/admin/notifications/notification-item";
 import { NotificationsFilterChips } from "@/components/admin/notifications/notifications-filter-chips";
 import {
@@ -48,6 +49,7 @@ import {
   type AdminQueryState,
   useAdminQuery,
 } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import { toast } from "@/lib/toast";
 import type {
@@ -95,6 +97,7 @@ function AdminNotificationsLive(): ReactElement {
       ),
     requestKey,
   });
+  useAdminRefresh("notifications", query.retry);
 
   return (
     <AdminNotificationsView
@@ -126,6 +129,7 @@ function AdminNotificationsView({
   presentation,
 }: AdminNotificationsViewProps): ReactElement {
   const prefersReducedMotion = useReducedMotion();
+  const realtime = useOptionalAdminRealtime();
   const searchId = useId();
   const readStateId = useId();
   const [localFilters, setLocalFilters] = useState<AdminNotificationFilters>(
@@ -161,6 +165,16 @@ function AdminNotificationsView({
             <p className="mt-3 text-body text-muted-foreground">
               {adminNotificationCopy.description}
             </p>
+            {realtime !== null &&
+            (realtime.status === "reconnecting" ||
+              realtime.status === "disconnected") ? (
+              <p
+                aria-live="polite"
+                className="mt-2 text-caption text-muted-foreground"
+              >
+                {adminNotificationCopy.disconnectedLabel}
+              </p>
+            ) : null}
           </header>
         </AdminDashboardBlock>
         <AdminDashboardBlock>

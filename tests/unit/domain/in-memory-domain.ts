@@ -840,6 +840,19 @@ export class InMemoryUserRepository implements UserRepository {
     return this.store.users.get(id) ?? null;
   }
 
+  public async listAdminIds(): Promise<readonly string[]> {
+    return [...this.store.users.values()]
+      .filter(
+        (row) =>
+          row.status === "ACTIVE" &&
+          (row.role === "ADMIN" ||
+            row.role === "SUPER_ADMIN" ||
+            row.role === "CONTENT_MANAGER" ||
+            row.role === "STAFF"),
+      )
+      .map((row) => row.id);
+  }
+
   public async update(
     id: string,
     input: UpdateUserProfileInput & { status?: UserProfile["status"] },

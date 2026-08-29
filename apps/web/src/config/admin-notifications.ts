@@ -10,6 +10,7 @@ export const adminNotificationCopy = {
   closeFiltersLabel: "Close filters",
   comingSoonHint: "Coming soon",
   description: "Stay up to date with important activity across Neatly.",
+  disconnectedLabel: "Live updates disconnected. Reconnecting…",
   emptyDescription: "Important activity and updates will appear here.",
   emptyTitle: "No notifications yet",
   emptyValue: "—",

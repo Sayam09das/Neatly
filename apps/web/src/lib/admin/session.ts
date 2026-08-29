@@ -1,5 +1,6 @@
 import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
 import type { AdminApiFailure } from "@/lib/api/admin-request";
+import { requestAdminLogout } from "@/lib/api/admin-request";
 
 export function redirectToAdminLogin(): void {
   if (typeof window === "undefined") {
@@ -20,4 +21,14 @@ export function handleAdminApiFailure(failure: AdminApiFailure): void {
   if (failure.unauthorized) {
     redirectToAdminLogin();
   }
+}
+
+export async function signOutAdmin(): Promise<void> {
+  await requestAdminLogout();
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.location.assign(AUTH_ADMIN_LOGIN_PATH);
 }

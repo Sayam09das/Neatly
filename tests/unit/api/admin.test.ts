@@ -479,6 +479,7 @@ describe("Admin APIs", (): void => {
       API_PATHS.adminReviews,
       withId(API_PATHS.adminReview, missingId),
       API_PATHS.adminNotifications,
+      API_PATHS.adminNotificationStream,
       API_PATHS.adminSettings,
     ];
 

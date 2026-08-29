@@ -28,6 +28,7 @@ export const adminHeaderCopy = {
   homeTitle: "Dashboard",
   logoutItem: "Log out",
   notificationsLabel: "Notifications",
+  notificationsUnreadLabel: "unread",
   openNavigationLabel: "Open navigation",
   profileItem: "Profile",
   profileLabel: "Admin",

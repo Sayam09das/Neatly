@@ -20,6 +20,7 @@ export const ADMIN_API_PATHS = {
   notifications: `${ADMIN_API_PREFIX}/notifications`,
   notificationsReadAll: `${ADMIN_API_PREFIX}/notifications/read-all`,
   notificationRead: `${ADMIN_API_PREFIX}/notifications/:id/read`,
+  notificationStream: `${ADMIN_API_PREFIX}/notifications/stream`,
   reviews: `${ADMIN_API_PREFIX}/reviews`,
   review: `${ADMIN_API_PREFIX}/reviews/:id`,
   reviewHide: `${ADMIN_API_PREFIX}/reviews/:id/hide`,

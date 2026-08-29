@@ -31,6 +31,7 @@ import {
   markAllNotificationsReadController,
   markNotificationReadController,
 } from "../../controllers/admin/notifications.controller.ts";
+import { streamNotificationsController } from "../../controllers/admin/notifications-stream.controller.ts";
 import {
   getReviewController,
   hideReviewController,
@@ -76,6 +77,7 @@ import {
 import { idParamSchema } from "../../lib/validations/primitives.ts";
 import {
   limitAdminMutations,
+  limitAdminStreams,
   requireAdminAccess,
   requireAuth,
   validateBody,
@@ -300,6 +302,12 @@ export const adminRoutes: readonly RouteDefinition[] = [
     method: "GET",
     middleware: [...adminAccess, validateQuery(notificationListQuerySchema)],
     path: API_PATHS.adminNotifications,
+  },
+  {
+    handler: streamNotificationsController,
+    method: "GET",
+    middleware: [...adminAccess, limitAdminStreams],
+    path: API_PATHS.adminNotificationStream,
   },
   {
     handler: createNotificationController,

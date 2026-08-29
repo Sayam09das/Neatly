@@ -3,6 +3,7 @@ import { createApp } from "./app.ts";
 import { API_SHUTDOWN_TIMEOUT_MS } from "./config/constants.ts";
 import { assertProductionConfig, loadApiEnv } from "./config/env.ts";
 import { disconnectPrisma } from "./lib/db.ts";
+import { closeAllAdminSse } from "./lib/events/admin-connection-manager.ts";
 import { logError, logInfo } from "./lib/logger.ts";
 
 assertProductionConfig();
@@ -49,6 +50,7 @@ function registerShutdown(httpServer: Server): void {
     forceExit.unref();
 
     try {
+      closeAllAdminSse();
       await closeServer(activeServer);
       await disconnectPrisma();
       process.exit(0);

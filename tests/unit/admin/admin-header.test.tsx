@@ -54,10 +54,24 @@ describe("AdminHeader", (): void => {
     ).toBeInTheDocument();
   });
 
-  it("opens the account menu without calling logout APIs", async (): Promise<void> => {
+  it("signs out through the logout API", async (): Promise<void> => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async (): Promise<{
+        data: { signedOut: true };
+        error: null;
+        success: true;
+      }> => ({
+        data: { signedOut: true },
+        error: null,
+        success: true,
+      }),
+      ok: true,
+      status: 200,
+    });
+    const assign = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("location", { assign, origin: "http://localhost:3000" });
 
     render(<AdminHeader />);
 
@@ -81,9 +95,11 @@ describe("AdminHeader", (): void => {
       screen.getByRole("menuitem", { name: adminHeaderCopy.logoutItem }),
     );
     await waitFor((): void => {
-      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalled();
     });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      "/api/admin/auth/logout",
+    );
     vi.unstubAllGlobals();
   });
 

@@ -26,6 +26,7 @@ import {
   type AdminQueryState,
   useAdminQuery,
 } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminBookingFilterCatalog,
@@ -89,6 +90,7 @@ function AdminBookingsLive({
       ),
     requestKey,
   });
+  useAdminRefresh("bookings", query.retry);
   const catalogQuery = useAdminQuery({
     enabled: catalogProp === undefined,
     request: (signal) => listAdminBookingFilterCatalog({ signal }),

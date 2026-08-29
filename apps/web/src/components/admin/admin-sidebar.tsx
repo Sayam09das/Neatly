@@ -51,6 +51,7 @@ import {
   adminShellCopy,
   adminSidebarCopy,
 } from "@/config/admin-ui";
+import { signOutAdmin } from "@/lib/admin/session";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -341,6 +342,9 @@ function AdminSidebarAccount({
               </Link>
               <button
                 className="inline-flex min-h-touch items-center text-caption text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={(): void => {
+                  void signOutAdmin();
+                }}
                 type="button"
               >
                 {adminSidebarCopy.logoutItem}
