@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AUTH_ADMIN_HOME_PATH, AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
+import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import { getFrontendAuthRedirect } from "@/lib/auth/navigation";
 import { isAuthEntryPath } from "@/lib/auth/paths";
 
@@ -86,6 +87,6 @@ describe("getFrontendAuthRedirect", (): void => {
         pathname: "/dashboard",
         status: "unauthenticated",
       }),
-    ).toEqual({ type: "redirect", to: AUTH_ADMIN_LOGIN_PATH });
+    ).toEqual({ type: "redirect", to: CUSTOMER_LOGIN_PATH });
   });
 });

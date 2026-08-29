@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
-import { CUSTOMER_PATHS } from "@/config/customer";
+import { CUSTOMER_LOGIN_PATH, CUSTOMER_PATHS } from "@/config/customer";
 import {
   getCustomerNavigationDecision,
   getFrontendAuthRedirect,
@@ -44,7 +44,7 @@ describe("customer route protection", (): void => {
       }),
     ).toEqual({
       next: "/dashboard/bookings",
-      pathname: AUTH_ADMIN_LOGIN_PATH,
+      pathname: CUSTOMER_LOGIN_PATH,
       type: "redirect",
     });
     expect(
@@ -70,7 +70,7 @@ describe("customer route protection", (): void => {
         pathname: "/dashboard",
         user: null,
       }),
-    ).toEqual({ type: "redirect", to: AUTH_ADMIN_LOGIN_PATH });
+    ).toEqual({ type: "redirect", to: CUSTOMER_LOGIN_PATH });
     expect(
       getCustomerNavigationDecision({
         pathname: "/dashboard/help",
@@ -82,7 +82,7 @@ describe("customer route protection", (): void => {
         pathname: CUSTOMER_PATHS.dashboard,
         status: "unauthenticated",
       }),
-    ).toEqual({ type: "redirect", to: AUTH_ADMIN_LOGIN_PATH });
+    ).toEqual({ type: "redirect", to: CUSTOMER_LOGIN_PATH });
     expect(
       getFrontendAuthRedirect({
         pathname: CUSTOMER_PATHS.dashboard,

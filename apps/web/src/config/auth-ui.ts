@@ -1,5 +1,9 @@
 import { APP_NAME } from "@neatly/config";
-import { AUTH_ROUTES } from "@/config/auth";
+import {
+  AUTH_LOGIN_ALIAS_PATH,
+  AUTH_REGISTER_ALIAS_PATH,
+  AUTH_ROUTES,
+} from "@/config/auth";
 import { landingFooter } from "@/config/landing";
 import { AUTH_ERROR_MESSAGES } from "@/lib/auth/errors";
 import type { AuthFormBannerCode } from "@/types/auth-form";
@@ -40,7 +44,7 @@ export const authRegisterCopy = {
   passwordPlaceholder: "Password",
   submit: "Register",
   submitting: "Creating account...",
-  title: "Create Admin Account",
+  title: "Create an account",
 } as const;
 
 export const authLoginVisual = {
@@ -147,8 +151,8 @@ export const authErrorCopy = {
 export const authFormPaths = {
   forgotPassword: AUTH_ROUTES.forgotPassword,
   home: AUTH_HOME_PATH,
-  login: AUTH_ROUTES.login,
-  register: AUTH_ROUTES.register,
+  login: AUTH_LOGIN_ALIAS_PATH,
+  register: AUTH_REGISTER_ALIAS_PATH,
   resetPassword: AUTH_ROUTES.resetPassword,
   verifyEmail: AUTH_ROUTES.verifyEmail,
 } as const;

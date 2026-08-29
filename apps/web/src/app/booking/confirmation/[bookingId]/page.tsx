@@ -4,8 +4,12 @@ import { notFound, redirect } from "next/navigation";
 import type { ReactElement } from "react";
 import { BookingConfirmation } from "@/components/customer/booking/booking-confirmation";
 import { CustomerPublicFrame } from "@/components/customer/customer-public-frame";
-import { AUTH_ADMIN_LOGIN_PATH, AUTH_SESSION_COOKIE_NAME } from "@/config/auth";
-import { CUSTOMER_PATHS, customerSurfaceCopy } from "@/config/customer";
+import { AUTH_SESSION_COOKIE_NAME } from "@/config/auth";
+import {
+  CUSTOMER_LOGIN_PATH,
+  CUSTOMER_PATHS,
+  customerSurfaceCopy,
+} from "@/config/customer";
 import { loadCustomerBooking } from "@/lib/customer/booking";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +35,7 @@ export default async function BookingConfirmationDetailPage({
 
   if (sessionToken === undefined || sessionToken.trim() === "") {
     redirect(
-      `${AUTH_ADMIN_LOGIN_PATH}?next=${encodeURIComponent(`${CUSTOMER_PATHS.bookingConfirmation}/${bookingId}`)}`,
+      `${CUSTOMER_LOGIN_PATH}?next=${encodeURIComponent(`${CUSTOMER_PATHS.bookingConfirmation}/${bookingId}`)}`,
     );
   }
 
@@ -39,7 +43,7 @@ export default async function BookingConfirmationDetailPage({
 
   if (!result.ok && result.unauthorized) {
     redirect(
-      `${AUTH_ADMIN_LOGIN_PATH}?next=${encodeURIComponent(`${CUSTOMER_PATHS.bookingConfirmation}/${bookingId}`)}`,
+      `${CUSTOMER_LOGIN_PATH}?next=${encodeURIComponent(`${CUSTOMER_PATHS.bookingConfirmation}/${bookingId}`)}`,
     );
   }
 

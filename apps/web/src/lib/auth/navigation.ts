@@ -1,4 +1,5 @@
 import { AUTH_ADMIN_HOME_PATH, AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
+import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import {
   isAuthEntryPath,
   isProtectedAdminPath,
@@ -49,7 +50,7 @@ export function getCustomerNavigationDecision(input: {
   }
 
   if (input.user === null) {
-    return { type: "redirect", to: AUTH_ADMIN_LOGIN_PATH };
+    return { type: "redirect", to: CUSTOMER_LOGIN_PATH };
   }
 
   return { type: "allow" };
@@ -74,7 +75,7 @@ export function getFrontendAuthRedirect(input: {
     }
 
     if (isProtectedCustomer) {
-      return { type: "redirect", to: AUTH_ADMIN_LOGIN_PATH };
+      return { type: "redirect", to: CUSTOMER_LOGIN_PATH };
     }
 
     return { type: "allow" };

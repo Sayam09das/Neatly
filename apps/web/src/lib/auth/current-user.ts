@@ -6,6 +6,7 @@ import {
   AUTH_ADMIN_LOGIN_PATH,
   AUTH_SESSION_COOKIE_NAME,
 } from "@/config/auth";
+import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import { requireRole } from "@/lib/auth/authorization";
 import { createClearedSessionCookie } from "@/lib/auth/cookies";
 import { AUTH_ERROR_MESSAGES, AuthError } from "@/lib/auth/errors";
@@ -65,7 +66,7 @@ export async function requireCustomerPage(): Promise<AuthUser> {
   const user = await getCurrentUser();
 
   if (user === null) {
-    redirect(AUTH_ADMIN_LOGIN_PATH);
+    redirect(CUSTOMER_LOGIN_PATH);
   }
 
   return user;

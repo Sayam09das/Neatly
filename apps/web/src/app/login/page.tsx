@@ -1,19 +1,22 @@
-import { redirect } from "next/navigation";
-import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
-import { isSafePostLoginPath } from "@/lib/auth/submit-login";
+import type { Metadata } from "next";
+import type { ReactElement } from "react";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { LoginForm } from "@/components/auth/login-form";
+import { authLoginCopy, authLoginVisual } from "@/config/auth-ui";
 
-interface LoginAliasPageProps {
-  searchParams: Promise<{ next?: string }>;
-}
+export const metadata: Metadata = {
+  description: authLoginCopy.description,
+  robots: {
+    follow: false,
+    index: false,
+  },
+  title: "Sign in",
+};
 
-export default async function LoginAliasPage({
-  searchParams,
-}: LoginAliasPageProps): Promise<never> {
-  const { next } = await searchParams;
-
-  if (typeof next === "string" && isSafePostLoginPath(next)) {
-    redirect(`${AUTH_ADMIN_LOGIN_PATH}?next=${encodeURIComponent(next)}`);
-  }
-
-  redirect(AUTH_ADMIN_LOGIN_PATH);
+export default function CustomerLoginPage(): ReactElement {
+  return (
+    <AuthShell image={authLoginVisual}>
+      <LoginForm mode="customer" />
+    </AuthShell>
+  );
 }

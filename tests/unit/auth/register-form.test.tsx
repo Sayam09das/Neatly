@@ -166,6 +166,44 @@ describe("RegisterForm", (): void => {
     });
   });
 
+  it("assigns successHref after a successful submit", async (): Promise<void> => {
+    const user = userEvent.setup();
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { assign },
+    });
+    const onSubmit = vi.fn(
+      async (): Promise<AuthFormSubmitResult> => ({ status: "ok" }),
+    );
+
+    render(<RegisterForm onSubmit={onSubmit} successHref="/dashboard" />);
+
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.nameLabel),
+      "Ada Lovelace",
+    );
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.emailLabel),
+      "ada@neatly.example",
+    );
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.passwordLabel),
+      validPassword,
+    );
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.confirmPasswordLabel),
+      validPassword,
+    );
+    await user.click(
+      screen.getByRole("button", { name: authRegisterCopy.submit }),
+    );
+
+    await waitFor((): void => {
+      expect(assign).toHaveBeenCalledWith("/dashboard");
+    });
+  });
+
   it("shows a frontend-only notice for social registration", async (): Promise<void> => {
     const user = userEvent.setup();
 

@@ -1,8 +1,8 @@
 import { APP_NAME } from "@neatly/config";
-import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
+import { AUTH_LOGIN_ALIAS_PATH } from "@/config/auth";
 
 export const CUSTOMER_HOME_PATH = "/dashboard";
-export const CUSTOMER_LOGIN_PATH = AUTH_ADMIN_LOGIN_PATH;
+export const CUSTOMER_LOGIN_PATH = AUTH_LOGIN_ALIAS_PATH;
 export const CUSTOMER_MAIN_CONTENT_ID = "customer-main-content";
 
 export const CUSTOMER_PATHS = {

@@ -33,6 +33,7 @@ import {
   collectFieldErrors,
 } from "@/lib/auth/form-errors";
 import { getPasswordStrength } from "@/lib/auth/password-strength";
+import { submitAdminRegister } from "@/lib/auth/submit-register";
 import {
   emptyRegisterFormValues,
   registerFormSchema,
@@ -55,14 +56,20 @@ const REGISTER_FIELDS = [
 ] as const;
 
 interface RegisterFormProps {
+  mode?: "admin" | "customer";
   onSocialSubmit?: AuthSocialSubmitHandler;
   onSubmit?: RegisterFormSubmitHandler;
+  successHref?: string;
 }
 
 export function RegisterForm({
+  mode = "customer",
   onSocialSubmit = submitSocialAuth,
-  onSubmit = registerUser,
+  onSubmit,
+  successHref,
 }: RegisterFormProps): ReactElement {
+  const submitRegister =
+    onSubmit ?? (mode === "admin" ? submitAdminRegister : registerUser);
   const instanceId = useId();
   const nameId = `${instanceId}-name`;
   const emailId = `${instanceId}-email`;
@@ -121,8 +128,10 @@ export function RegisterForm({
     setSocialNotice(null);
     setStatus("submitting");
 
+    let keepSubmitting = false;
+
     try {
-      const result = await onSubmit({
+      const result = await submitRegister({
         email: parsed.data.email,
         name: parsed.data.name,
         password: parsed.data.password,
@@ -130,9 +139,18 @@ export function RegisterForm({
 
       if (result.status === "error") {
         setBanner(result.code);
+        return;
+      }
+
+      if (successHref !== undefined && successHref !== "") {
+        keepSubmitting = true;
+        window.location.assign(successHref);
+        return;
       }
     } finally {
-      setStatus("idle");
+      if (!keepSubmitting) {
+        setStatus("idle");
+      }
     }
   }
 

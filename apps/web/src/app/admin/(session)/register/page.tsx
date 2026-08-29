@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function AdminRegisterPage(): ReactElement {
   return (
     <AuthShell image={authRegisterVisual}>
-      <RegisterForm />
+      <RegisterForm mode="admin" />
     </AuthShell>
   );
 }

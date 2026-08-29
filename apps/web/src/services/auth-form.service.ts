@@ -1,4 +1,5 @@
 import { submitAdminLogin } from "@/lib/auth/submit-login";
+import { submitCustomerRegister } from "@/lib/auth/submit-register";
 import type {
   ForgotPasswordValues,
   LoginValues,
@@ -20,9 +21,9 @@ export async function submitLoginForm(
 }
 
 export async function submitRegisterForm(
-  _values: RegisterUserValues,
+  values: RegisterUserValues,
 ): Promise<AuthFormSubmitResult> {
-  return { status: "ok" };
+  return submitCustomerRegister(values);
 }
 
 export async function submitForgotPasswordForm(

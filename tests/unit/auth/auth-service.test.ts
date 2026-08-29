@@ -104,6 +104,22 @@ describe("AuthService", (): void => {
     );
   });
 
+  it("registers a verified staff user without sending verification email", async (): Promise<void> => {
+    const { emails, repository, service } = createAuthHarness();
+    const user = await service.registerUser(
+      {
+        email: "sayam@neatly.example",
+        name: "Sayam Das",
+        password: ADMIN_PASSWORD,
+      },
+      { role: "STAFF", verifyEmail: true },
+    );
+
+    expect(user.role).toBe("STAFF");
+    expect(repository.users[0]?.emailVerifiedAt).not.toBeNull();
+    expect(emails.verifications).toHaveLength(0);
+  });
+
   it("rejects duplicate registration with a safe message", async (): Promise<void> => {
     const { service } = createAuthHarness();
     await service.registerUser({

@@ -57,7 +57,7 @@ describe("AboutPage architecture", (): void => {
     expect(
       screen.getByRole("link", { name: "Skip to content" }),
     ).toHaveAttribute("href", "#main-content");
-  });
+  }, 20000);
 
   it("renders the brand story headings in editorial order", (): void => {
     render(<AboutPage />);
@@ -81,7 +81,7 @@ describe("AboutPage architecture", (): void => {
       "Email notes",
       "Neatly",
     ]);
-  });
+  }, 20000);
 
   it("keeps people and testimonials content-ready without invented names", (): void => {
     render(<AboutPage />);

@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
-import { adminPostLoginPath, submitAdminLogin } from "@/lib/auth/submit-login";
+import { AUTH_ADMIN_HOME_PATH, AUTH_CUSTOMER_HOME_PATH } from "@/config/auth";
+import {
+  adminPostLoginPath,
+  customerPostLoginPath,
+  submitAdminLogin,
+} from "@/lib/auth/submit-login";
 
 describe("adminPostLoginPath", (): void => {
   it("accepts a same-origin admin next path and rejects others", (): void => {
@@ -16,6 +20,21 @@ describe("adminPostLoginPath", (): void => {
     expect(adminPostLoginPath("?next=%2Flogin")).toBe(AUTH_ADMIN_HOME_PATH);
     expect(adminPostLoginPath("?next=%2Fdashboard%2F..%2Fadmin")).toBe(
       AUTH_ADMIN_HOME_PATH,
+    );
+  });
+});
+
+describe("customerPostLoginPath", (): void => {
+  it("accepts a same-origin customer next path and rejects others", (): void => {
+    expect(customerPostLoginPath("?next=%2Fdashboard%2Fbookings")).toBe(
+      "/dashboard/bookings",
+    );
+    expect(customerPostLoginPath("?next=%2Fbooking")).toBe("/booking");
+    expect(customerPostLoginPath("?next=%2Fadmin%2Fbookings")).toBe(
+      AUTH_CUSTOMER_HOME_PATH,
+    );
+    expect(customerPostLoginPath("?next=https://example.com")).toBe(
+      AUTH_CUSTOMER_HOME_PATH,
     );
   });
 });

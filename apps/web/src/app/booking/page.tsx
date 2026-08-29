@@ -3,8 +3,11 @@ import { redirect } from "next/navigation";
 import type { ReactElement } from "react";
 import { BookingFlowForm } from "@/components/customer/booking/booking-flow-form";
 import { CustomerPublicFrame } from "@/components/customer/customer-public-frame";
-import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
-import { CUSTOMER_PATHS, customerSurfaceCopy } from "@/config/customer";
+import {
+  CUSTOMER_LOGIN_PATH,
+  CUSTOMER_PATHS,
+  customerSurfaceCopy,
+} from "@/config/customer";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   loadPublicCatalogDetail,
@@ -33,7 +36,7 @@ export default async function BookingPage({
 
   if (user === null) {
     redirect(
-      `${AUTH_ADMIN_LOGIN_PATH}?next=${encodeURIComponent(CUSTOMER_PATHS.booking)}`,
+      `${CUSTOMER_LOGIN_PATH}?next=${encodeURIComponent(CUSTOMER_PATHS.booking)}`,
     );
   }
 
