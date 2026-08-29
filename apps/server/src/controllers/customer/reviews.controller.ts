@@ -46,10 +46,12 @@ export async function createCustomerReviewController(
   );
   sendSuccess(res, { review }, { statusCode: HTTP_STATUS.CREATED });
   await recordCustomerInboxNotification(identity.id, {
+    entityId: review.id,
     message: CUSTOMER_EVENT_COPY.reviewCreated.message,
     relatedHref: CUSTOMER_APP_HREFS.reviews,
     relatedLabel: CUSTOMER_EVENT_COPY.reviewCreated.relatedLabel,
     title: CUSTOMER_EVENT_COPY.reviewCreated.title,
+    type: "REVIEW_CREATED",
   });
 }
 

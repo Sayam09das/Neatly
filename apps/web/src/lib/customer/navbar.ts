@@ -115,7 +115,7 @@ export function getCustomerNavbarPresentation(
     primaryLinks: area === "public" ? landingNavLinks : customerAppNavigation,
     showAdmin: false,
     showLogin: false,
-    showNotifications: false,
+    showNotifications: area === "account",
     showQuote: area === "public",
     showUserMenu: true,
   };

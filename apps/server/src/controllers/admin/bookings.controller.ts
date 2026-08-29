@@ -6,7 +6,11 @@ import {
   ADMIN_APP_HREFS,
   ADMIN_EVENT_COPY,
 } from "../../lib/events/admin-event-copy.ts";
-import { publishAdminDomainEvent } from "../../lib/events/publisher.ts";
+import { CUSTOMER_EVENT_COPY } from "../../lib/events/customer-event-copy.ts";
+import {
+  notifyBookingOwner,
+  publishAdminDomainEvent,
+} from "../../lib/events/publisher.ts";
 import { sendSuccess } from "../../lib/http.ts";
 import {
   getValidatedBody,
@@ -66,6 +70,12 @@ export async function createBookingController(
     title: ADMIN_EVENT_COPY.bookingCreated.title,
     type: "BOOKING_CREATED",
   });
+  await notifyBookingOwner(actor, booking, {
+    message: CUSTOMER_EVENT_COPY.bookingCreated.message,
+    relatedLabel: CUSTOMER_EVENT_COPY.bookingCreated.relatedLabel,
+    title: CUSTOMER_EVENT_COPY.bookingCreated.title,
+    type: "BOOKING_CREATED",
+  });
 }
 
 export async function updateBookingController(
@@ -109,6 +119,22 @@ export async function changeBookingStatusController(
     type:
       status === "CANCELLED" ? "BOOKING_CANCELLED" : "BOOKING_STATUS_CHANGED",
   });
+  await notifyBookingOwner(actor, booking, {
+    message:
+      status === "CANCELLED"
+        ? CUSTOMER_EVENT_COPY.bookingCancelled.message
+        : CUSTOMER_EVENT_COPY.bookingUpdated.message,
+    relatedLabel:
+      status === "CANCELLED"
+        ? CUSTOMER_EVENT_COPY.bookingCancelled.relatedLabel
+        : CUSTOMER_EVENT_COPY.bookingUpdated.relatedLabel,
+    title:
+      status === "CANCELLED"
+        ? CUSTOMER_EVENT_COPY.bookingCancelled.title
+        : CUSTOMER_EVENT_COPY.bookingUpdated.title,
+    type:
+      status === "CANCELLED" ? "BOOKING_CANCELLED" : "BOOKING_STATUS_CHANGED",
+  });
 }
 
 export async function assignBookingCleanerController(
@@ -131,6 +157,12 @@ export async function assignBookingCleanerController(
     relatedHref: ADMIN_APP_HREFS.bookings,
     relatedLabel: ADMIN_EVENT_COPY.bookingAssigned.relatedLabel,
     title: ADMIN_EVENT_COPY.bookingAssigned.title,
+    type: "BOOKING_ASSIGNED",
+  });
+  await notifyBookingOwner(actor, booking, {
+    message: CUSTOMER_EVENT_COPY.bookingAssigned.message,
+    relatedLabel: CUSTOMER_EVENT_COPY.bookingAssigned.relatedLabel,
+    title: CUSTOMER_EVENT_COPY.bookingAssigned.title,
     type: "BOOKING_ASSIGNED",
   });
 }

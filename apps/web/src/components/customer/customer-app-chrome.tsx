@@ -1,14 +1,19 @@
 "use client";
 
+import { Button } from "@neatly/ui";
 import { cn } from "@neatly/utils";
+import Link from "next/link";
 import type { ReactElement } from "react";
+import { CustomerBellIcon } from "@/components/customer/customer-icons";
 import { CustomerMobileNav } from "@/components/customer/customer-mobile-nav";
 import { CustomerNavLink } from "@/components/customer/customer-nav-link";
+import { useOptionalCustomerRealtime } from "@/components/customer/customer-realtime-provider";
 import { CustomerUserMenu } from "@/components/customer/customer-user-menu";
 import { BrandLink } from "@/components/layout/navbar/brand-link";
 import { useActivePathname } from "@/components/layout/navbar/use-active-pathname";
 import {
   CUSTOMER_HEADER_HEIGHT_CLASS,
+  CUSTOMER_PATHS,
   customerNavbarCopy,
 } from "@/config/customer";
 import {
@@ -35,6 +40,7 @@ export function CustomerAppChrome({
     "account",
   );
   const pageTitle = getCustomerPageTitle(pathname);
+  const unreadCount = useOptionalCustomerRealtime()?.unreadCount ?? 0;
   const logout = (): void => {
     void signOutCustomer();
   };
@@ -58,6 +64,26 @@ export function CustomerAppChrome({
             {pageTitle}
           </p>
           <div className="flex items-center gap-2">
+            {presentation.showNotifications ? (
+              <Button asChild size="icon" variant="ghost">
+                <Link
+                  aria-label={customerNavbarCopy.notificationsLabel}
+                  className="relative"
+                  href={CUSTOMER_PATHS.notifications}
+                >
+                  <CustomerBellIcon />
+                  {unreadCount > 0 ? (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary"
+                      />
+                      <span className="sr-only">{String(unreadCount)}</span>
+                    </>
+                  ) : null}
+                </Link>
+              </Button>
+            ) : null}
             <CustomerUserMenu
               identity={identity}
               onLogout={logout}

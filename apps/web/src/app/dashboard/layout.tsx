@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactElement, ReactNode } from "react";
+import { CustomerRealtimeProvider } from "@/components/customer/customer-realtime-provider";
 import { CustomerShell } from "@/components/customer/customer-shell";
 import { customerSurfaceCopy } from "@/config/customer";
 import { requireCustomerPage } from "@/lib/auth/current-user";
@@ -25,8 +26,10 @@ export default async function CustomerAppLayout({
   const user = await requireCustomerPage();
 
   return (
-    <CustomerShell identity={{ email: user.email, name: user.name }}>
-      {children}
-    </CustomerShell>
+    <CustomerRealtimeProvider>
+      <CustomerShell identity={{ email: user.email, name: user.name }}>
+        {children}
+      </CustomerShell>
+    </CustomerRealtimeProvider>
   );
 }

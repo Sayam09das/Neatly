@@ -1,7 +1,15 @@
+import { EventEmitter } from "node:events";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getDomainServices } from "../../../apps/server/src/lib/domain/runtime.ts";
-import { resetAdminSseConnections } from "../../../apps/server/src/lib/events/admin-connection-manager.ts";
-import { publishAdminDomainEvent } from "../../../apps/server/src/lib/events/publisher.ts";
+import {
+  connectAdminSse,
+  resetAdminSseConnections,
+} from "../../../apps/server/src/lib/events/admin-connection-manager.ts";
+import {
+  publishAdminDomainEvent,
+  recordCustomerInboxNotification,
+} from "../../../apps/server/src/lib/events/publisher.ts";
 import type { UserProfile } from "../../../apps/server/src/services/users/user.types.ts";
 import { createDomainHarness } from "../domain/in-memory-domain.ts";
 
@@ -74,5 +82,53 @@ describe("Admin domain event publisher", (): void => {
         },
       ),
     ).resolves.toBeUndefined();
+  });
+
+  it("persists a customer inbox row before publishing to that user only", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    mockedDomain.mockReturnValue(harness);
+    const ownerChunks: string[] = [];
+    const otherChunks: string[] = [];
+    const ownerReq = new EventEmitter() as IncomingMessage;
+    const otherReq = new EventEmitter() as IncomingMessage;
+    const ownerRes = {
+      end(): void {},
+      get writableEnded(): boolean {
+        return false;
+      },
+      write(chunk: string): boolean {
+        ownerChunks.push(chunk);
+        return true;
+      },
+    } as unknown as ServerResponse;
+    const otherRes = {
+      end(): void {},
+      get writableEnded(): boolean {
+        return false;
+      },
+      write(chunk: string): boolean {
+        otherChunks.push(chunk);
+        return true;
+      },
+    } as unknown as ServerResponse;
+
+    connectAdminSse("customer-a", ownerReq, ownerRes);
+    connectAdminSse("customer-b", otherReq, otherRes);
+
+    await recordCustomerInboxNotification("customer-a", {
+      entityId: "booking-1",
+      message: "Your booking request was received.",
+      relatedHref: "/dashboard/bookings/booking-1",
+      relatedLabel: "View booking",
+      title: "Booking requested",
+      type: "BOOKING_CREATED",
+    });
+
+    const rows = [...harness.store.notifications.values()];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.recipientId).toBe("customer-a");
+    expect(ownerChunks.join("")).toContain("event: customer");
+    expect(ownerChunks.join("")).toContain("Booking requested");
+    expect(otherChunks.join("")).not.toContain("Booking requested");
   });
 });

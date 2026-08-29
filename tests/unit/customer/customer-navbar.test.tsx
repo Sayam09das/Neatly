@@ -87,11 +87,13 @@ describe("CustomerAppChrome", (): void => {
     render(<CustomerAppChrome identity={identity} />);
 
     expect(screen.queryByText("3")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", {
-        name: customerNavbarCopy.notificationsLabel,
-      }),
-    ).not.toBeInTheDocument();
+    const notificationLinks = screen.getAllByRole("link", {
+      name: customerNavbarCopy.notificationsLabel,
+    });
+    expect(notificationLinks.length).toBeGreaterThan(0);
+    for (const link of notificationLinks) {
+      expect(link).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
+    }
   });
 });
 

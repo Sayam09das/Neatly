@@ -37,6 +37,7 @@ export interface AuthEmailVerificationRecord {
 
 export interface CreateUserRecordInput {
   email: string;
+  emailVerifiedAt?: Date | null;
   name: string;
   passwordHash: string;
   role?: AuthUserRole;

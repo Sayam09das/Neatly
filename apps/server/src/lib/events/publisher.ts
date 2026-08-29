@@ -2,8 +2,16 @@ import { randomUUID } from "node:crypto";
 import type { Actor } from "../domain/actor.ts";
 import { getDomainServices } from "../domain/runtime.ts";
 import { logError } from "../logger.ts";
-import { publishAdminSse } from "./admin-connection-manager.ts";
-import type { AdminDomainEvent, AdminDomainEventInput } from "./event-types.ts";
+import {
+  publishAdminSse,
+  publishCustomerSse,
+} from "./admin-connection-manager.ts";
+import { CUSTOMER_APP_HREFS } from "./customer-event-copy.ts";
+import type {
+  AdminDomainEvent,
+  AdminDomainEventInput,
+  CustomerRealtimeEventType,
+} from "./event-types.ts";
 
 export interface PublishAdminEventOptions {
   notificationId?: string | null;
@@ -63,21 +71,70 @@ export async function publishAdminDomainEvent(
 export async function recordCustomerInboxNotification(
   recipientUserId: string,
   input: {
+    entityId: string;
     message: string;
     relatedHref: string;
     relatedLabel: string;
     title: string;
+    type: CustomerRealtimeEventType;
   },
 ): Promise<void> {
   try {
-    await getDomainServices().notifications.record({
+    const notification = await getDomainServices().notifications.record({
       message: input.message,
       recipientId: recipientUserId,
       relatedHref: input.relatedHref,
       relatedLabel: input.relatedLabel,
       title: input.title,
     });
+    publishCustomerSse(recipientUserId, {
+      entityId: input.entityId,
+      eventId: randomUUID(),
+      message: input.message,
+      notificationId: notification.id,
+      relatedHref: input.relatedHref,
+      timestamp: new Date().toISOString(),
+      title: input.title,
+      type: input.type,
+    });
   } catch {
     logError("Customer notification persist failed", { title: input.title });
+  }
+}
+
+export async function notifyBookingOwner(
+  actor: Actor,
+  booking: { customerId: string | null; id: string },
+  input: {
+    message: string;
+    relatedLabel: string;
+    title: string;
+    type: CustomerRealtimeEventType;
+  },
+): Promise<void> {
+  if (booking.customerId === null) {
+    return;
+  }
+
+  try {
+    const customer = await getDomainServices().customers.getById(
+      actor,
+      booking.customerId,
+    );
+
+    if (customer.userId === null) {
+      return;
+    }
+
+    await recordCustomerInboxNotification(customer.userId, {
+      entityId: booking.id,
+      message: input.message,
+      relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
+      relatedLabel: input.relatedLabel,
+      title: input.title,
+      type: input.type,
+    });
+  } catch {
+    logError("Customer booking notice failed", { type: input.type });
   }
 }

@@ -43,10 +43,12 @@ export async function createCustomerBookingController(
   );
   sendSuccess(res, { booking }, { statusCode: HTTP_STATUS.CREATED });
   await recordCustomerInboxNotification(actor.id, {
+    entityId: booking.id,
     message: CUSTOMER_EVENT_COPY.bookingCreated.message,
     relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
     relatedLabel: CUSTOMER_EVENT_COPY.bookingCreated.relatedLabel,
     title: CUSTOMER_EVENT_COPY.bookingCreated.title,
+    type: "BOOKING_CREATED",
   });
   await publishAdminDomainEvent(actor, {
     entityId: booking.id,
@@ -115,10 +117,12 @@ export async function updateCustomerBookingController(
   );
   sendSuccess(res, { booking });
   await recordCustomerInboxNotification(actor.id, {
+    entityId: booking.id,
     message: CUSTOMER_EVENT_COPY.bookingUpdated.message,
     relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
     relatedLabel: CUSTOMER_EVENT_COPY.bookingUpdated.relatedLabel,
     title: CUSTOMER_EVENT_COPY.bookingUpdated.title,
+    type: "BOOKING_UPDATED",
   });
 }
 
@@ -136,10 +140,12 @@ export async function cancelCustomerBookingController(
   );
   sendSuccess(res, { booking });
   await recordCustomerInboxNotification(actor.id, {
+    entityId: booking.id,
     message: CUSTOMER_EVENT_COPY.bookingCancelled.message,
     relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
     relatedLabel: CUSTOMER_EVENT_COPY.bookingCancelled.relatedLabel,
     title: CUSTOMER_EVENT_COPY.bookingCancelled.title,
+    type: "BOOKING_CANCELLED",
   });
   await publishAdminDomainEvent(actor, {
     entityId: booking.id,

@@ -5,6 +5,11 @@ export const CUSTOMER_APP_HREFS = {
 } as const;
 
 export const CUSTOMER_EVENT_COPY = {
+  bookingAssigned: {
+    message: "A cleaner was assigned to your booking.",
+    relatedLabel: "View booking",
+    title: "Cleaner assigned",
+  },
   bookingCancelled: {
     message: "Your booking was cancelled.",
     relatedLabel: "View booking",

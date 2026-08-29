@@ -72,7 +72,7 @@ describe("customer navbar presentation", (): void => {
       "account",
     );
     expect(customer.primaryLinks).toEqual(customerAppNavigation);
-    expect(customer.showNotifications).toBe(false);
+    expect(customer.showNotifications).toBe(true);
     expect(customer.showLogin).toBe(false);
     expect(customer.showQuote).toBe(false);
   });

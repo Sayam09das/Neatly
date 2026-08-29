@@ -66,6 +66,12 @@ describe("Customer notification APIs", (): void => {
     });
     expect(unauthenticated.statusCode).toBe(HTTP_STATUS.UNAUTHORIZED);
 
+    const unauthenticatedStream = await dispatchApi({
+      method: "GET",
+      url: API_PATHS.customerNotificationsStream,
+    });
+    expect(unauthenticatedStream.statusCode).toBe(HTTP_STATUS.UNAUTHORIZED);
+
     mockedAuth.mockReturnValue({
       resolveSession: vi.fn().mockResolvedValue(sessionUser),
     } as never);

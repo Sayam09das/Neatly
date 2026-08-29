@@ -66,7 +66,16 @@ async function proxyCustomerRequest(
     const sessionToken = jar.get(AUTH_SESSION_COOKIE_NAME)?.value;
     const headers = new Headers();
 
-    headers.set("accept", "application/json");
+    const isNotificationStream =
+      method === "GET" &&
+      segments.length === 2 &&
+      segments[0] === "notifications" &&
+      segments[1] === "stream";
+
+    headers.set(
+      "accept",
+      isNotificationStream ? "text/event-stream" : "application/json",
+    );
     headers.set("x-forwarded-for", getRequestIp(request));
     headers.set("x-request-id", requestId);
 
@@ -91,6 +100,21 @@ async function proxyCustomerRequest(
 
     const upstreamContentType =
       upstream.headers.get("content-type") ?? "application/json; charset=utf-8";
+
+    if (isNotificationStream && upstream.body !== null) {
+      return new Response(upstream.body, {
+        headers: {
+          "cache-control": "no-store",
+          connection: "keep-alive",
+          "content-type":
+            upstream.headers.get("content-type") ??
+            "text/event-stream; charset=utf-8",
+          "x-accel-buffering": "no",
+        },
+        status: upstream.status,
+      });
+    }
+
     const responseBody = await upstream.text();
 
     return new Response(responseBody, {

@@ -30,7 +30,7 @@ export class InMemoryAuthRepository implements AuthRepository {
   ): Promise<AuthUserRecord> {
     const user: AuthUserRecord = {
       email: input.email,
-      emailVerifiedAt: null,
+      emailVerifiedAt: input.emailVerifiedAt ?? null,
       id: randomUUID(),
       lastLoginAt: null,
       name: input.name,

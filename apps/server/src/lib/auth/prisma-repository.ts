@@ -105,6 +105,7 @@ export class PrismaAuthRepository implements AuthRepository {
       data: {
         name: input.name,
         email: input.email,
+        emailVerifiedAt: input.emailVerifiedAt ?? null,
         passwordHash: input.passwordHash,
         role: input.role ?? "ADMIN",
         status: input.status ?? "ACTIVE",

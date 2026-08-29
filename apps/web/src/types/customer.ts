@@ -106,13 +106,26 @@ export interface CustomerBookingList {
 export type CustomerBookingWindow = "upcoming" | "past";
 
 export interface CustomerNotification {
-  createdAt: string | null;
+  createdAt: string;
   id: string;
   isRead: boolean;
   message: string;
+  readAt: string | null;
   relatedHref: string | null;
   relatedLabel: string | null;
   title: string;
+}
+
+export interface CustomerNotificationPagination {
+  limit: number;
+  page: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CustomerNotificationList {
+  items: CustomerNotification[];
+  pagination: CustomerNotificationPagination;
 }
 
 export type CustomerReviewStatus = "pending" | "published";

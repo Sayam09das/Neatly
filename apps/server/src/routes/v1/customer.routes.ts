@@ -22,6 +22,7 @@ import {
   markAllCustomerNotificationsReadController,
   markCustomerNotificationReadController,
 } from "../../controllers/customer/notifications.controller.ts";
+import { streamCustomerNotificationsController } from "../../controllers/customer/notifications-stream.controller.ts";
 import {
   getCustomerProfileController,
   updateCustomerProfileController,
@@ -31,6 +32,7 @@ import {
   getCustomerQuoteController,
   listCustomerQuotesController,
 } from "../../controllers/customer/quotes.controller.ts";
+import { registerCustomerController } from "../../controllers/customer/register.controller.ts";
 import {
   createCustomerReviewController,
   deleteCustomerReviewController,
@@ -42,6 +44,7 @@ import {
   listPublicServicesController,
 } from "../../controllers/customer/services.controller.ts";
 import type { RouteDefinition } from "../../lib/router.ts";
+import { registerUserSchema } from "../../lib/validations/auth.schema.ts";
 import {
   changeCustomerPasswordBodySchema,
   updateCustomerProfileBodySchema,
@@ -66,6 +69,7 @@ import {
 import { createPublicQuoteBodySchema } from "../../lib/validations/public-quote.schema.ts";
 import {
   limitCustomerMutations,
+  limitCustomerStreams,
   limitPublicQuoteMutations,
   requireAuth,
   validateBody,
@@ -85,6 +89,12 @@ export const customerRoutes: readonly RouteDefinition[] = [
     method: "GET",
     middleware: [validateParams(publicCatalogSlugParamSchema)],
     path: API_PATHS.customerService,
+  },
+  {
+    handler: registerCustomerController,
+    method: "POST",
+    middleware: [limitCustomerMutations, validateBody(registerUserSchema)],
+    path: API_PATHS.customerRegister,
   },
   {
     handler: createPublicQuoteController,
@@ -176,6 +186,12 @@ export const customerRoutes: readonly RouteDefinition[] = [
     method: "GET",
     middleware: [requireAuth],
     path: API_PATHS.customerNotificationsUnreadCount,
+  },
+  {
+    handler: streamCustomerNotificationsController,
+    method: "GET",
+    middleware: [requireAuth, limitCustomerStreams],
+    path: API_PATHS.customerNotificationsStream,
   },
   {
     handler: markAllCustomerNotificationsReadController,

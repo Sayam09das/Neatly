@@ -45,6 +45,14 @@ export class BackendAuthClient {
     return parseAuthUser(data.user);
   }
 
+  public async registerCustomer(input: unknown): Promise<AuthUser> {
+    const data = await this.post<{ user: unknown }>(
+      "/api/v1/customer/register",
+      input,
+    );
+    return parseAuthUser(data.user);
+  }
+
   public async authenticateUser(
     input: unknown,
     context: AuthClientContext,

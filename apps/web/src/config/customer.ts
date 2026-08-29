@@ -34,7 +34,12 @@ export const CUSTOMER_API_PATHS = {
   bookings: `${CUSTOMER_API_PREFIX}/bookings`,
   dashboard: `${CUSTOMER_API_PREFIX}/dashboard`,
   help: `${CUSTOMER_API_PREFIX}/help`,
+  notification: `${CUSTOMER_API_PREFIX}/notifications/:id`,
+  notificationRead: `${CUSTOMER_API_PREFIX}/notifications/:id/read`,
   notifications: `${CUSTOMER_API_PREFIX}/notifications`,
+  notificationsReadAll: `${CUSTOMER_API_PREFIX}/notifications/read-all`,
+  notificationsStream: `${CUSTOMER_API_PREFIX}/notifications/stream`,
+  notificationsUnreadCount: `${CUSTOMER_API_PREFIX}/notifications/unread-count`,
   profile: `${CUSTOMER_API_PREFIX}/me`,
   quotes: `${CUSTOMER_API_PREFIX}/quotes`,
   review: `${CUSTOMER_API_PREFIX}/reviews/:id`,
@@ -52,6 +57,8 @@ export const CUSTOMER_BOOKINGS_SEARCH_INPUT_ID = "customer-bookings-search";
 export const CUSTOMER_BOOKINGS_STATUS_INPUT_ID = "customer-bookings-status";
 export const CUSTOMER_BOOKINGS_WINDOW_INPUT_ID = "customer-bookings-window";
 export const CUSTOMER_BOOKING_REQUEST_TIMEOUT_MS = 8_000;
+export const CUSTOMER_NOTIFICATIONS_PAGE_PARAM = "page";
+export const CUSTOMER_NOTIFICATIONS_REQUEST_TIMEOUT_MS = 8_000;
 
 export const CUSTOMER_SERVICES_SEARCH_PARAM = "q";
 export const CUSTOMER_SERVICES_PAGE_PARAM = "page";
@@ -558,6 +565,25 @@ export const customerHelpResources = [
     title: "Request a quote",
   },
 ] as const;
+
+export const customerNotificationsCopy = {
+  description: "Updates about bookings you own will appear here.",
+  emptyDescription: "Updates about your bookings will appear here.",
+  emptyTitle: "No notifications yet",
+  heading: "Notifications",
+  markAllAction: "Mark all as read",
+  markAllError: "Unable to mark notifications as read.",
+  markAllSuccess: "All notifications marked as read.",
+  markReadAction: "Mark as read",
+  markReadError: "Unable to mark this notification as read.",
+  markReadSuccess: "Notification marked as read.",
+  marking: "Updating",
+  paginationLabel: "Notification pages",
+  paginationNext: "Next",
+  paginationPrevious: "Previous",
+  readLabel: "Read",
+  unreadLabel: "Unread",
+} as const;
 
 export const customerReviewsCopy = {
   cancelEdit: "Cancel",

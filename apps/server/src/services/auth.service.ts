@@ -18,6 +18,7 @@ import { generateAuthToken, hashAuthToken } from "../lib/auth/tokens.ts";
 import {
   type AuthSessionResult,
   type AuthUser,
+  type AuthUserRole,
   toAuthUser,
 } from "../lib/auth/types.ts";
 import { ValidationError } from "../lib/errors.ts";
@@ -103,7 +104,10 @@ export class AuthService {
     this.verifyLimiter = options.verifyLimiter ?? new MemoryRateLimiter();
   }
 
-  public async registerUser(input: unknown): Promise<AuthUser> {
+  public async registerUser(
+    input: unknown,
+    options: { role?: AuthUserRole; verifyEmail?: boolean } = {},
+  ): Promise<AuthUser> {
     const values = parseSchema(registerUserSchema, input);
     const email = normalizeEmail(values.email);
     const existing = await this.repository.findUserByEmail(email);
@@ -122,13 +126,18 @@ export class AuthService {
     }
 
     const passwordHash = await hashPassword(values.password);
+    const verifiedAt = options.verifyEmail === true ? this.now() : null;
     const user = await this.repository.createUser({
       email,
+      emailVerifiedAt: verifiedAt,
       name: values.name,
       passwordHash,
+      role: options.role,
     });
 
-    await this.dispatchVerificationEmail(user.id, user.email);
+    if (verifiedAt === null) {
+      await this.dispatchVerificationEmail(user.id, user.email);
+    }
 
     return toAuthUser(user);
   }

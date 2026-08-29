@@ -38,6 +38,22 @@ const quoteLimiter = new MemoryRateLimiter(
   QUOTE_RATE_LIMIT_WINDOW_MS,
 );
 
+export function limitCustomerStreams(
+  _req: IncomingMessage,
+  _res: ServerResponse,
+  context: RequestContext,
+): void {
+  if (loadApiEnv().nodeEnv === "test") {
+    return;
+  }
+
+  const key = `customer-sse:${context.user?.id ?? context.ip}`;
+
+  if (!streamLimiter.consume(key)) {
+    throw new RateLimitError();
+  }
+}
+
 export function limitAdminStreams(
   _req: IncomingMessage,
   _res: ServerResponse,

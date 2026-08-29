@@ -6,6 +6,7 @@ export {
   limitAdminMutations,
   limitAdminStreams,
   limitCustomerMutations,
+  limitCustomerStreams,
   limitPublicQuoteMutations,
 } from "./rate-limit.ts";
 export { applySecurityHeaders } from "./security-headers.ts";

@@ -54,6 +54,7 @@ describe("customer navigation", (): void => {
       CUSTOMER_PATHS.dashboard,
       CUSTOMER_PATHS.bookings,
       CUSTOMER_PATHS.reviews,
+      CUSTOMER_PATHS.notifications,
       CUSTOMER_PATHS.help,
       CUSTOMER_PATHS.services,
     ]);

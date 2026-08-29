@@ -58,11 +58,13 @@ describe("CustomerShell", (): void => {
     expect(
       screen.getAllByRole("link", { name: "Services" })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.services);
-    expect(
-      screen.queryByRole("link", {
-        name: customerNavbarCopy.notificationsLabel,
-      }),
-    ).not.toBeInTheDocument();
+    const notificationLinks = screen.getAllByRole("link", {
+      name: customerNavbarCopy.notificationsLabel,
+    });
+    expect(notificationLinks.length).toBeGreaterThan(0);
+    for (const link of notificationLinks) {
+      expect(link).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
+    }
     expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     expect(

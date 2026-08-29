@@ -7,9 +7,13 @@ import {
   countAdminSseConnections,
   disconnectAdminSse,
   publishAdminSse,
+  publishCustomerSse,
   resetAdminSseConnections,
 } from "../../../apps/server/src/lib/events/admin-connection-manager.ts";
-import type { AdminDomainEvent } from "../../../apps/server/src/lib/events/event-types.ts";
+import type {
+  AdminDomainEvent,
+  CustomerRealtimeEvent,
+} from "../../../apps/server/src/lib/events/event-types.ts";
 
 function createSsePair(): {
   chunks: string[];
@@ -66,6 +70,33 @@ describe("Admin SSE connection manager", (): void => {
     expect(first.chunks.join("")).toContain("evt-1");
     expect(second.chunks.join("")).toContain("evt-1");
     expect(first.chunks.join("")).toContain("BOOKING_CREATED");
+  });
+
+  it("does not leak customer events to another user or admin channel", (): void => {
+    const owner = createSsePair();
+    const other = createSsePair();
+    connectAdminSse("customer-a", owner.req, owner.res);
+    connectAdminSse("customer-b", other.req, other.res);
+
+    const customerEvent: CustomerRealtimeEvent = {
+      entityId: "booking-1",
+      eventId: "evt-customer-1",
+      message: "Your booking request was received.",
+      notificationId: "notif-1",
+      relatedHref: "/dashboard/bookings/booking-1",
+      timestamp: "2026-08-29T00:00:00.000Z",
+      title: "Booking requested",
+      type: "BOOKING_CREATED",
+    };
+
+    publishCustomerSse("customer-a", customerEvent);
+    publishAdminSse("customer-a", sampleEvent("evt-admin-1"));
+
+    expect(owner.chunks.join("")).toContain("event: customer");
+    expect(owner.chunks.join("")).toContain("evt-customer-1");
+    expect(owner.chunks.join("")).toContain("event: admin");
+    expect(other.chunks.join("")).not.toContain("evt-customer-1");
+    expect(other.chunks.join("")).not.toContain("evt-admin-1");
   });
 
   it("does not leak events to another admin", (): void => {

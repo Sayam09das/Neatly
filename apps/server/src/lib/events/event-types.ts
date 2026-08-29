@@ -38,3 +38,26 @@ export interface AdminDomainEventInput {
   title: string;
   type: AdminDomainEventType;
 }
+
+export const CUSTOMER_REALTIME_EVENT_TYPES = [
+  "BOOKING_ASSIGNED",
+  "BOOKING_CANCELLED",
+  "BOOKING_CREATED",
+  "BOOKING_STATUS_CHANGED",
+  "BOOKING_UPDATED",
+  "REVIEW_CREATED",
+] as const;
+
+export type CustomerRealtimeEventType =
+  (typeof CUSTOMER_REALTIME_EVENT_TYPES)[number];
+
+export interface CustomerRealtimeEvent {
+  entityId: string;
+  eventId: string;
+  message: string;
+  notificationId: string | null;
+  relatedHref: string | null;
+  timestamp: string;
+  title: string;
+  type: CustomerRealtimeEventType;
+}

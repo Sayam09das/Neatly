@@ -35,6 +35,13 @@ vi.mock("@/lib/customer/session-token", () => ({
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
   usePathname: (): string => "/dashboard",
+  useRouter: (): { refresh: () => void } => ({ refresh: vi.fn() }),
+}));
+
+vi.mock("@/components/customer/customer-realtime-provider", () => ({
+  CustomerRealtimeProvider: ({ children }: { children: unknown }): unknown =>
+    children,
+  useOptionalCustomerRealtime: (): null => null,
 }));
 
 const layoutUser: AuthUser = {

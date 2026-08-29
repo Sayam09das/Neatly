@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { logInfo } from "../logger.ts";
-import type { AdminDomainEvent } from "./event-types.ts";
+import type { AdminDomainEvent, CustomerRealtimeEvent } from "./event-types.ts";
 
 export interface AdminSseConnection {
   adminId: string;
@@ -92,14 +92,29 @@ export function publishAdminSse(
   adminId: string,
   event: AdminDomainEvent,
 ): void {
-  const adminSet = connectionsByAdmin.get(adminId);
+  publishNamedSse(adminId, "admin", event);
+}
 
-  if (adminSet === undefined) {
+export function publishCustomerSse(
+  recipientUserId: string,
+  event: CustomerRealtimeEvent,
+): void {
+  publishNamedSse(recipientUserId, "customer", event);
+}
+
+function publishNamedSse(
+  recipientId: string,
+  eventName: "admin" | "customer",
+  event: AdminDomainEvent | CustomerRealtimeEvent,
+): void {
+  const recipientSet = connectionsByAdmin.get(recipientId);
+
+  if (recipientSet === undefined) {
     return;
   }
 
-  for (const connectionId of adminSet) {
-    connections.get(connectionId)?.send("admin", event);
+  for (const connectionId of recipientSet) {
+    connections.get(connectionId)?.send(eventName, event);
   }
 }
 
