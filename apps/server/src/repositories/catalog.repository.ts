@@ -26,7 +26,7 @@ export interface CatalogRepository {
 
 function toRecord(row: {
   benefits: string[];
-  coverMedia: { url: string } | null;
+  coverMedia: { altText: string; url: string } | null;
   coverMediaId: string | null;
   createdAt: Date;
   excludedTasks: string[];
@@ -46,6 +46,7 @@ function toRecord(row: {
 }): CatalogRecord {
   return {
     benefits: row.benefits,
+    coverImageAlt: row.coverMedia?.altText ?? null,
     coverImageUrl: row.coverMedia?.url ?? null,
     coverMediaId: row.coverMediaId,
     createdAt: row.createdAt,
@@ -67,7 +68,7 @@ function toRecord(row: {
 }
 
 const CATALOG_INCLUDE = {
-  coverMedia: { select: { url: true } },
+  coverMedia: { select: { altText: true, url: true } },
 } as const;
 
 function orderBy(
@@ -167,7 +168,12 @@ export class PrismaCatalogRepository implements CatalogRepository {
       ...(query.active === undefined ? {} : { isActive: query.active }),
       ...(search === undefined || search === ""
         ? {}
-        : { name: { contains: search, mode: "insensitive" } }),
+        : {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { shortDescription: { contains: search, mode: "insensitive" } },
+            ],
+          }),
     };
 
     const [total, rows] = await prisma.$transaction([

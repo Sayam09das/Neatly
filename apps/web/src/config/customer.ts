@@ -32,6 +32,12 @@ export const CUSTOMER_API_PATHS = {
   services: `${CUSTOMER_API_PREFIX}/services`,
 } as const;
 
+export const CUSTOMER_SERVICES_SEARCH_PARAM = "q";
+export const CUSTOMER_SERVICES_PAGE_PARAM = "page";
+export const CUSTOMER_SERVICES_SEARCH_MAX_LENGTH = 120;
+export const CUSTOMER_SERVICES_SEARCH_INPUT_ID = "customer-services-search";
+export const CUSTOMER_CATALOG_REQUEST_TIMEOUT_MS = 8_000;
+
 export const FORBIDDEN_CUSTOMER_AUTH_QUERY_KEYS = [
   "customerId",
   "userId",
@@ -104,6 +110,10 @@ export const customerEmptyCopy = {
     description: "Published cleaning services will appear here.",
     title: "No services listed",
   },
+  serviceSearch: {
+    description: "Try a different search, or browse all published services.",
+    title: "No services match your search.",
+  },
 } as const;
 
 export const customerSurfaceCopy = {
@@ -160,7 +170,8 @@ export const customerSurfaceCopy = {
     title: "Reviews",
   },
   services: {
-    description: "Published cleaning services will appear here.",
+    description:
+      "Browse published cleaning services and open a service to learn more.",
     heading: "Services",
     title: "Services",
   },
@@ -176,8 +187,25 @@ export const customerSurfaceCopy = {
   },
 } as const;
 
+export const customerServicesCopy = {
+  browseAll: "Browse all services",
+  imageUnavailable: "No image available",
+  paginationLabel: "Services pages",
+  paginationNext: "Next",
+  paginationPrevious: "Previous",
+  searchClear: "Clear search",
+  searchLabel: "Search services",
+  searchPlaceholder: "Search by name or description",
+  searchSubmit: "Search",
+  viewDetails: "View details",
+} as const;
+
 export function customerServicePath(slug: string): string {
   return `${CUSTOMER_PATHS.services}/${encodeURIComponent(slug)}`;
+}
+
+export function customerServiceDetailsLabel(name: string): string {
+  return `View ${name}`;
 }
 
 export function customerBookingDetailPath(id: string): string {

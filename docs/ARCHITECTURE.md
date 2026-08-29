@@ -279,10 +279,11 @@ Customer Route Hierarchy
 
 * **Navigation:** Public marketing pages reuse `Navbar` with a server-fetched session (name and email only). `/dashboard` uses `CustomerNavbar`. Public and account shells reuse `SiteFooter`. Frontend navigation is UX only; backend authorization remains authoritative.
 * **Home:** `/` keeps the existing landing composition and animation architecture. CTAs use real routes (`/quote`, `/services`, `/about`, `/dashboard` for customers). Unpublished portfolio, blog, and contact indexes are not linked. Home does not fetch catalog, booking, notification, or admin data. JSON-LD `LocalBusiness` omits unpublished NAP fields.
+* **Services discovery:** `/services` is a public Server Component. It reads `q` and `page` from the URL and loads active catalog items from `GET /api/v1/customer/services`. `CatalogService.listPublic()` always scopes to `isActive: true`; the UI is not the visibility boundary. Cards use real slugs and link to `/services/[slug]`. Search matches `name` and `shortDescription`. There is no category or price filter because those fields are not on `Service`.
 * **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard` requests redirect to `/admin/login` with a safe `next` path. `/login` remains an alias and forwards a safe `next` query. Logout reuses `POST /api/admin/auth/logout`.
 * **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for future ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
 * **Privacy:** `/dashboard` is `force-dynamic` and `robots: noindex`. Customer query keys include the session user id. Logout clears customer client cache listeners.
-* **Customer HTTP APIs:** Reserved under `/api/v1/customer` for later phases. This foundation does not add fake customer endpoints or mock bookings.
+* **Customer HTTP APIs:** Public catalog listing lives at `GET /api/v1/customer/services` (no auth). Remaining customer account endpoints stay reserved; this phase does not add fake bookings or quote APIs.
 
 ---
 
@@ -349,7 +350,7 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
 * `POST /api/quotes` — Submit a new quote request (Rate-limited, honeypot protected).
 * `POST /api/contact` — Submit a general contact message (Rate-limited, honeypot protected).
 * `POST /api/newsletter` — Subscribe email to newsletter.
-* `GET  /api/services` — Fetch active public services.
+* `GET  /api/v1/customer/services` — Fetch active public catalog services (`search`, `page`, `limit`). Inactive records are excluded by the domain, not the client.
 * `GET  /api/portfolio` — Fetch active public portfolio items.
 * `GET  /api/testimonials` — Fetch active featured testimonials.
 * `GET  /api/blog` — Fetch published blog posts (supports pagination & category filters).

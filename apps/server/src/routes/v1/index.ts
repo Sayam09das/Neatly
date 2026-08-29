@@ -3,6 +3,7 @@ import { v1RootController } from "../../controllers/root.controller.ts";
 import type { RouteDefinition } from "../../lib/router.ts";
 import { adminRoutes } from "./admin.routes.ts";
 import { authRoutes } from "./auth.routes.ts";
+import { customerRoutes } from "./customer.routes.ts";
 
 export const v1Routes: readonly RouteDefinition[] = [
   {
@@ -12,4 +13,5 @@ export const v1Routes: readonly RouteDefinition[] = [
   },
   ...authRoutes,
   ...adminRoutes,
+  ...customerRoutes,
 ];

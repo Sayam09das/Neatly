@@ -18,6 +18,9 @@ import {
   type CatalogListQuery,
   type CatalogRecord,
   type CreateCatalogInput,
+  type PublicCatalogItem,
+  type PublicCatalogListQuery,
+  toPublicCatalogItem,
   type UpdateCatalogInput,
 } from "./catalog.types.ts";
 
@@ -73,6 +76,20 @@ export class CatalogService {
       sort,
     });
     return toListResult(result.items, result.total, pagination);
+  }
+
+  public async listPublic(
+    query: PublicCatalogListQuery = {},
+  ): Promise<ListResult<PublicCatalogItem>> {
+    const result = await this.list({
+      pagination: query.pagination,
+      search: query.search,
+    });
+
+    return {
+      items: result.items.map(toPublicCatalogItem),
+      pagination: result.pagination,
+    };
   }
 
   public async update(

@@ -36,6 +36,7 @@ export const API_PATHS = {
   authResetPassword: `${API_PREFIX}/auth/reset-password`,
   authSession: `${API_PREFIX}/auth/session`,
   authVerifyEmail: `${API_PREFIX}/auth/verify-email`,
+  customerServices: `${API_PREFIX}/customer/services`,
   health: "/health",
   ready: "/ready",
   root: "/",

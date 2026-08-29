@@ -51,6 +51,41 @@ describe("CatalogService", (): void => {
     expect(adminList.items).toHaveLength(1);
   });
 
+  it("lists only active public offerings and omits admin catalog fields", async (): Promise<void> => {
+    const { catalog } = createDomainHarness();
+    const visible = await catalog.create(admin, offeringInput);
+    await catalog.create(admin, {
+      fullDescription: "Office clean.",
+      isFeatured: true,
+      name: "Studio Reset",
+      shortDescription: "Desk and kitchen tidy",
+    });
+    const archived = await catalog.create(admin, {
+      fullDescription: "Archived offering.",
+      name: "Retired Clean",
+      shortDescription: "No longer offered",
+    });
+    await catalog.archive(admin, archived.id);
+
+    const result = await catalog.listPublic({ search: "desk" });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toEqual({
+      coverImageAlt: null,
+      coverImageUrl: null,
+      id: expect.any(String),
+      isFeatured: true,
+      name: "Studio Reset",
+      shortDescription: "Desk and kitchen tidy",
+      slug: "studio-reset",
+    });
+    expect(result.items[0]?.id).not.toBe(visible.id);
+    expect(JSON.stringify(result.items)).not.toContain("faqs");
+    expect(JSON.stringify(result.items)).not.toContain("seoTitle");
+    expect(JSON.stringify(result.items)).not.toContain("isActive");
+    expect(JSON.stringify(result.items)).not.toContain("coverMediaId");
+  });
+
   it("rejects missing offerings", async (): Promise<void> => {
     const { catalog } = createDomainHarness();
     await expect(catalog.getById("missing")).rejects.toBeInstanceOf(

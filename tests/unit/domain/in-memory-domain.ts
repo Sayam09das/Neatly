@@ -21,11 +21,12 @@ import type {
   UpdateBookingInput,
 } from "../../../apps/server/src/services/bookings/booking.types.ts";
 import { CatalogService } from "../../../apps/server/src/services/catalog/catalog.service.ts";
-import type {
-  CatalogListQuery,
-  CatalogRecord,
-  CreateCatalogInput,
-  UpdateCatalogInput,
+import {
+  type CatalogListQuery,
+  type CatalogRecord,
+  type CreateCatalogInput,
+  catalogRecordMatchesSearch,
+  type UpdateCatalogInput,
 } from "../../../apps/server/src/services/catalog/catalog.types.ts";
 import { CleanerService } from "../../../apps/server/src/services/cleaners/cleaner.service.ts";
 import type {
@@ -392,6 +393,7 @@ export class InMemoryCatalogRepository implements CatalogRepository {
     const now = new Date();
     const row: CatalogRecord = {
       benefits: input.benefits ?? [],
+      coverImageAlt: null,
       coverImageUrl: null,
       coverMediaId: input.coverMediaId ?? null,
       createdAt: now,
@@ -436,17 +438,13 @@ export class InMemoryCatalogRepository implements CatalogRepository {
   public async list(
     query: CatalogListQuery,
   ): Promise<{ items: CatalogRecord[]; total: number }> {
-    const search = query.search?.trim().toLowerCase();
+    const search = query.search ?? "";
     const filtered = [...this.store.catalog.values()].filter((row) => {
       if (query.active !== undefined && row.isActive !== query.active) {
         return false;
       }
 
-      if (search === undefined || search === "") {
-        return true;
-      }
-
-      return row.name.toLowerCase().includes(search);
+      return catalogRecordMatchesSearch(row, search);
     });
 
     return page(filtered, query, (left, right) =>

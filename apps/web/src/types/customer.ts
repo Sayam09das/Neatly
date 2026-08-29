@@ -81,10 +81,25 @@ export interface CustomerReview {
 }
 
 export interface CustomerService {
+  coverImageAlt: string | null;
+  coverImageUrl: string | null;
   id: string;
+  isFeatured: boolean;
   name: string;
   shortDescription: string;
   slug: string;
+}
+
+export interface CustomerServicePagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CustomerServiceList {
+  pagination: CustomerServicePagination;
+  services: CustomerService[];
 }
 
 export interface QuoteRequest {
