@@ -1,4 +1,16 @@
+import { ADMIN_API_PATHS, ADMIN_LIST_PAGE_SIZE } from "@/config/admin-api";
 import { adminNotificationCopy } from "@/config/admin-notifications";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readBoolean,
+  readIsoDate,
+  readNullableString,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import type {
   AdminNotification,
   AdminNotificationFilters,
@@ -78,6 +90,80 @@ export function formatNotificationTime(isoDateTime: string | null): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+export interface AdminNotificationList {
+  notifications: readonly AdminNotification[];
+  pagination: AdminNotificationPagination;
+}
+
+export interface AdminNotificationListQuery extends AdminNotificationFilters {
+  page: number;
+}
+
+export async function listAdminNotifications(
+  query: AdminNotificationListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminNotificationList>> {
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.notifications, {
+      filters: {
+        unreadOnly: query.readState === "unread" ? true : undefined,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapNotificationList);
+}
+
+function mapNotificationList(value: unknown): AdminNotificationList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const notifications: AdminNotification[] = [];
+
+  for (const item of value.items) {
+    const notification = mapNotification(item);
+
+    if (notification === null) {
+      return null;
+    }
+
+    notifications.push(notification);
+  }
+
+  return { notifications, pagination };
+}
+
+function mapNotification(value: unknown): AdminNotification | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+
+  if (id === null) {
+    return null;
+  }
+
+  return {
+    createdAt: readIsoDate(value.createdAt),
+    id,
+    isRead: readBoolean(value.isRead),
+    message: readNullableString(value.message),
+    relatedHref: readNullableString(value.relatedHref),
+    relatedLabel: readNullableString(value.relatedLabel),
+    title: readNullableString(value.title),
+  };
 }
 
 export function shouldRenderNotificationPagination(

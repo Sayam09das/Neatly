@@ -20,7 +20,45 @@ import type { AdminReview } from "@/types/admin-review";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/reviews",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
+  useSearchParams: (): URLSearchParams => new URLSearchParams(),
 }));
+
+vi.mock("@/lib/admin/use-admin-list-state", () => ({
+  useAdminListState: <T,>({
+    defaults,
+  }: {
+    defaults: T;
+  }): {
+    filters: T;
+    page: number;
+    setFilters: (filters: T) => void;
+    setPage: (page: number) => void;
+  } => ({
+    filters: defaults,
+    page: 1,
+    setFilters: (): void => undefined,
+    setPage: (): void => undefined,
+  }),
+}));
+
+vi.mock("@/lib/admin/reviews", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/reviews")>();
+
+  return {
+    ...actual,
+    listAdminReviews: vi.fn().mockResolvedValue({
+      data: {
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+        reviews: [],
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 const TEST_REVIEW: AdminReview = {
   content: null,
@@ -54,7 +92,7 @@ const FORBIDDEN_FAKE_REVIEW_COPY = [
 ];
 
 describe("Admin reviews page", (): void => {
-  it("renders the title, search, filters, and empty state without fake reviews", (): void => {
+  it("renders the title, search, filters, and empty state without fake reviews", async (): Promise<void> => {
     render(<AdminReviewsPage />);
 
     expect(
@@ -73,7 +111,9 @@ describe("Admin reviews page", (): void => {
     expect(
       screen.getByRole("button", { name: adminReviewCopy.filtersLabel }),
     ).toBeInTheDocument();
-    expect(screen.getByText(adminReviewCopy.emptyTitle)).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(screen.getByText(adminReviewCopy.emptyTitle)).toBeInTheDocument();
+    });
     expect(
       screen.getByText(adminReviewCopy.emptyDescription),
     ).toBeInTheDocument();

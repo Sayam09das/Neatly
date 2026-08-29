@@ -18,7 +18,45 @@ import type { AdminCustomer } from "@/types/admin-customer";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/customers",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
+  useSearchParams: (): URLSearchParams => new URLSearchParams(),
 }));
+
+vi.mock("@/lib/admin/use-admin-list-state", () => ({
+  useAdminListState: <T,>({
+    defaults,
+  }: {
+    defaults: T;
+  }): {
+    filters: T;
+    page: number;
+    setFilters: (filters: T) => void;
+    setPage: (page: number) => void;
+  } => ({
+    filters: defaults,
+    page: 1,
+    setFilters: (): void => undefined,
+    setPage: (): void => undefined,
+  }),
+}));
+
+vi.mock("@/lib/admin/customers", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/customers")>();
+
+  return {
+    ...actual,
+    listAdminCustomers: vi.fn().mockResolvedValue({
+      data: {
+        customers: [],
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 const TEST_CUSTOMER: AdminCustomer = {
   avatarUrl: null,
@@ -43,7 +81,7 @@ const FORBIDDEN_FAKE_CUSTOMER_COPY = [
 ];
 
 describe("Admin customers page", (): void => {
-  it("renders the title, search, filters, and empty state without fake customers", (): void => {
+  it("renders the title, search, filters, and empty state without fake customers", async (): Promise<void> => {
     render(<AdminCustomersPage />);
 
     expect(
@@ -69,7 +107,11 @@ describe("Admin customers page", (): void => {
       screen.getAllByRole("button", { name: adminCustomerCopy.primaryAction })
         .length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText(adminCustomerCopy.emptyTitle)).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(
+        screen.getByText(adminCustomerCopy.emptyTitle),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByText(adminCustomerCopy.emptyDescription),
     ).toBeInTheDocument();
@@ -79,8 +121,6 @@ describe("Admin customers page", (): void => {
         name: adminCustomerCopy.paginationLabel,
       }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText("Active")).not.toBeInTheDocument();
-    expect(screen.queryByText("Inactive")).not.toBeInTheDocument();
 
     const markup = document.body.textContent ?? "";
 

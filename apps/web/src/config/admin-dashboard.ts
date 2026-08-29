@@ -3,9 +3,9 @@ import { adminHomeCopy } from "@/config/admin-ui";
 
 export const adminDashboardCopy = {
   activityDescription:
-    "Incoming quotes and inquiries will list here as they arrive.",
+    "Recent bookings and customers from the Admin API appear here.",
   activityEmptyDescription:
-    "Your dashboard will update as quotes and inquiries move through Neatly.",
+    "Your dashboard will update as bookings and customers are added.",
   activityEmptyTitle: "No recent activity yet",
   activityHeading: "Recent activity",
   description: adminHomeCopy.description,
@@ -17,15 +17,14 @@ export const adminDashboardCopy = {
   loadingLabel: "Loading overview",
   metricErrorLabel: "Unable to load",
   metricsDescription:
-    "These counts will fill in once quotes, inquiries, and published content are available.",
+    "These counts come from live customer, booking, service, and review records.",
   metricsHeading: "Overview",
   trendDecreaseLabel: "Decrease compared with previous period",
   trendIncreaseLabel: "Increase compared with previous period",
   trendNeutralLabel: "No change compared with previous period",
-  operationsDescription:
-    "A summary of quote flow and inbox activity will appear here.",
+  operationsDescription: "The latest bookings from the operations queue.",
   operationsEmptyDescription:
-    "Quote requests and contact inquiries will appear here as they arrive.",
+    "Bookings will appear here once customers begin scheduling work.",
   operationsEmptyTitle: "No operational activity yet",
   operationsHeading: "Operational overview",
   quickActionsDescription: "Jump to the areas you will use most often.",
@@ -41,14 +40,14 @@ export interface AdminDashboardMetricConfig {
 
 export const adminDashboardMetrics: readonly AdminDashboardMetricConfig[] = [
   {
-    icon: "quotes",
-    id: "quotes",
-    label: "New quote requests",
+    icon: "customers",
+    id: "customers",
+    label: "Customers",
   },
   {
-    icon: "contacts",
-    id: "contacts",
-    label: "Pending inquiries",
+    icon: "bookings",
+    id: "bookings",
+    label: "Bookings",
   },
   {
     icon: "services",
@@ -56,9 +55,9 @@ export const adminDashboardMetrics: readonly AdminDashboardMetricConfig[] = [
     label: "Active services",
   },
   {
-    icon: "blog",
-    id: "articles",
-    label: "Published articles",
+    icon: "reviews",
+    id: "reviews",
+    label: "Reviews",
   },
 ] as const;
 

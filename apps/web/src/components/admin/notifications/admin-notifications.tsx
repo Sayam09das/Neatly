@@ -29,38 +29,115 @@ import {
   NotificationsNoMatchesState,
   NotificationsUnavailableCard,
 } from "@/components/admin/notifications/notifications-states";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminNotificationCopy,
   adminNotificationFilterCatalog,
   defaultAdminNotificationFilters,
 } from "@/config/admin-notifications";
 import {
+  type AdminNotificationList,
   filterNotifications,
   hasActiveNotificationFilters,
+  listAdminNotifications,
   shouldRenderNotificationPagination,
 } from "@/lib/admin/notifications";
+import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminNotificationFilters,
   AdminNotificationPresentation,
 } from "@/types/admin-notification";
 
 interface AdminNotificationsProps {
-  presentation: AdminNotificationPresentation;
+  presentation?: AdminNotificationPresentation;
 }
 
 export function AdminNotifications({
   presentation,
 }: AdminNotificationsProps): ReactElement {
+  if (presentation === undefined) {
+    return <AdminNotificationsLive />;
+  }
+
+  return <AdminNotificationsView presentation={presentation} />;
+}
+
+function AdminNotificationsLive(): ReactElement {
+  const { filters, page, setFilters, setPage } = useAdminListState({
+    defaults: defaultAdminNotificationFilters,
+  });
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    page,
+    query: debouncedQuery,
+    readState: filters.readState,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminNotifications(
+        {
+          page,
+          query: debouncedQuery,
+          readState: filters.readState,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+
+  return (
+    <AdminNotificationsView
+      filters={filters}
+      onFiltersChange={setFilters}
+      onPageChange={setPage}
+      presentation={toLiveNotificationPresentation(
+        query,
+        hasActiveNotificationFilters(filters),
+      )}
+    />
+  );
+}
+
+interface AdminNotificationsViewProps {
+  filters?: AdminNotificationFilters;
+  onFiltersChange?: (filters: AdminNotificationFilters) => void;
+  onPageChange?: (page: number) => void;
+  presentation: AdminNotificationPresentation;
+}
+
+function AdminNotificationsView({
+  filters: filtersProp,
+  onFiltersChange,
+  onPageChange,
+  presentation,
+}: AdminNotificationsViewProps): ReactElement {
   const prefersReducedMotion = useReducedMotion();
   const searchId = useId();
   const readStateId = useId();
-  const [filters, setFilters] = useState<AdminNotificationFilters>(
+  const [localFilters, setLocalFilters] = useState<AdminNotificationFilters>(
     defaultAdminNotificationFilters,
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filters = filtersProp ?? localFilters;
+  const setFilters = onFiltersChange ?? setLocalFilters;
   const source =
     presentation.status === "ready" ? presentation.notifications : [];
-  const visible = filterNotifications(source, filters);
+  const visible = filterNotifications(source, {
+    query: filters.query,
+    readState:
+      onFiltersChange !== undefined && filters.readState === "unread"
+        ? ""
+        : filters.readState,
+  });
   const hasActiveFilters = hasActiveNotificationFilters(filters);
   const canMarkAll = presentation.status === "ready" && visible.length > 0;
 
@@ -236,6 +313,7 @@ export function AdminNotifications({
             <AdminListPagination
               ariaLabel={adminNotificationCopy.paginationLabel}
               nextLabel={adminNotificationCopy.paginationNext}
+              onPageChange={onPageChange}
               pageLabel={adminNotificationCopy.paginationPageLabel}
               pagination={presentation.pagination}
               previousLabel={adminNotificationCopy.paginationPrevious}
@@ -246,4 +324,33 @@ export function AdminNotifications({
       </AdminDashboardMotion>
     </div>
   );
+}
+
+function toLiveNotificationPresentation(
+  query: AdminQueryState<AdminNotificationList>,
+  hasActiveFilters: boolean,
+): AdminNotificationPresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.notifications.length === 0) {
+    return hasActiveFilters
+      ? {
+          notifications: [],
+          pagination: query.data?.pagination,
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    notifications: query.data.notifications,
+    pagination: query.data.pagination,
+    status: "ready",
+  };
 }

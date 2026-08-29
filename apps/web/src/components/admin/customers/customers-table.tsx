@@ -26,6 +26,7 @@ interface CustomersTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onPageChange?: (page: number) => void;
   pagination?: AdminCustomerPagination;
   presentation: AdminCustomerPresentation;
 }
@@ -35,6 +36,7 @@ export function CustomersTable({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onPageChange,
   pagination,
   presentation,
 }: CustomersTableProps): ReactElement {
@@ -50,7 +52,10 @@ export function CustomersTable({
       {presentation.status === "ready" &&
       shouldRenderCustomerPagination(pagination, customers.length) &&
       pagination !== undefined ? (
-        <CustomersPagination pagination={pagination} />
+        <CustomersPagination
+          onPageChange={onPageChange}
+          pagination={pagination}
+        />
       ) : null}
     </div>
   );

@@ -1,4 +1,20 @@
+import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
 import { adminCustomerCopy } from "@/config/admin-customers";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readIsoDate,
+  readNullableString,
+  readNumber,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import type {
   AdminCustomer,
   AdminCustomerFilters,
@@ -206,6 +222,113 @@ function matchesJoinedRange(
   }
 
   return true;
+}
+
+export interface AdminCustomerList {
+  customers: readonly AdminCustomer[];
+  pagination: AdminCustomerPagination;
+}
+
+export interface AdminCustomerListQuery extends AdminCustomerFilters {
+  page: number;
+}
+
+export async function listAdminCustomers(
+  query: AdminCustomerListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCustomerList>> {
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.customers, {
+      filters: {
+        createdFrom: query.joinedFrom,
+        createdTo: query.joinedTo,
+        status: query.status,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapCustomerList);
+}
+
+export async function getAdminCustomer(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCustomer>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.customer, id),
+    init,
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapCustomer(value.customer ?? value);
+  });
+}
+
+function mapCustomerList(value: unknown): AdminCustomerList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const customers: AdminCustomer[] = [];
+
+  for (const item of value.items) {
+    const customer = mapCustomer(item);
+
+    if (customer === null) {
+      return null;
+    }
+
+    customers.push(customer);
+  }
+
+  return { customers, pagination };
+}
+
+function mapCustomer(value: unknown): AdminCustomer | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+
+  if (id === null) {
+    return null;
+  }
+
+  return {
+    avatarUrl: null,
+    bookingCount: readNumber(value.bookingCount),
+    email: readNullableString(value.email),
+    id,
+    joinedAt: readIsoDate(value.createdAt),
+    name: readNullableString(value.name),
+    phone: readNullableString(value.phone),
+    statusLabel: mapCustomerStatusLabel(readNullableString(value.status)),
+  };
+}
+
+function mapCustomerStatusLabel(status: string | null): string | null {
+  if (status === "ACTIVE") {
+    return "Active";
+  }
+
+  if (status === "INACTIVE") {
+    return "Inactive";
+  }
+
+  return status;
 }
 
 function extractDateOnly(value: string): string | null {

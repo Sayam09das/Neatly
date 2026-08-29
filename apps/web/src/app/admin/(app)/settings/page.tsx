@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function AdminSettingsPage(): ReactElement {
   return (
     <Suspense fallback={<SettingsLoading />}>
-      <AdminSettings presentation={{ status: "ready" }} />
+      <AdminSettings />
     </Suspense>
   );
 }

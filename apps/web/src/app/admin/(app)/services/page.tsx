@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactElement } from "react";
+import { type ReactElement, Suspense } from "react";
 import { AdminServices } from "@/components/admin/services/admin-services";
 import { adminServiceCopy } from "@/config/admin-services";
 
@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AdminServicesPage(): ReactElement {
-  return <AdminServices presentation={{ status: "empty" }} />;
+  return (
+    <Suspense fallback={<AdminServices presentation={{ status: "loading" }} />}>
+      <AdminServices />
+    </Suspense>
+  );
 }

@@ -8,15 +8,25 @@ import {
 import { CustomersCreateDialog } from "@/components/admin/customers/customers-create-dialog";
 import { CustomersTable } from "@/components/admin/customers/customers-table";
 import { CustomersToolbar } from "@/components/admin/customers/customers-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminCustomerCopy,
+  adminCustomerFilterCatalog,
   defaultAdminCustomerFilters,
   emptyAdminCustomerFilterCatalog,
 } from "@/config/admin-customers";
 import {
+  type AdminCustomerList,
   filterCustomers,
   hasActiveCustomerFilters,
+  listAdminCustomers,
 } from "@/lib/admin/customers";
+import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminCustomerFilterCatalog,
   AdminCustomerFilters,
@@ -25,21 +35,105 @@ import type {
 
 interface AdminCustomersProps {
   filterCatalog?: AdminCustomerFilterCatalog;
-  presentation: AdminCustomerPresentation;
+  presentation?: AdminCustomerPresentation;
 }
 
 export function AdminCustomers({
-  filterCatalog = emptyAdminCustomerFilterCatalog,
+  filterCatalog,
   presentation,
 }: AdminCustomersProps): ReactElement {
-  const [filters, setFilters] = useState<AdminCustomerFilters>(
+  if (presentation === undefined) {
+    return (
+      <AdminCustomersLive
+        filterCatalog={filterCatalog ?? adminCustomerFilterCatalog}
+      />
+    );
+  }
+
+  return (
+    <AdminCustomersView
+      filterCatalog={filterCatalog ?? emptyAdminCustomerFilterCatalog}
+      presentation={presentation}
+    />
+  );
+}
+
+function AdminCustomersLive({
+  filterCatalog,
+}: {
+  filterCatalog: AdminCustomerFilterCatalog;
+}): ReactElement {
+  const { filters, page, setFilters, setPage } = useAdminListState({
+    defaults: defaultAdminCustomerFilters,
+  });
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    joinedFrom: filters.joinedFrom,
+    joinedTo: filters.joinedTo,
+    page,
+    query: debouncedQuery,
+    status: filters.status,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminCustomers(
+        {
+          joinedFrom: filters.joinedFrom,
+          joinedTo: filters.joinedTo,
+          page,
+          query: debouncedQuery,
+          status: filters.status,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+  const hasActiveFilters = hasActiveCustomerFilters(filters);
+  const presentation = toLiveCustomerPresentation(query, hasActiveFilters);
+
+  return (
+    <AdminCustomersView
+      filterCatalog={filterCatalog}
+      filters={filters}
+      onFiltersChange={setFilters}
+      onPageChange={setPage}
+      presentation={presentation}
+    />
+  );
+}
+
+interface AdminCustomersViewProps {
+  filterCatalog: AdminCustomerFilterCatalog;
+  filters?: AdminCustomerFilters;
+  onFiltersChange?: (filters: AdminCustomerFilters) => void;
+  onPageChange?: (page: number) => void;
+  presentation: AdminCustomerPresentation;
+}
+
+function AdminCustomersView({
+  filterCatalog,
+  filters: filtersProp,
+  onFiltersChange,
+  onPageChange,
+  presentation,
+}: AdminCustomersViewProps): ReactElement {
+  const [localFilters, setLocalFilters] = useState<AdminCustomerFilters>(
     defaultAdminCustomerFilters,
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filters = filtersProp ?? localFilters;
+  const setFilters = onFiltersChange ?? setLocalFilters;
   const sourceCustomers =
     presentation.status === "ready" ? presentation.customers : [];
-  const visibleCustomers = filterCustomers(sourceCustomers, filters);
+  const visibleCustomers =
+    onFiltersChange === undefined
+      ? filterCustomers(sourceCustomers, filters)
+      : sourceCustomers;
   const hasActiveFilters = hasActiveCustomerFilters(filters);
 
   return (
@@ -84,6 +178,7 @@ export function AdminCustomers({
             onCreate={(): void => {
               setCreateOpen(true);
             }}
+            onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"
                 ? presentation.pagination
@@ -96,4 +191,36 @@ export function AdminCustomers({
       <CustomersCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
     </div>
   );
+}
+
+function toLiveCustomerPresentation(
+  query: AdminQueryState<AdminCustomerList>,
+  hasActiveFilters: boolean,
+): AdminCustomerPresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return {
+      onRetry: query.retry,
+      status: "error",
+    };
+  }
+
+  if (query.data === null || query.data.customers.length === 0) {
+    return hasActiveFilters
+      ? {
+          customers: [],
+          pagination: query.data?.pagination,
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    customers: query.data.customers,
+    pagination: query.data.pagination,
+    status: "ready",
+  };
 }

@@ -6,10 +6,17 @@ export interface AdminApiSuccess<T> {
   data: T;
 }
 
+export type AdminApiErrorCode =
+  | AuthErrorCode
+  | "CONFLICT"
+  | "INTERNAL_ERROR"
+  | "NOT_FOUND";
+
 export interface AdminApiFailure {
   ok: false;
   status: number;
-  code: AuthErrorCode | "INTERNAL_ERROR";
+  code: AdminApiErrorCode;
+  fields: Record<string, string>;
   message: string;
   unauthorized: boolean;
   forbidden: boolean;
@@ -21,7 +28,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function readErrorCode(value: unknown): AuthErrorCode | "INTERNAL_ERROR" {
+function readErrorCode(value: unknown): AdminApiErrorCode {
   if (
     value === "INVALID_INPUT" ||
     value === "INVALID_CREDENTIALS" ||
@@ -31,9 +38,31 @@ function readErrorCode(value: unknown): AuthErrorCode | "INTERNAL_ERROR" {
     value === "TOKEN_EXPIRED" ||
     value === "TOKEN_INVALID" ||
     value === "RATE_LIMITED" ||
+    value === "NOT_FOUND" ||
+    value === "CONFLICT" ||
     value === "INTERNAL_ERROR"
   ) {
     return value;
+  }
+
+  return "INTERNAL_ERROR";
+}
+
+function fallbackErrorCode(status: number): AdminApiErrorCode {
+  if (status === 404) {
+    return "NOT_FOUND";
+  }
+
+  if (status === 409) {
+    return "CONFLICT";
+  }
+
+  if (status === 429) {
+    return "RATE_LIMITED";
+  }
+
+  if (status === 400 || status === 422) {
+    return "INVALID_INPUT";
   }
 
   return "INTERNAL_ERROR";
@@ -54,6 +83,14 @@ export function parseAdminApiResponse<T>(
   const unauthorized = status === 401;
   const forbidden = status === 403;
 
+  if (status === 204) {
+    return {
+      ok: true,
+      status,
+      data: undefined as T,
+    };
+  }
+
   if (
     status >= 200 &&
     status < 300 &&
@@ -69,21 +106,46 @@ export function parseAdminApiResponse<T>(
   }
 
   const error = isRecord(body) && isRecord(body.error) ? body.error : undefined;
+  const parsedCode = readErrorCode(error?.code);
 
   return {
     ok: false,
     status,
     code: unauthorized
-      ? readErrorCode(error?.code) === "INTERNAL_ERROR"
+      ? parsedCode === "INTERNAL_ERROR"
         ? "UNAUTHORIZED"
-        : readErrorCode(error?.code)
+        : parsedCode
       : forbidden
         ? "FORBIDDEN"
-        : readErrorCode(error?.code),
+        : parsedCode === "INTERNAL_ERROR"
+          ? fallbackErrorCode(status)
+          : parsedCode,
+    fields: readErrorFields(error),
     message: readSafeMessage(error?.message),
     unauthorized,
     forbidden,
   };
+}
+
+function readErrorFields(
+  error: Record<string, unknown> | undefined,
+): Record<string, string> {
+  if (error === undefined) {
+    return {};
+  }
+
+  const fields = error.fields;
+  const mapped: Record<string, string> = {};
+
+  if (isRecord(fields)) {
+    for (const [key, value] of Object.entries(fields)) {
+      if (typeof value === "string" && value.trim() !== "") {
+        mapped[key] = value;
+      }
+    }
+  }
+
+  return mapped;
 }
 
 export async function adminRequest<T>(

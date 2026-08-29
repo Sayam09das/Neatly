@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactElement } from "react";
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { AdminDashboardLive } from "@/components/admin/admin-dashboard-live";
 import { adminHomeCopy } from "@/config/admin-ui";
 
 export const metadata: Metadata = {
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminHomePage(): ReactElement {
-  return <AdminDashboard />;
+  return <AdminDashboardLive />;
 }

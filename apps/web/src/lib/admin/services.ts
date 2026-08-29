@@ -1,7 +1,22 @@
 import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
+import {
   adminServiceCopy,
   adminServiceStatusLabels,
 } from "@/config/admin-services";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readBoolean,
+  readNullableString,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import type {
   AdminService,
   AdminServiceFilters,
@@ -88,6 +103,102 @@ export function getServiceSlugLabel(slug: string | null): string | null {
   }
 
   return slug;
+}
+
+export interface AdminServiceList {
+  pagination: AdminServicePagination;
+  services: readonly AdminService[];
+}
+
+export interface AdminServiceListQuery extends AdminServiceFilters {
+  page: number;
+}
+
+export async function listAdminServices(
+  query: AdminServiceListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminServiceList>> {
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.services, {
+      filters: {
+        active:
+          query.status === "active"
+            ? true
+            : query.status === "inactive"
+              ? false
+              : undefined,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapServiceList);
+}
+
+export async function getAdminService(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminService>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.service, id),
+    init,
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapService(value.service ?? value);
+  });
+}
+
+function mapServiceList(value: unknown): AdminServiceList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const services: AdminService[] = [];
+
+  for (const item of value.items) {
+    const service = mapService(item);
+
+    if (service === null) {
+      return null;
+    }
+
+    services.push(service);
+  }
+
+  return { pagination, services };
+}
+
+function mapService(value: unknown): AdminService | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+
+  if (id === null) {
+    return null;
+  }
+
+  return {
+    coverImageUrl: readNullableString(value.coverImageUrl),
+    id,
+    isActive: readBoolean(value.isActive),
+    name: readNullableString(value.name),
+    shortDescription: readNullableString(value.shortDescription),
+    slug: readNullableString(value.slug),
+  };
 }
 
 export function shouldRenderServicePagination(

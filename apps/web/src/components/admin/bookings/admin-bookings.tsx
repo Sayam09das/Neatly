@@ -8,12 +8,25 @@ import {
 import { BookingsCreateDialog } from "@/components/admin/bookings/bookings-create-dialog";
 import { BookingsTable } from "@/components/admin/bookings/bookings-table";
 import { BookingsToolbar } from "@/components/admin/bookings/bookings-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminBookingCopy,
   defaultAdminBookingFilters,
   emptyAdminBookingFilterCatalog,
 } from "@/config/admin-bookings";
-import { filterBookings, hasActiveBookingFilters } from "@/lib/admin/bookings";
+import {
+  type AdminBookingList,
+  filterBookings,
+  hasActiveBookingFilters,
+  listAdminBookingFilterCatalog,
+  listAdminBookings,
+} from "@/lib/admin/bookings";
+import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminBookingFilterCatalog,
   AdminBookingFilters,
@@ -22,21 +35,108 @@ import type {
 
 interface AdminBookingsProps {
   filterCatalog?: AdminBookingFilterCatalog;
-  presentation: AdminBookingPresentation;
+  presentation?: AdminBookingPresentation;
 }
 
 export function AdminBookings({
-  filterCatalog = emptyAdminBookingFilterCatalog,
+  filterCatalog,
   presentation,
 }: AdminBookingsProps): ReactElement {
-  const [filters, setFilters] = useState<AdminBookingFilters>(
+  if (presentation === undefined) {
+    return <AdminBookingsLive filterCatalog={filterCatalog} />;
+  }
+
+  return (
+    <AdminBookingsView
+      filterCatalog={filterCatalog ?? emptyAdminBookingFilterCatalog}
+      presentation={presentation}
+    />
+  );
+}
+
+function AdminBookingsLive({
+  filterCatalog: catalogProp,
+}: {
+  filterCatalog?: AdminBookingFilterCatalog;
+}): ReactElement {
+  const { filters, page, setFilters, setPage } = useAdminListState({
+    defaults: defaultAdminBookingFilters,
+  });
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    cleanerId: filters.cleanerId,
+    customerId: filters.customerId,
+    page,
+    query: debouncedQuery,
+    scheduledFrom: filters.scheduledFrom,
+    scheduledTo: filters.scheduledTo,
+    serviceId: filters.serviceId,
+    status: filters.status,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminBookings(
+        {
+          ...filters,
+          page,
+          query: debouncedQuery,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+  const catalogQuery = useAdminQuery({
+    enabled: catalogProp === undefined,
+    request: (signal) => listAdminBookingFilterCatalog({ signal }),
+    requestKey: "booking-filter-catalog",
+  });
+  const hasActiveFilters = hasActiveBookingFilters(filters);
+
+  return (
+    <AdminBookingsView
+      filterCatalog={
+        catalogProp ?? catalogQuery.data ?? emptyAdminBookingFilterCatalog
+      }
+      filters={filters}
+      onFiltersChange={setFilters}
+      onPageChange={setPage}
+      presentation={toLiveBookingPresentation(query, hasActiveFilters)}
+    />
+  );
+}
+
+interface AdminBookingsViewProps {
+  filterCatalog: AdminBookingFilterCatalog;
+  filters?: AdminBookingFilters;
+  onFiltersChange?: (filters: AdminBookingFilters) => void;
+  onPageChange?: (page: number) => void;
+  presentation: AdminBookingPresentation;
+}
+
+function AdminBookingsView({
+  filterCatalog,
+  filters: filtersProp,
+  onFiltersChange,
+  onPageChange,
+  presentation,
+}: AdminBookingsViewProps): ReactElement {
+  const [localFilters, setLocalFilters] = useState<AdminBookingFilters>(
     defaultAdminBookingFilters,
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filters = filtersProp ?? localFilters;
+  const setFilters = onFiltersChange ?? setLocalFilters;
   const sourceBookings =
     presentation.status === "ready" ? presentation.bookings : [];
-  const visibleBookings = filterBookings(sourceBookings, filters);
+  const visibleBookings =
+    onFiltersChange === undefined
+      ? filterBookings(sourceBookings, filters)
+      : sourceBookings;
   const hasActiveFilters = hasActiveBookingFilters(filters);
 
   return (
@@ -81,6 +181,7 @@ export function AdminBookings({
             onCreate={(): void => {
               setCreateOpen(true);
             }}
+            onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"
                 ? presentation.pagination
@@ -93,4 +194,33 @@ export function AdminBookings({
       <BookingsCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
     </div>
   );
+}
+
+function toLiveBookingPresentation(
+  query: AdminQueryState<AdminBookingList>,
+  hasActiveFilters: boolean,
+): AdminBookingPresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.bookings.length === 0) {
+    return hasActiveFilters
+      ? {
+          bookings: [],
+          pagination: query.data?.pagination,
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    bookings: query.data.bookings,
+    pagination: query.data.pagination,
+    status: "ready",
+  };
 }

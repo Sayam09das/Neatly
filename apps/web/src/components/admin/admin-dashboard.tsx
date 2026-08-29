@@ -1,5 +1,6 @@
 import { Card } from "@neatly/ui";
 import type { ComponentType, ReactElement, SVGProps } from "react";
+import type { AdminActivityPresentation } from "@/components/admin/admin-activity-list";
 import { AdminActivityList } from "@/components/admin/admin-activity-list";
 import {
   AdminDashboardBlock,
@@ -7,14 +8,19 @@ import {
 } from "@/components/admin/admin-dashboard-motion";
 import { AdminEmptyState } from "@/components/admin/admin-empty-state";
 import {
-  BlogIcon,
+  BookingsIcon,
   ContactsIcon,
+  CustomersIcon,
   OverviewIcon,
   PortfolioIcon,
   QuotesIcon,
   ServicesIcon,
+  TestimonialsIcon,
 } from "@/components/admin/admin-icons";
-import { AdminMetricCard } from "@/components/admin/admin-metric-card";
+import {
+  AdminMetricCard,
+  type AdminMetricPresentation,
+} from "@/components/admin/admin-metric-card";
 import { AdminMetricsGrid } from "@/components/admin/admin-metrics-grid";
 import { AdminQuickAction } from "@/components/admin/admin-quick-action";
 import { AdminSection } from "@/components/admin/admin-section";
@@ -28,10 +34,12 @@ import type { AdminNavIconName } from "@/config/admin-nav";
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 const dashboardIcons: Partial<Record<AdminNavIconName, IconComponent>> = {
-  blog: BlogIcon,
+  bookings: BookingsIcon,
   contacts: ContactsIcon,
+  customers: CustomersIcon,
   portfolio: PortfolioIcon,
   quotes: QuotesIcon,
+  reviews: TestimonialsIcon,
   services: ServicesIcon,
 };
 
@@ -45,7 +53,17 @@ function getDashboardIcon(name: AdminNavIconName): IconComponent {
   return icon;
 }
 
-export function AdminDashboard(): ReactElement {
+export interface AdminDashboardProps {
+  activity?: AdminActivityPresentation;
+  metricPresentations?: Partial<Record<string, AdminMetricPresentation>>;
+  operations?: AdminActivityPresentation;
+}
+
+export function AdminDashboard({
+  activity = { status: "empty" },
+  metricPresentations,
+  operations = { status: "empty" },
+}: AdminDashboardProps): ReactElement {
   return (
     <div className="mx-auto w-full min-w-0 max-w-page">
       <AdminDashboardMotion>
@@ -71,7 +89,9 @@ export function AdminDashboard(): ReactElement {
                   icon={getDashboardIcon(metric.icon)}
                   key={metric.id}
                   label={metric.label}
-                  presentation={{ status: "empty" }}
+                  presentation={
+                    metricPresentations?.[metric.id] ?? { status: "empty" }
+                  }
                 />
               ))}
             </AdminMetricsGrid>
@@ -84,20 +104,27 @@ export function AdminDashboard(): ReactElement {
               description={adminDashboardCopy.operationsDescription}
               title={adminDashboardCopy.operationsHeading}
             >
-              <Card className="flex min-h-48 flex-col justify-center p-6 shadow-none">
-                <AdminEmptyState
-                  description={adminDashboardCopy.operationsEmptyDescription}
-                  icon={OverviewIcon}
-                  title={adminDashboardCopy.operationsEmptyTitle}
-                />
-              </Card>
+              {operations.status === "ready" ? (
+                <AdminActivityList presentation={operations} />
+              ) : operations.status === "loading" ||
+                operations.status === "error" ? (
+                <AdminActivityList presentation={operations} />
+              ) : (
+                <Card className="flex min-h-48 flex-col justify-center p-6 shadow-none">
+                  <AdminEmptyState
+                    description={adminDashboardCopy.operationsEmptyDescription}
+                    icon={OverviewIcon}
+                    title={adminDashboardCopy.operationsEmptyTitle}
+                  />
+                </Card>
+              )}
             </AdminSection>
 
             <AdminSection
               description={adminDashboardCopy.activityDescription}
               title={adminDashboardCopy.activityHeading}
             >
-              <AdminActivityList presentation={{ status: "empty" }} />
+              <AdminActivityList presentation={activity} />
             </AdminSection>
           </div>
         </AdminDashboardBlock>

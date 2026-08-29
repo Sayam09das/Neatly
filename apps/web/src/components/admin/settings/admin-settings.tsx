@@ -26,18 +26,64 @@ import {
   adminSettingsCopy,
   adminSettingsSections,
 } from "@/config/admin-settings";
+import { getAdminSettingsPayload } from "@/lib/admin/settings";
+import { useAdminQuery } from "@/lib/admin/use-admin-query";
 import type {
   AdminSettingsPresentation,
+  AdminSettingsProfile,
   AdminSettingsSectionId,
+  AdminSiteSettings,
 } from "@/types/admin-settings";
 
 interface AdminSettingsProps {
-  presentation: AdminSettingsPresentation;
+  presentation?: AdminSettingsPresentation;
 }
 
 export function AdminSettings({
   presentation,
 }: AdminSettingsProps): ReactElement {
+  if (presentation === undefined) {
+    return <AdminSettingsLive />;
+  }
+
+  return <AdminSettingsReady presentation={presentation} />;
+}
+
+function AdminSettingsLive(): ReactElement {
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) => getAdminSettingsPayload({ signal }),
+    requestKey: "admin-settings",
+  });
+
+  if (query.status === "loading") {
+    return <AdminSettingsReady presentation={{ status: "loading" }} />;
+  }
+
+  if (query.status === "error" || query.data === null) {
+    return (
+      <AdminSettingsReady
+        presentation={{ onRetry: query.retry, status: "error" }}
+      />
+    );
+  }
+
+  return (
+    <AdminSettingsReady
+      presentation={{
+        profile: query.data.profile,
+        settings: query.data.settings,
+        status: "ready",
+      }}
+    />
+  );
+}
+
+function AdminSettingsReady({
+  presentation,
+}: {
+  presentation: AdminSettingsPresentation;
+}): ReactElement {
   return (
     <Suspense
       fallback={
@@ -51,7 +97,11 @@ export function AdminSettings({
   );
 }
 
-function AdminSettingsBody({ presentation }: AdminSettingsProps): ReactElement {
+function AdminSettingsBody({
+  presentation,
+}: {
+  presentation: AdminSettingsPresentation;
+}): ReactElement {
   const searchParams = useSearchParams();
   const requested = searchParams?.get("section") ?? null;
   const initialSection = adminSettingsSections.some(
@@ -120,7 +170,19 @@ function AdminSettingsBody({ presentation }: AdminSettingsProps): ReactElement {
                 key={section}
                 transition={getMotionTransition(prefersReducedMotion)}
               >
-                <SettingsSectionPanel section={section} />
+                <SettingsSectionPanel
+                  profile={
+                    presentation.status === "ready"
+                      ? (presentation.profile ?? null)
+                      : null
+                  }
+                  section={section}
+                  settings={
+                    presentation.status === "ready"
+                      ? (presentation.settings ?? null)
+                      : null
+                  }
+                />
               </motion.div>
             </div>
           ) : null}
@@ -131,11 +193,15 @@ function AdminSettingsBody({ presentation }: AdminSettingsProps): ReactElement {
 }
 
 interface SettingsSectionPanelProps {
+  profile: AdminSettingsProfile | null;
   section: AdminSettingsSectionId;
+  settings: AdminSiteSettings | null;
 }
 
 function SettingsSectionPanel({
+  profile,
   section,
+  settings,
 }: SettingsSectionPanelProps): ReactElement {
   const copy = adminSettingsSections.find((item) => item.id === section);
 
@@ -146,12 +212,33 @@ function SettingsSectionPanel({
         {copy?.description}
       </p>
       <div className="mt-6">
-        {section === "profile" ? <ProfileFields /> : null}
-        {section === "account" ? <AccountFields /> : null}
-        {section === "notifications" ? <NotificationFields /> : null}
+        {section === "profile" ? (
+          <ProfileFields
+            initialEmail={profile?.email ?? ""}
+            initialName={profile?.name ?? ""}
+          />
+        ) : null}
+        {section === "account" ? (
+          <AccountFields
+            role={profile?.role ?? null}
+            status={profile?.status ?? null}
+          />
+        ) : null}
+        {section === "notifications" ? (
+          <NotificationFields
+            initialEmail={settings?.notificationEmail ?? ""}
+          />
+        ) : null}
         {section === "appearance" ? <AppearanceFields /> : null}
         {section === "security" ? <SecurityFields /> : null}
-        {section === "business" ? <BusinessFields /> : null}
+        {section === "business" ? (
+          <BusinessFields
+            initialAddress={settings?.address ?? ""}
+            initialEmail={settings?.email ?? ""}
+            initialName={settings?.businessName ?? ""}
+            initialPhone={settings?.phone ?? ""}
+          />
+        ) : null}
       </div>
     </Card>
   );

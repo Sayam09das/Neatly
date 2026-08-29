@@ -19,7 +19,45 @@ import type { AdminService } from "@/types/admin-service";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/services",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
+  useSearchParams: (): URLSearchParams => new URLSearchParams(),
 }));
+
+vi.mock("@/lib/admin/use-admin-list-state", () => ({
+  useAdminListState: <T,>({
+    defaults,
+  }: {
+    defaults: T;
+  }): {
+    filters: T;
+    page: number;
+    setFilters: (filters: T) => void;
+    setPage: (page: number) => void;
+  } => ({
+    filters: defaults,
+    page: 1,
+    setFilters: (): void => undefined,
+    setPage: (): void => undefined,
+  }),
+}));
+
+vi.mock("@/lib/admin/services", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/services")>();
+
+  return {
+    ...actual,
+    listAdminServices: vi.fn().mockResolvedValue({
+      data: {
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+        services: [],
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 const TEST_SERVICE: AdminService = {
   coverImageUrl: null,
@@ -42,7 +80,7 @@ const FORBIDDEN_FAKE_SERVICE_COPY = [
 ];
 
 describe("Admin services page", (): void => {
-  it("renders the title, search, filters, and empty state without fake services", (): void => {
+  it("renders the title, search, filters, and empty state without fake services", async (): Promise<void> => {
     render(<AdminServicesPage />);
 
     expect(
@@ -65,7 +103,9 @@ describe("Admin services page", (): void => {
       screen.getAllByRole("button", { name: adminServiceCopy.primaryAction })
         .length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText(adminServiceCopy.emptyTitle)).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(screen.getByText(adminServiceCopy.emptyTitle)).toBeInTheDocument();
+    });
     expect(
       screen.getByText(adminServiceCopy.emptyDescription),
     ).toBeInTheDocument();

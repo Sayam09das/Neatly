@@ -10,7 +10,7 @@ export const adminSettingsCopy = {
   appearanceTitle: "Appearance",
   businessAddressLabel: "Address",
   businessDescription:
-    "Public contact details will appear here once site settings are connected.",
+    "Public contact details are loaded from site settings when that record exists.",
   businessEmailLabel: "Public email",
   businessNameLabel: "Business name",
   businessPhoneLabel: "Phone",
@@ -31,7 +31,7 @@ export const adminSettingsCopy = {
   navLabel: "Settings sections",
   newPasswordLabel: "New password",
   notificationEmailDescription:
-    "Admin alert email is managed with site settings and is not connected yet.",
+    "Admin alert email is loaded from site settings. Saving changes is not available yet.",
   notificationEmailLabel: "Notification email",
   notificationsDescription:
     "Email alert destination for quotes and contact inquiries.",

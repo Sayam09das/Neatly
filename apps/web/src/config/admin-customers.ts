@@ -71,6 +71,13 @@ export const emptyAdminCustomerFilterCatalog: AdminCustomerFilterCatalog = {
   statuses: [],
 };
 
+export const adminCustomerFilterCatalog: AdminCustomerFilterCatalog = {
+  statuses: [
+    { id: "ACTIVE", label: "Active" },
+    { id: "INACTIVE", label: "Inactive" },
+  ],
+};
+
 export function getAdminCustomerDetailsPath(customerId: string): string {
   return `${ADMIN_PATHS.customers}/${customerId}`;
 }

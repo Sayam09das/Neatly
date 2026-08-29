@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactElement } from "react";
+import { type ReactElement, Suspense } from "react";
 import { AdminCustomers } from "@/components/admin/customers/admin-customers";
 import { adminCustomerCopy } from "@/config/admin-customers";
 
@@ -8,5 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default function AdminCustomersPage(): ReactElement {
-  return <AdminCustomers presentation={{ status: "empty" }} />;
+  return (
+    <Suspense
+      fallback={<AdminCustomers presentation={{ status: "loading" }} />}
+    >
+      <AdminCustomers />
+    </Suspense>
+  );
 }

@@ -25,6 +25,7 @@ interface ServicesTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onPageChange?: (page: number) => void;
   pagination?: AdminServicePagination;
   presentation: AdminServicePresentation;
   services: readonly AdminService[];
@@ -34,6 +35,7 @@ export function ServicesTable({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onPageChange,
   pagination,
   presentation,
   services,
@@ -50,7 +52,10 @@ export function ServicesTable({
       {presentation.status === "ready" &&
       shouldRenderServicePagination(pagination, services.length) &&
       pagination !== undefined ? (
-        <ServicesPagination pagination={pagination} />
+        <ServicesPagination
+          onPageChange={onPageChange}
+          pagination={pagination}
+        />
       ) : null}
     </div>
   );

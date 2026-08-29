@@ -40,3 +40,17 @@ Mutations are rate-limited outside `test` (60 / 15 minutes per user + route).
 Possible errors: `401 UNAUTHORIZED`, `403 FORBIDDEN`, `400 INVALID_INPUT`, `404 NOT_FOUND`, `409 CONFLICT`, `429 RATE_LIMITED`, `500 INTERNAL_ERROR`.
 
 Audit logging is not in the schema yet. Important mutations (status, assignment, deactivate, archive, hide) should be audited in a later phase.
+
+## Frontend read integration (phase 32)
+
+The Admin UI calls same-origin `GET /api/v1/admin/*` through `adminRequest()`. Next.js proxies those GETs in `apps/web/src/app/api/v1/admin/[...path]/route.ts`: it forwards the HttpOnly session cookie as `x-session-token` to `NEATLY_API_URL` and never exposes the token or server secrets to the browser. Typed clients and mappers live in `apps/web/src/lib/admin/`. List filters, search, and pagination are server-backed. HTTP 401 uses the existing login redirect; 403 stays a page error. Failed GETs show the existing error/retry UI and never fall back to mock rows.
+
+Known gaps (do not invent UI or data for these):
+
+* There is no Admin Cleaners page. `GET /api/v1/admin/cleaners` and `src/lib/admin/cleaners.ts` exist for later UI.
+* There is no customer detail route. `GET /api/v1/admin/customers/:id` is wired in the client; the customers table view action stays disabled until mutations/detail work.
+* Notification list search is not a backend query (`search` is ignored). Unread uses `unreadOnly`; a “read only” filter is not in the API and is applied only to the current page.
+* `GET /api/v1/admin/settings` returns 404 until `site_settings` id=1 is seeded. The UI treats that as empty settings, not an error.
+* Quote, contact, and blog Admin APIs are not part of this namespace. Dashboard quick actions that point at those screens remain navigation only.
+* Review rating averages in the UI are computed from the current page, not a backend aggregate.
+* Write/mutation flows are phase 33. Real-time notification delivery is phase 34.

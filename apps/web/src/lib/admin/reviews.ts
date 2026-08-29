@@ -1,9 +1,26 @@
 import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
+import {
   ADMIN_REVIEW_PREVIEW_LENGTH,
   adminReviewCategoryLabels,
   adminReviewCopy,
   adminReviewStatusLabels,
 } from "@/config/admin-reviews";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readBoolean,
+  readIsoDate,
+  readNullableString,
+  readNumber,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import type {
   AdminReview,
   AdminReviewFilters,
@@ -210,6 +227,129 @@ export function shouldRenderReviewPagination(
     pagination.total > 0 &&
     pagination.totalPages > 1 &&
     visibleCount > 0
+  );
+}
+
+export interface AdminReviewList {
+  pagination: AdminReviewPagination;
+  reviews: readonly AdminReview[];
+}
+
+export interface AdminReviewListQuery extends AdminReviewFilters {
+  page: number;
+}
+
+export async function listAdminReviews(
+  query: AdminReviewListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminReviewList>> {
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.reviews, {
+      filters: {
+        active:
+          query.status === "active"
+            ? true
+            : query.status === "inactive"
+              ? false
+              : undefined,
+        category: query.category,
+        createdFrom: query.createdFrom,
+        createdTo: query.createdTo,
+        rating: query.rating === "" ? undefined : Number(query.rating),
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapReviewList);
+}
+
+export async function getAdminReview(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminReview>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.review, id),
+    init,
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapReview(value.review ?? value);
+  });
+}
+
+function mapReviewList(value: unknown): AdminReviewList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const reviews: AdminReview[] = [];
+
+  for (const item of value.items) {
+    const review = mapReview(item);
+
+    if (review === null) {
+      return null;
+    }
+
+    reviews.push(review);
+  }
+
+  return { pagination, reviews };
+}
+
+function mapReview(value: unknown): AdminReview | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+
+  if (id === null) {
+    return null;
+  }
+
+  const rating = readNumber(value.rating);
+  const category = readNullableString(value.serviceCategory);
+
+  return {
+    content: readNullableString(value.content),
+    createdAt: readIsoDate(value.createdAt),
+    customerName: readNullableString(value.customerName),
+    customerRole: readNullableString(value.customerRole),
+    id,
+    isActive: readBoolean(value.isActive),
+    isFeatured: readBoolean(value.isFeatured),
+    rating: isReviewRating(rating) ? rating : null,
+    serviceCategory: isReviewCategory(category) ? category : null,
+  };
+}
+
+function isReviewRating(value: number | null): value is AdminReviewRatingValue {
+  return (
+    value === 1 || value === 2 || value === 3 || value === 4 || value === 5
+  );
+}
+
+function isReviewCategory(
+  value: string | null,
+): value is AdminReviewServiceCategory {
+  return (
+    value === "COMMERCIAL" ||
+    value === "DEEP_CLEAN" ||
+    value === "MOVE_IN_OUT" ||
+    value === "RESIDENTIAL"
   );
 }
 

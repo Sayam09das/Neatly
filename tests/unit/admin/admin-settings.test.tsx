@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -12,10 +12,26 @@ import { AUTH_PASSWORD_MIN_LENGTH } from "@/config/auth";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/settings",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
   useSearchParams: (): { get: (key: string) => string | null } => ({
     get: (): string | null => null,
   }),
 }));
+
+vi.mock("@/lib/admin/settings", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/settings")>();
+
+  return {
+    ...actual,
+    getAdminSettingsPayload: vi.fn().mockResolvedValue({
+      data: { profile: null, settings: null },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 vi.mock("@/providers/theme-provider", () => ({
   useTheme: (): {
@@ -42,7 +58,7 @@ const FORBIDDEN_FAKE_SETTINGS_COPY = [
 ];
 
 describe("Admin settings page", (): void => {
-  it("renders the title, navigation, and profile form without fake values", (): void => {
+  it("renders the title, navigation, and profile form without fake values", async (): Promise<void> => {
     renderSettings(<AdminSettingsPage />);
 
     expect(
@@ -52,9 +68,11 @@ describe("Admin settings page", (): void => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText(adminSettingsCopy.description)).toBeInTheDocument();
-    expect(
-      screen.getByRole("navigation", { name: adminSettingsCopy.navLabel }),
-    ).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(
+        screen.getByRole("navigation", { name: adminSettingsCopy.navLabel }),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByRole("button", { name: adminSettingsCopy.profileTitle }),
     ).toHaveAttribute("aria-current", "page");

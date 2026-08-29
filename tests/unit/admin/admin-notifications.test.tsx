@@ -12,7 +12,46 @@ import type { AdminNotification } from "@/types/admin-notification";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/notifications",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
+  useSearchParams: (): URLSearchParams => new URLSearchParams(),
 }));
+
+vi.mock("@/lib/admin/use-admin-list-state", () => ({
+  useAdminListState: <T,>({
+    defaults,
+  }: {
+    defaults: T;
+  }): {
+    filters: T;
+    page: number;
+    setFilters: (filters: T) => void;
+    setPage: (page: number) => void;
+  } => ({
+    filters: defaults,
+    page: 1,
+    setFilters: (): void => undefined,
+    setPage: (): void => undefined,
+  }),
+}));
+
+vi.mock("@/lib/admin/notifications", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/admin/notifications")>();
+
+  return {
+    ...actual,
+    listAdminNotifications: vi.fn().mockResolvedValue({
+      data: {
+        notifications: [],
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 const TEST_NOTIFICATION: AdminNotification = {
   createdAt: null,
@@ -33,7 +72,7 @@ const FORBIDDEN_FAKE_NOTIFICATION_COPY = [
 ];
 
 describe("Admin notifications page", (): void => {
-  it("renders the title, search, filters, and empty state without fake notifications", (): void => {
+  it("renders the title, search, filters, and empty state without fake notifications", async (): Promise<void> => {
     render(<AdminNotificationsPage />);
 
     expect(
@@ -61,9 +100,11 @@ describe("Admin notifications page", (): void => {
     expect(
       screen.getByRole("button", { name: adminNotificationCopy.markAllAction }),
     ).toBeDisabled();
-    expect(
-      screen.getByText(adminNotificationCopy.emptyTitle),
-    ).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(
+        screen.getByText(adminNotificationCopy.emptyTitle),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByText(adminNotificationCopy.emptyDescription),
     ).toBeInTheDocument();

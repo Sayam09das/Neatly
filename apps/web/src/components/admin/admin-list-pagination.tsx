@@ -13,6 +13,7 @@ export interface AdminListPaginationMeta {
 interface AdminListPaginationProps {
   ariaLabel: string;
   nextLabel: string;
+  onPageChange?: (page: number) => void;
   pageLabel: string;
   pagination: AdminListPaginationMeta;
   previousLabel: string;
@@ -22,6 +23,7 @@ interface AdminListPaginationProps {
 export function AdminListPagination({
   ariaLabel,
   nextLabel,
+  onPageChange,
   pageLabel,
   pagination,
   previousLabel,
@@ -41,6 +43,13 @@ export function AdminListPagination({
       <Button
         aria-label={previousLabel}
         disabled={pagination.page <= 1}
+        onClick={
+          onPageChange === undefined || pagination.page <= 1
+            ? undefined
+            : (): void => {
+                onPageChange(pagination.page - 1);
+              }
+        }
         size="sm"
         type="button"
         variant="outline"
@@ -53,7 +62,14 @@ export function AdminListPagination({
             <Button
               aria-current={page === pagination.page ? "page" : undefined}
               aria-label={`${pageLabel} ${page}`}
-              disabled
+              disabled={onPageChange === undefined || page === pagination.page}
+              onClick={
+                onPageChange === undefined || page === pagination.page
+                  ? undefined
+                  : (): void => {
+                      onPageChange(page);
+                    }
+              }
               size="sm"
               type="button"
               variant={page === pagination.page ? "secondary" : "ghost"}
@@ -66,6 +82,13 @@ export function AdminListPagination({
       <Button
         aria-label={nextLabel}
         disabled={pagination.page >= pagination.totalPages}
+        onClick={
+          onPageChange === undefined || pagination.page >= pagination.totalPages
+            ? undefined
+            : (): void => {
+                onPageChange(pagination.page + 1);
+              }
+        }
         size="sm"
         type="button"
         variant="outline"

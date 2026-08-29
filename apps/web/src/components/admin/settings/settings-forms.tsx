@@ -23,14 +23,20 @@ import { adminSettingsCopy } from "@/config/admin-settings";
 import { AUTH_PASSWORD_MIN_LENGTH } from "@/config/auth";
 import { useTheme } from "@/providers/theme-provider";
 
-export function ProfileFields(): ReactElement {
+export function ProfileFields({
+  initialEmail = "",
+  initialName = "",
+}: {
+  initialEmail?: string;
+  initialName?: string;
+}): ReactElement {
   const nameId = useId();
   const emailId = useId();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [unavailableOpen, setUnavailableOpen] = useState(false);
-  const dirty = name !== "" || email !== "";
+  const dirty = name !== initialName || email !== initialEmail;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -73,8 +79,8 @@ export function ProfileFields(): ReactElement {
       <SaveBar
         dirty={dirty}
         onCancel={(): void => {
-          setName("");
-          setEmail("");
+          setName(initialName);
+          setEmail(initialEmail);
           setEmailError(null);
         }}
       />
@@ -86,7 +92,13 @@ export function ProfileFields(): ReactElement {
   );
 }
 
-export function AccountFields(): ReactElement {
+export function AccountFields({
+  role = null,
+  status = null,
+}: {
+  role?: string | null;
+  status?: string | null;
+}): ReactElement {
   return (
     <dl className="space-y-4">
       <div>
@@ -94,7 +106,7 @@ export function AccountFields(): ReactElement {
           {adminSettingsCopy.accountRoleLabel}
         </dt>
         <dd className="mt-1 text-body text-foreground">
-          {adminSettingsCopy.emptyValue}
+          {role ?? adminSettingsCopy.emptyValue}
         </dd>
       </div>
       <div>
@@ -102,16 +114,20 @@ export function AccountFields(): ReactElement {
           {adminSettingsCopy.accountStatusLabel}
         </dt>
         <dd className="mt-1 text-body text-foreground">
-          {adminSettingsCopy.emptyValue}
+          {status ?? adminSettingsCopy.emptyValue}
         </dd>
       </div>
     </dl>
   );
 }
 
-export function NotificationFields(): ReactElement {
+export function NotificationFields({
+  initialEmail = "",
+}: {
+  initialEmail?: string;
+}): ReactElement {
   const emailId = useId();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [unavailableOpen, setUnavailableOpen] = useState(false);
 
   return (
@@ -137,9 +153,9 @@ export function NotificationFields(): ReactElement {
         />
       </SettingsField>
       <SaveBar
-        dirty={email !== ""}
+        dirty={email !== initialEmail}
         onCancel={(): void => {
-          setEmail("");
+          setEmail(initialEmail);
         }}
       />
       <UnavailableDialog
@@ -247,15 +263,29 @@ export function SecurityFields(): ReactElement {
   );
 }
 
-export function BusinessFields(): ReactElement {
+export function BusinessFields({
+  initialAddress = "",
+  initialEmail = "",
+  initialName = "",
+  initialPhone = "",
+}: {
+  initialAddress?: string;
+  initialEmail?: string;
+  initialName?: string;
+  initialPhone?: string;
+}): ReactElement {
   const [values, setValues] = useState({
-    address: "",
-    email: "",
-    name: "",
-    phone: "",
+    address: initialAddress,
+    email: initialEmail,
+    name: initialName,
+    phone: initialPhone,
   });
   const [unavailableOpen, setUnavailableOpen] = useState(false);
-  const dirty = Object.values(values).some((value) => value !== "");
+  const dirty =
+    values.address !== initialAddress ||
+    values.email !== initialEmail ||
+    values.name !== initialName ||
+    values.phone !== initialPhone;
   const nameId = useId();
   const emailId = useId();
   const phoneId = useId();
@@ -323,7 +353,12 @@ export function BusinessFields(): ReactElement {
       <SaveBar
         dirty={dirty}
         onCancel={(): void => {
-          setValues({ address: "", email: "", name: "", phone: "" });
+          setValues({
+            address: initialAddress,
+            email: initialEmail,
+            name: initialName,
+            phone: initialPhone,
+          });
         }}
       />
       <UnavailableDialog

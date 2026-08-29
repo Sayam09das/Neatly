@@ -1,14 +1,36 @@
 import {
+  ADMIN_API_PATHS,
+  ADMIN_FILTER_CATALOG_LIMIT,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
+import {
   adminBookingCopy,
   adminBookingStatusLabels,
 } from "@/config/admin-bookings";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readIsoDate,
+  readNullableString,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import type {
   AdminBooking,
+  AdminBookingFilterCatalog,
+  AdminBookingFilterOption,
   AdminBookingFilters,
   AdminBookingPagination,
+  AdminBookingStatus,
   AdminBookingStatusFilter,
 } from "@/types/admin-booking";
-import { ADMIN_BOOKING_STATUS_ALL } from "@/types/admin-booking";
+import {
+  ADMIN_BOOKING_STATUS_ALL,
+  adminBookingStatuses,
+} from "@/types/admin-booking";
 
 const DATE_ONLY_PATTERN = /^(\d{4}-\d{2}-\d{2})/;
 
@@ -205,6 +227,210 @@ function matchesScheduledRange(
   }
 
   return true;
+}
+
+export interface AdminBookingList {
+  bookings: readonly AdminBooking[];
+  pagination: AdminBookingPagination;
+}
+
+export interface AdminBookingListQuery extends AdminBookingFilters {
+  page: number;
+}
+
+export async function listAdminBookings(
+  query: AdminBookingListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBookingList>> {
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.bookings, {
+      filters: {
+        cleanerId: query.cleanerId,
+        customerId: query.customerId,
+        scheduledFrom: query.scheduledFrom,
+        scheduledTo: query.scheduledTo,
+        serviceId: query.serviceId,
+        status:
+          query.status === ADMIN_BOOKING_STATUS_ALL ? undefined : query.status,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapBookingList);
+}
+
+export async function getAdminBooking(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBooking>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.booking, id),
+    init,
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapBooking(value.booking ?? value);
+  });
+}
+
+export async function listAdminBookingFilterCatalog(
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBookingFilterCatalog>> {
+  const [customers, cleaners, services] = await Promise.all([
+    adminRequest<unknown>(
+      withAdminQuery(ADMIN_API_PATHS.customers, {
+        limit: ADMIN_FILTER_CATALOG_LIMIT,
+        page: 1,
+        sort: "name",
+        order: "asc",
+      }),
+      init,
+    ),
+    adminRequest<unknown>(
+      withAdminQuery(ADMIN_API_PATHS.cleaners, {
+        limit: ADMIN_FILTER_CATALOG_LIMIT,
+        page: 1,
+        sort: "name",
+        order: "asc",
+      }),
+      init,
+    ),
+    adminRequest<unknown>(
+      withAdminQuery(ADMIN_API_PATHS.services, {
+        limit: ADMIN_FILTER_CATALOG_LIMIT,
+        page: 1,
+        sort: "name",
+        order: "asc",
+      }),
+      init,
+    ),
+  ]);
+
+  if (!customers.ok) {
+    return customers;
+  }
+
+  if (!cleaners.ok) {
+    return cleaners;
+  }
+
+  if (!services.ok) {
+    return services;
+  }
+
+  const catalog: AdminBookingFilterCatalog = {
+    cleaners: mapNamedOptions(cleaners.data),
+    customers: mapNamedOptions(customers.data),
+    services: mapNamedOptions(services.data),
+  };
+
+  return {
+    data: catalog,
+    ok: true,
+    status: 200,
+  };
+}
+
+function mapBookingList(value: unknown): AdminBookingList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const bookings: AdminBooking[] = [];
+
+  for (const item of value.items) {
+    const booking = mapBooking(item);
+
+    if (booking === null) {
+      return null;
+    }
+
+    bookings.push(booking);
+  }
+
+  return { bookings, pagination };
+}
+
+function mapBooking(value: unknown): AdminBooking | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+  const status = readString(value.status);
+
+  if (id === null || !isBookingStatus(status)) {
+    return null;
+  }
+
+  return {
+    cleanerId: readNullableString(value.cleanerId),
+    cleanerName: readPartyName(value.cleaner),
+    customerId: readNullableString(value.customerId),
+    customerName: readPartyName(value.customer),
+    id,
+    scheduledAt: readIsoDate(value.scheduledAt),
+    serviceId: readNullableString(value.serviceId),
+    serviceName: readPartyName(value.service),
+    status,
+  };
+}
+
+function mapNamedOptions(
+  value: unknown,
+): AdminBookingFilterCatalog["customers"] {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return [];
+  }
+
+  const options: AdminBookingFilterOption[] = [];
+
+  for (const item of value.items) {
+    if (!isRecord(item)) {
+      continue;
+    }
+
+    const id = readString(item.id);
+    const name = readNullableString(item.name);
+
+    if (id === null) {
+      continue;
+    }
+
+    options.push({
+      id,
+      label: name ?? id,
+    });
+  }
+
+  return options;
+}
+
+function readPartyName(value: unknown): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return readNullableString(value.name);
+}
+
+function isBookingStatus(value: string | null): value is AdminBookingStatus {
+  return (
+    value !== null &&
+    (adminBookingStatuses as readonly string[]).includes(value)
+  );
 }
 
 function extractDateOnly(value: string): string | null {

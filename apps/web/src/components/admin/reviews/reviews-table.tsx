@@ -25,6 +25,7 @@ import type {
 interface ReviewsTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  onPageChange?: (page: number) => void;
   pagination?: AdminReviewPagination;
   presentation: AdminReviewPresentation;
   reviews: readonly AdminReview[];
@@ -33,6 +34,7 @@ interface ReviewsTableProps {
 export function ReviewsTable({
   hasActiveFilters,
   onClearFilters,
+  onPageChange,
   pagination,
   presentation,
   reviews,
@@ -51,7 +53,10 @@ export function ReviewsTable({
       {presentation.status === "ready" &&
       shouldRenderReviewPagination(pagination, reviews.length) &&
       pagination !== undefined ? (
-        <ReviewsPagination pagination={pagination} />
+        <ReviewsPagination
+          onPageChange={onPageChange}
+          pagination={pagination}
+        />
       ) : null}
     </div>
   );

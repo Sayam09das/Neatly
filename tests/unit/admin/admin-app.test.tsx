@@ -1,12 +1,13 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AdminErrorPage from "@/app/admin/(app)/error";
 import AdminAppLayout from "@/app/admin/(app)/layout";
 import AdminLoading from "@/app/admin/(app)/loading";
 import AdminNotFound from "@/app/admin/(app)/not-found";
 import AdminHomePage from "@/app/admin/(app)/page";
+import { adminDashboardCopy } from "@/config/admin-dashboard";
 import {
   ADMIN_HOME_PATH,
   adminErrorCopy,
@@ -25,7 +26,40 @@ vi.mock("@/lib/auth/current-user", () => ({
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
+  useSearchParams: (): URLSearchParams => new URLSearchParams(),
 }));
+
+vi.mock("@/lib/admin/dashboard", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/dashboard")>();
+
+  return {
+    ...actual,
+    getAdminDashboard: vi.fn().mockResolvedValue({
+      data: {
+        bookings: {
+          assigned: 0,
+          cancelled: 0,
+          completed: 0,
+          confirmed: 0,
+          inProgress: 0,
+          pending: 0,
+          total: 0,
+        },
+        cleaners: { active: 0, total: 0 },
+        customers: { active: 0, total: 0 },
+        recentBookings: [],
+        recentCustomers: [],
+        reviews: { active: 0, total: 0 },
+        services: { active: 0, total: 0 },
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 const layoutAdmin: AuthUser = {
   email: "admin@neatly.example",
@@ -65,15 +99,21 @@ describe("Admin application routes", (): void => {
     expect(screen.queryByText(AUTH_ADMIN_LOGIN_PATH)).not.toBeInTheDocument();
   });
 
-  it("renders the admin home welcome state without dummy metrics", (): void => {
+  it("renders the admin home welcome state without dummy metrics", async (): Promise<void> => {
     render(<AdminHomePage />);
 
     expect(
       screen.getByRole("heading", { name: adminHomeCopy.heading }),
     ).toBeInTheDocument();
     expect(screen.getByText(adminHomeCopy.description)).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(
+        screen.getByText(adminDashboardCopy.activityEmptyTitle),
+      ).toBeInTheDocument();
+    });
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+24%/)).not.toBeInTheDocument();
   });
 
   it("renders a stable loading placeholder inside the content region", (): void => {

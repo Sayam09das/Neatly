@@ -8,12 +8,24 @@ import {
 import { ServicesCreateDialog } from "@/components/admin/services/services-create-dialog";
 import { ServicesTable } from "@/components/admin/services/services-table";
 import { ServicesToolbar } from "@/components/admin/services/services-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminServiceCopy,
   adminServiceFilterCatalog,
   defaultAdminServiceFilters,
 } from "@/config/admin-services";
-import { filterServices, hasActiveServiceFilters } from "@/lib/admin/services";
+import {
+  type AdminServiceList,
+  filterServices,
+  hasActiveServiceFilters,
+  listAdminServices,
+} from "@/lib/admin/services";
+import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminServiceFilterCatalog,
   AdminServiceFilters,
@@ -22,21 +34,98 @@ import type {
 
 interface AdminServicesProps {
   filterCatalog?: AdminServiceFilterCatalog;
-  presentation: AdminServicePresentation;
+  presentation?: AdminServicePresentation;
 }
 
 export function AdminServices({
   filterCatalog = adminServiceFilterCatalog,
   presentation,
 }: AdminServicesProps): ReactElement {
-  const [filters, setFilters] = useState<AdminServiceFilters>(
+  if (presentation === undefined) {
+    return <AdminServicesLive filterCatalog={filterCatalog} />;
+  }
+
+  return (
+    <AdminServicesView
+      filterCatalog={filterCatalog}
+      presentation={presentation}
+    />
+  );
+}
+
+function AdminServicesLive({
+  filterCatalog,
+}: {
+  filterCatalog: AdminServiceFilterCatalog;
+}): ReactElement {
+  const { filters, page, setFilters, setPage } = useAdminListState({
+    defaults: defaultAdminServiceFilters,
+  });
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    page,
+    query: debouncedQuery,
+    status: filters.status,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminServices(
+        {
+          page,
+          query: debouncedQuery,
+          status: filters.status,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+
+  return (
+    <AdminServicesView
+      filterCatalog={filterCatalog}
+      filters={filters}
+      onFiltersChange={setFilters}
+      onPageChange={setPage}
+      presentation={toLiveServicePresentation(
+        query,
+        hasActiveServiceFilters(filters),
+      )}
+    />
+  );
+}
+
+interface AdminServicesViewProps {
+  filterCatalog: AdminServiceFilterCatalog;
+  filters?: AdminServiceFilters;
+  onFiltersChange?: (filters: AdminServiceFilters) => void;
+  onPageChange?: (page: number) => void;
+  presentation: AdminServicePresentation;
+}
+
+function AdminServicesView({
+  filterCatalog,
+  filters: filtersProp,
+  onFiltersChange,
+  onPageChange,
+  presentation,
+}: AdminServicesViewProps): ReactElement {
+  const [localFilters, setLocalFilters] = useState<AdminServiceFilters>(
     defaultAdminServiceFilters,
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filters = filtersProp ?? localFilters;
+  const setFilters = onFiltersChange ?? setLocalFilters;
   const sourceServices =
     presentation.status === "ready" ? presentation.services : [];
-  const visibleServices = filterServices(sourceServices, filters);
+  const visibleServices =
+    onFiltersChange === undefined
+      ? filterServices(sourceServices, filters)
+      : sourceServices;
   const hasActiveFilters = hasActiveServiceFilters(filters);
 
   return (
@@ -80,6 +169,7 @@ export function AdminServices({
             onCreate={(): void => {
               setCreateOpen(true);
             }}
+            onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"
                 ? presentation.pagination
@@ -93,4 +183,33 @@ export function AdminServices({
       <ServicesCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
     </div>
   );
+}
+
+function toLiveServicePresentation(
+  query: AdminQueryState<AdminServiceList>,
+  hasActiveFilters: boolean,
+): AdminServicePresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.services.length === 0) {
+    return hasActiveFilters
+      ? {
+          pagination: query.data?.pagination,
+          services: [],
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    pagination: query.data.pagination,
+    services: query.data.services,
+    status: "ready",
+  };
 }

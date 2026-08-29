@@ -26,6 +26,7 @@ interface BookingsTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onPageChange?: (page: number) => void;
   pagination?: AdminBookingPagination;
   presentation: AdminBookingPresentation;
 }
@@ -35,6 +36,7 @@ export function BookingsTable({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onPageChange,
   pagination,
   presentation,
 }: BookingsTableProps): ReactElement {
@@ -50,7 +52,10 @@ export function BookingsTable({
       {presentation.status === "ready" &&
       shouldRenderBookingPagination(pagination, bookings.length) &&
       pagination !== undefined ? (
-        <BookingsPagination pagination={pagination} />
+        <BookingsPagination
+          onPageChange={onPageChange}
+          pagination={pagination}
+        />
       ) : null}
     </div>
   );

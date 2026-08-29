@@ -20,7 +20,50 @@ import { adminBookingStatuses } from "@/types/admin-booking";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/bookings",
+  useRouter: (): { replace: () => void } => ({
+    replace: (): void => undefined,
+  }),
+  useSearchParams: (): URLSearchParams => new URLSearchParams(),
 }));
+
+vi.mock("@/lib/admin/use-admin-list-state", () => ({
+  useAdminListState: <T,>({
+    defaults,
+  }: {
+    defaults: T;
+  }): {
+    filters: T;
+    page: number;
+    setFilters: (filters: T) => void;
+    setPage: (page: number) => void;
+  } => ({
+    filters: defaults,
+    page: 1,
+    setFilters: (): void => undefined,
+    setPage: (): void => undefined,
+  }),
+}));
+
+vi.mock("@/lib/admin/bookings", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/bookings")>();
+
+  return {
+    ...actual,
+    listAdminBookingFilterCatalog: vi.fn().mockResolvedValue({
+      data: { cleaners: [], customers: [], services: [] },
+      ok: true,
+      status: 200,
+    }),
+    listAdminBookings: vi.fn().mockResolvedValue({
+      data: {
+        bookings: [],
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
 
 const TEST_BOOKING: AdminBooking = {
   cleanerId: null,
@@ -46,7 +89,7 @@ const FORBIDDEN_FAKE_BOOKING_COPY = [
 ];
 
 describe("Admin bookings page", (): void => {
-  it("renders the title, search, filters, and empty state without fake bookings", (): void => {
+  it("renders the title, search, filters, and empty state without fake bookings", async (): Promise<void> => {
     render(<AdminBookingsPage />);
 
     expect(
@@ -75,7 +118,9 @@ describe("Admin bookings page", (): void => {
       screen.getAllByRole("button", { name: adminBookingCopy.primaryAction })
         .length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText(adminBookingCopy.emptyTitle)).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(screen.getByText(adminBookingCopy.emptyTitle)).toBeInTheDocument();
+    });
     expect(
       screen.getByText(adminBookingCopy.emptyDescription),
     ).toBeInTheDocument();

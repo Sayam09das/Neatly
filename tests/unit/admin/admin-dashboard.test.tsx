@@ -11,16 +11,7 @@ import {
 } from "@/config/admin-dashboard";
 import { ADMIN_PATHS } from "@/config/admin-nav";
 
-const FORBIDDEN_DASHBOARD_COPY = [
-  "revenue",
-  "bookings",
-  "customers",
-  "cleaners",
-  "₹",
-  "+24%",
-  "-12%",
-  "96%",
-];
+const FORBIDDEN_DASHBOARD_COPY = ["revenue", "₹", "+24%", "-12%", "96%"];
 
 describe("AdminDashboard", (): void => {
   it("renders the overview heading, empty metrics, and PRD quick actions", (): void => {
