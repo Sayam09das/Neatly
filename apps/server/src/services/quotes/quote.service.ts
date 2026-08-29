@@ -1,15 +1,24 @@
 import { QUOTE_PREFERRED_DATE_LEAD_MS } from "../../config/quotes.ts";
+import type { SessionCustomerIdentity } from "../../lib/domain/actor.ts";
 import {
   catalogItemNotFound,
   quoteRequestNotFound,
 } from "../../lib/domain/errors.ts";
+import {
+  type ListResult,
+  resolvePagination,
+  toListResult,
+} from "../../lib/domain/list.ts";
 import { ConflictError, ValidationError } from "../../lib/errors.ts";
 import type { CatalogRepository } from "../../repositories/catalog.repository.ts";
 import type { QuoteRepository } from "../../repositories/quote.repository.ts";
 import {
   type CreateQuoteRequestInput,
+  type CustomerQuoteListQuery,
+  type CustomerQuoteView,
   type PublicQuoteConfirmation,
   type QuoteRequestRecord,
+  toCustomerQuoteView,
   toPublicQuoteConfirmation,
 } from "./quote.types.ts";
 
@@ -45,6 +54,40 @@ export class QuoteService {
     }
 
     return quote;
+  }
+
+  public async listForCustomer(
+    identity: SessionCustomerIdentity,
+    query: CustomerQuoteListQuery = {},
+  ): Promise<ListResult<CustomerQuoteView>> {
+    const pagination = resolvePagination(query.pagination);
+    const result = await this.quotes.listByEmail({
+      email: identity.email.trim().toLowerCase(),
+      pagination,
+      status: query.status,
+    });
+
+    return toListResult(
+      result.items.map(toCustomerQuoteView),
+      result.total,
+      pagination,
+    );
+  }
+
+  public async getForCustomer(
+    identity: SessionCustomerIdentity,
+    id: string,
+  ): Promise<CustomerQuoteView> {
+    const quote = await this.quotes.findByIdForEmail(
+      id,
+      identity.email.trim().toLowerCase(),
+    );
+
+    if (quote === null) {
+      throw quoteRequestNotFound();
+    }
+
+    return toCustomerQuoteView(quote);
   }
 
   private async resolveActiveServiceId(

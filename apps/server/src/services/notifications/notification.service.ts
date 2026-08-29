@@ -2,6 +2,7 @@ import {
   type Actor,
   isAdminActor,
   requireAdminActor,
+  type SessionCustomerIdentity,
 } from "../../lib/domain/actor.ts";
 import { notificationNotFound } from "../../lib/domain/errors.ts";
 import {
@@ -14,9 +15,12 @@ import { AuthorizationError, ValidationError } from "../../lib/errors.ts";
 import type { NotificationRepository } from "../../repositories/notification.repository.ts";
 import {
   type CreateNotificationInput,
+  type CustomerNotificationListQuery,
+  type CustomerNotificationView,
   NOTIFICATION_SORT_FIELDS,
   type NotificationListQuery,
   type NotificationRecord,
+  toCustomerNotificationView,
 } from "./notification.types.ts";
 
 export class NotificationService {
@@ -88,10 +92,84 @@ export class NotificationService {
     return this.notifications.markAllRead(recipientId, this.now());
   }
 
+  public async listForCustomer(
+    identity: SessionCustomerIdentity,
+    query: CustomerNotificationListQuery = {},
+  ): Promise<ListResult<CustomerNotificationView>> {
+    const pagination = resolvePagination(query.pagination);
+    const result = await this.notifications.list({
+      pagination,
+      recipientId: identity.id,
+      sort: { direction: "desc", field: "createdAt" },
+      unreadOnly: query.unreadOnly,
+    });
+    return toListResult(
+      result.items.map(toCustomerNotificationView),
+      result.total,
+      pagination,
+    );
+  }
+
+  public async getForCustomer(
+    identity: SessionCustomerIdentity,
+    id: string,
+  ): Promise<CustomerNotificationView> {
+    return toCustomerNotificationView(
+      await this.requireOwnedCustomerNotification(identity, id),
+    );
+  }
+
+  public async markReadForCustomer(
+    identity: SessionCustomerIdentity,
+    id: string,
+  ): Promise<CustomerNotificationView> {
+    const notification = await this.requireOwnedCustomerNotification(
+      identity,
+      id,
+    );
+
+    if (notification.isRead) {
+      return toCustomerNotificationView(notification);
+    }
+
+    const updated = await this.notifications.markRead(id, this.now());
+
+    if (updated === null) {
+      throw notificationNotFound();
+    }
+
+    return toCustomerNotificationView(updated);
+  }
+
+  public async markAllReadForCustomer(
+    identity: SessionCustomerIdentity,
+  ): Promise<number> {
+    return this.notifications.markAllRead(identity.id, this.now());
+  }
+
+  public async countUnreadForCustomer(
+    identity: SessionCustomerIdentity,
+  ): Promise<number> {
+    return this.notifications.countUnread(identity.id);
+  }
+
   public async remove(actor: Actor, id: string): Promise<void> {
     const notification = await this.requireNotification(id);
     assertRecipientAccess(actor, notification.recipientId);
     await this.notifications.deleteById(id);
+  }
+
+  private async requireOwnedCustomerNotification(
+    identity: SessionCustomerIdentity,
+    id: string,
+  ): Promise<NotificationRecord> {
+    const notification = await this.notifications.findById(id);
+
+    if (notification === null || notification.recipientId !== identity.id) {
+      throw notificationNotFound();
+    }
+
+    return notification;
   }
 
   private async requireNotification(id: string): Promise<NotificationRecord> {

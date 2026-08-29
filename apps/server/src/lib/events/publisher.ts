@@ -59,3 +59,25 @@ export async function publishAdminDomainEvent(
     logError("Admin domain event publish failed", { type: input.type });
   }
 }
+
+export async function recordCustomerInboxNotification(
+  recipientUserId: string,
+  input: {
+    message: string;
+    relatedHref: string;
+    relatedLabel: string;
+    title: string;
+  },
+): Promise<void> {
+  try {
+    await getDomainServices().notifications.record({
+      message: input.message,
+      recipientId: recipientUserId,
+      relatedHref: input.relatedHref,
+      relatedLabel: input.relatedLabel,
+      title: input.title,
+    });
+  } catch {
+    logError("Customer notification persist failed", { title: input.title });
+  }
+}

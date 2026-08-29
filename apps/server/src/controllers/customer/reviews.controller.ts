@@ -5,6 +5,11 @@ import {
   sessionCustomerIdentityFromContext,
 } from "../../lib/domain/http-actor.ts";
 import { getDomainServices } from "../../lib/domain/runtime.ts";
+import {
+  CUSTOMER_APP_HREFS,
+  CUSTOMER_EVENT_COPY,
+} from "../../lib/events/customer-event-copy.ts";
+import { recordCustomerInboxNotification } from "../../lib/events/publisher.ts";
 import { sendSuccess } from "../../lib/http.ts";
 import {
   getValidatedBody,
@@ -33,12 +38,19 @@ export async function createCustomerReviewController(
   res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
+  const identity = sessionCustomerIdentityFromContext(context);
   const review = await getDomainServices().reviews.createForCustomer(
     customerActorFromContext(context),
-    sessionCustomerIdentityFromContext(context),
+    identity,
     getValidatedBody<CreateCustomerReviewBody>(context),
   );
   sendSuccess(res, { review }, { statusCode: HTTP_STATUS.CREATED });
+  await recordCustomerInboxNotification(identity.id, {
+    message: CUSTOMER_EVENT_COPY.reviewCreated.message,
+    relatedHref: CUSTOMER_APP_HREFS.reviews,
+    relatedLabel: CUSTOMER_EVENT_COPY.reviewCreated.relatedLabel,
+    title: CUSTOMER_EVENT_COPY.reviewCreated.title,
+  });
 }
 
 export async function updateCustomerReviewController(

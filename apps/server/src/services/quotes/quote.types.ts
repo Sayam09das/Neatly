@@ -5,6 +5,7 @@ import type {
   QuoteStatus,
 } from "@prisma/client";
 import type { QuotePreferredTime } from "../../config/quotes.ts";
+import type { PaginationQuery } from "../../lib/query.ts";
 
 export interface QuoteRequestRecord {
   additionalNotes: string | null;
@@ -38,6 +39,31 @@ export interface PublicQuoteConfirmation {
   status: QuoteStatus;
 }
 
+export interface CustomerQuoteView {
+  additionalNotes: string | null;
+  approximateSize: string;
+  bathrooms: number | null;
+  bedrooms: number | null;
+  createdAt: string;
+  email: string;
+  frequency: QuoteFrequency;
+  fullName: string;
+  id: string;
+  phone: string;
+  preferredDate: string;
+  preferredTime: string;
+  propertyType: QuotePropertyType;
+  serviceAddress: string;
+  serviceId: string | null;
+  serviceType: QuoteServiceType;
+  status: QuoteStatus;
+}
+
+export interface CustomerQuoteListQuery {
+  pagination?: PaginationQuery;
+  status?: QuoteStatus;
+}
+
 export interface CreateQuoteRequestInput {
   additionalNotes?: string | null;
   approximateSize: string;
@@ -53,6 +79,30 @@ export interface CreateQuoteRequestInput {
   serviceAddress: string;
   serviceId?: string | null;
   serviceType: QuoteServiceType;
+}
+
+export function toCustomerQuoteView(
+  record: QuoteRequestRecord,
+): CustomerQuoteView {
+  return {
+    additionalNotes: record.additionalNotes,
+    approximateSize: record.approximateSize,
+    bathrooms: record.bathrooms,
+    bedrooms: record.bedrooms,
+    createdAt: record.createdAt.toISOString(),
+    email: record.email,
+    frequency: record.frequency,
+    fullName: record.fullName,
+    id: record.id,
+    phone: record.phone,
+    preferredDate: record.preferredDate.toISOString(),
+    preferredTime: record.preferredTime,
+    propertyType: record.propertyType,
+    serviceAddress: record.serviceAddress,
+    serviceId: record.serviceId,
+    serviceType: record.serviceType,
+    status: record.status,
+  };
 }
 
 export function toPublicQuoteConfirmation(

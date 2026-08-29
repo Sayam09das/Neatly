@@ -16,10 +16,21 @@ import {
 } from "../../controllers/customer/bookings.controller.ts";
 import { listCustomerHelpController } from "../../controllers/customer/help.controller.ts";
 import {
+  getCustomerNotificationController,
+  getCustomerUnreadNotificationCountController,
+  listCustomerNotificationsController,
+  markAllCustomerNotificationsReadController,
+  markCustomerNotificationReadController,
+} from "../../controllers/customer/notifications.controller.ts";
+import {
   getCustomerProfileController,
   updateCustomerProfileController,
 } from "../../controllers/customer/profile.controller.ts";
-import { createPublicQuoteController } from "../../controllers/customer/quotes.controller.ts";
+import {
+  createPublicQuoteController,
+  getCustomerQuoteController,
+  listCustomerQuotesController,
+} from "../../controllers/customer/quotes.controller.ts";
 import {
   createCustomerReviewController,
   deleteCustomerReviewController,
@@ -40,6 +51,8 @@ import {
   customerBookingListQuerySchema,
   updateCustomerBookingBodySchema,
 } from "../../lib/validations/customer-booking.schema.ts";
+import { customerNotificationListQuerySchema } from "../../lib/validations/customer-notification.schema.ts";
+import { customerQuoteListQuerySchema } from "../../lib/validations/customer-quote.schema.ts";
 import {
   createCustomerReviewBodySchema,
   customerReviewListQuerySchema,
@@ -81,6 +94,18 @@ export const customerRoutes: readonly RouteDefinition[] = [
       validateBody(createPublicQuoteBodySchema),
     ],
     path: API_PATHS.customerQuotes,
+  },
+  {
+    handler: listCustomerQuotesController,
+    method: "GET",
+    middleware: [requireAuth, validateQuery(customerQuoteListQuerySchema)],
+    path: API_PATHS.customerQuotes,
+  },
+  {
+    handler: getCustomerQuoteController,
+    method: "GET",
+    middleware: [requireAuth, validateParams(idParamSchema)],
+    path: API_PATHS.customerQuote,
   },
   {
     handler: getCustomerOverviewController,
@@ -136,6 +161,43 @@ export const customerRoutes: readonly RouteDefinition[] = [
       validateParams(idParamSchema),
     ],
     path: API_PATHS.customerBookingCancel,
+  },
+  {
+    handler: listCustomerNotificationsController,
+    method: "GET",
+    middleware: [
+      requireAuth,
+      validateQuery(customerNotificationListQuerySchema),
+    ],
+    path: API_PATHS.customerNotifications,
+  },
+  {
+    handler: getCustomerUnreadNotificationCountController,
+    method: "GET",
+    middleware: [requireAuth],
+    path: API_PATHS.customerNotificationsUnreadCount,
+  },
+  {
+    handler: markAllCustomerNotificationsReadController,
+    method: "POST",
+    middleware: [requireAuth, limitCustomerMutations],
+    path: API_PATHS.customerNotificationsReadAll,
+  },
+  {
+    handler: getCustomerNotificationController,
+    method: "GET",
+    middleware: [requireAuth, validateParams(idParamSchema)],
+    path: API_PATHS.customerNotification,
+  },
+  {
+    handler: markCustomerNotificationReadController,
+    method: "PATCH",
+    middleware: [
+      requireAuth,
+      limitCustomerMutations,
+      validateParams(idParamSchema),
+    ],
+    path: API_PATHS.customerNotificationRead,
   },
   {
     handler: getCustomerProfileController,

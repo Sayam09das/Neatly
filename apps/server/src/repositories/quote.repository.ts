@@ -1,14 +1,49 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type QuoteStatus } from "@prisma/client";
 import { prisma } from "../lib/db.ts";
+import type { PaginationQuery } from "../lib/query.ts";
 import type {
   CreateQuoteRequestInput,
   QuoteRequestRecord,
 } from "../services/quotes/quote.types.ts";
 
+export interface QuoteListByEmailQuery {
+  email: string;
+  pagination: PaginationQuery;
+  status?: QuoteStatus;
+}
+
 export interface QuoteRepository {
   create(input: CreateQuoteRequestInput): Promise<QuoteRequestRecord>;
   findById(id: string): Promise<QuoteRequestRecord | null>;
+  findByIdForEmail(
+    id: string,
+    email: string,
+  ): Promise<QuoteRequestRecord | null>;
+  listByEmail(
+    query: QuoteListByEmailQuery,
+  ): Promise<{ items: QuoteRequestRecord[]; total: number }>;
 }
+
+const quoteRequestSelect = {
+  additionalNotes: true,
+  approximateSize: true,
+  bathrooms: true,
+  bedrooms: true,
+  createdAt: true,
+  email: true,
+  frequency: true,
+  fullName: true,
+  id: true,
+  phone: true,
+  preferredDate: true,
+  preferredTime: true,
+  propertyType: true,
+  serviceAddress: true,
+  serviceId: true,
+  serviceType: true,
+  status: true,
+  updatedAt: true,
+} as const;
 
 function toNumber(value: Prisma.Decimal | number | null): number | null {
   if (value === null) {
@@ -63,7 +98,19 @@ function toRecord(row: {
 export class PrismaQuoteRepository implements QuoteRepository {
   public async findById(id: string): Promise<QuoteRequestRecord | null> {
     const row = await prisma.quoteRequest.findUnique({
+      select: quoteRequestSelect,
       where: { id },
+    });
+    return row === null ? null : toRecord(row);
+  }
+
+  public async findByIdForEmail(
+    id: string,
+    email: string,
+  ): Promise<QuoteRequestRecord | null> {
+    const row = await prisma.quoteRequest.findFirst({
+      select: quoteRequestSelect,
+      where: { email, id },
     });
     return row === null ? null : toRecord(row);
   }
@@ -80,7 +127,7 @@ export class PrismaQuoteRepository implements QuoteRepository {
             ? null
             : new Prisma.Decimal(input.bathrooms),
         bedrooms: input.bedrooms ?? null,
-        email: input.email,
+        email: input.email.trim().toLowerCase(),
         frequency: input.frequency,
         fullName: input.fullName,
         phone: input.phone,
@@ -92,7 +139,32 @@ export class PrismaQuoteRepository implements QuoteRepository {
         serviceType: input.serviceType,
         status: "NEW",
       },
+      select: quoteRequestSelect,
     });
     return toRecord(row);
+  }
+
+  public async listByEmail(
+    query: QuoteListByEmailQuery,
+  ): Promise<{ items: QuoteRequestRecord[]; total: number }> {
+    const where: Prisma.QuoteRequestWhereInput = {
+      email: query.email,
+      ...(query.status === undefined ? {} : { status: query.status }),
+    };
+    const [rows, total] = await prisma.$transaction([
+      prisma.quoteRequest.findMany({
+        orderBy: { createdAt: "desc" },
+        select: quoteRequestSelect,
+        skip: query.pagination.skip,
+        take: query.pagination.limit,
+        where,
+      }),
+      prisma.quoteRequest.count({ where }),
+    ]);
+
+    return {
+      items: rows.map(toRecord),
+      total,
+    };
   }
 }

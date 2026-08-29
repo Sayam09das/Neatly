@@ -95,4 +95,52 @@ describe("QuoteService", (): void => {
       NotFoundError,
     );
   });
+
+  it("lists and reads only quotes matching the session email", async (): Promise<void> => {
+    const { quotes } = createDomainHarness();
+    const own = await quotes.createPublic({
+      approximateSize: "1,000-2,000 sq ft",
+      bathrooms: 1,
+      bedrooms: 2,
+      email: "ada@neatly.example",
+      frequency: "ONE_TIME",
+      fullName: "Ada Customer",
+      phone: "5551234567",
+      preferredDate: futureDate(),
+      preferredTime: "Morning (8am-12pm)",
+      propertyType: "HOUSE",
+      serviceAddress: "12 Harbour Street",
+      serviceType: "RESIDENTIAL",
+    });
+    const other = await quotes.createPublic({
+      approximateSize: "Under 1,000 sq ft",
+      email: "other@neatly.example",
+      frequency: "ONE_TIME",
+      fullName: "Other Customer",
+      phone: "5550000000",
+      preferredDate: futureDate(),
+      preferredTime: "Afternoon (12pm-4pm)",
+      propertyType: "OFFICE",
+      serviceAddress: "9 Queen Street",
+      serviceType: "COMMERCIAL",
+    });
+    const identity = {
+      email: "ada@neatly.example",
+      id: "user-ada",
+      name: "Ada",
+    };
+
+    const list = await quotes.listForCustomer(identity);
+    expect(list.items).toHaveLength(1);
+    expect(list.items[0]?.id).toBe(own.id);
+    expect(JSON.stringify(list)).not.toContain("adminNotes");
+
+    const detail = await quotes.getForCustomer(identity, own.id);
+    expect(detail.email).toBe("ada@neatly.example");
+    expect(detail.serviceAddress).toBe("12 Harbour Street");
+
+    await expect(
+      quotes.getForCustomer(identity, other.id),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
 });

@@ -57,6 +57,76 @@ describe("Customer booking read APIs", (): void => {
     mockedDomain.mockReturnValue(createDomainHarness() as never);
   });
 
+  it("creates a booking for the session customer and rejects client-owned fields", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    mockedDomain.mockReturnValue(harness as never);
+    const offering = await harness.catalog.create(admin, {
+      fullDescription: "Home",
+      name: "Home Refresh",
+      shortDescription: "Weekly",
+    });
+
+    mockedAuth.mockReturnValue({
+      resolveSession: vi.fn().mockResolvedValue(null),
+    } as never);
+    const unauthenticated = await dispatchApi({
+      body: JSON.stringify({
+        scheduledAt: new Date(
+          Date.now() + 3 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        serviceAddress: "12 Harbour Street",
+        serviceId: offering.id,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      url: API_PATHS.customerBookings,
+    });
+    expect(unauthenticated.statusCode).toBe(HTTP_STATUS.UNAUTHORIZED);
+
+    mockedAuth.mockReturnValue({
+      resolveSession: vi.fn().mockResolvedValue(sessionUser),
+    } as never);
+    const rejected = await dispatchApi(
+      withAuth({
+        body: JSON.stringify({
+          customerId: "clother000000000000000001",
+          scheduledAt: new Date(
+            Date.now() + 3 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+          serviceAddress: "12 Harbour Street",
+          serviceId: offering.id,
+          status: "CONFIRMED",
+          total: 99,
+        }),
+        method: "POST",
+        url: API_PATHS.customerBookings,
+      }),
+    );
+    expect(rejected.statusCode).toBe(HTTP_STATUS.BAD_REQUEST);
+
+    const created = await dispatchApi(
+      withAuth({
+        body: JSON.stringify({
+          scheduledAt: new Date(
+            Date.now() + 3 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+          serviceAddress: "12 Harbour Street",
+          serviceId: offering.id,
+        }),
+        method: "POST",
+        url: API_PATHS.customerBookings,
+      }),
+    );
+    const createdBody = parseJsonBody(created.body) as Envelope<{
+      booking: { status: string; serviceAddress: string };
+    }>;
+    expect(created.statusCode).toBe(HTTP_STATUS.CREATED);
+    expect(createdBody.data.booking.status).toBe("PENDING");
+    expect(createdBody.data.booking.serviceAddress).toBe("12 Harbour Street");
+    expect(created.body).not.toContain("customerId");
+    expect(created.body).not.toContain("total");
+  });
+
   it("rejects unauthenticated overview and list access", async (): Promise<void> => {
     mockedAuth.mockReturnValue({
       resolveSession: vi.fn().mockResolvedValue(null),

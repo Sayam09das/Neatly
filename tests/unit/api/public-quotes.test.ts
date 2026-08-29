@@ -82,6 +82,30 @@ describe("Public quote APIs", (): void => {
     expect(JSON.stringify(body.data)).not.toContain("Ada Customer");
   });
 
+  it("rejects client-owned price and status fields", async (): Promise<void> => {
+    const priced = await dispatchApi({
+      body: JSON.stringify({
+        approximateSize: "Under 1,000 sq ft",
+        email: "ada@neatly.example",
+        frequency: "ONE_TIME",
+        fullName: "Ada Customer",
+        phone: "5551234567",
+        preferredDate: futureDateInput(),
+        preferredTime: "Morning (8am-12pm)",
+        price: 100,
+        propertyType: "OFFICE",
+        serviceAddress: "1 Main",
+        serviceType: "COMMERCIAL",
+        total: 100,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      url: API_PATHS.customerQuotes,
+    });
+
+    expect(priced.statusCode).toBe(HTTP_STATUS.BAD_REQUEST);
+  });
+
   it("rejects honeypot submissions and client-owned status", async (): Promise<void> => {
     const response = await dispatchApi({
       body: JSON.stringify({

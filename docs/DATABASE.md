@@ -206,6 +206,8 @@ Captures interactive quote submissions submitted by visitors on `/quote`.
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Submission timestamp (UTC) |
 | `updatedAt` | DateTime | NOT NULL, UpdatedAt | Status update timestamp (UTC) |
 
+There is no `customerId` on `QuoteRequest`. Public create is anonymous. Authenticated customer reads match `QuoteRequest.email` to the session user's email (indexed). `adminNotes` is staff-only and never returned on customer serializers.
+
 ---
 
 ## 8. CONTACT MESSAGE MODEL (`ContactMessage`)

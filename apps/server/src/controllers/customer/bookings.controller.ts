@@ -9,7 +9,14 @@ import {
   ADMIN_APP_HREFS,
   ADMIN_EVENT_COPY,
 } from "../../lib/events/admin-event-copy.ts";
-import { publishAdminDomainEvent } from "../../lib/events/publisher.ts";
+import {
+  CUSTOMER_APP_HREFS,
+  CUSTOMER_EVENT_COPY,
+} from "../../lib/events/customer-event-copy.ts";
+import {
+  publishAdminDomainEvent,
+  recordCustomerInboxNotification,
+} from "../../lib/events/publisher.ts";
 import { sendSuccess } from "../../lib/http.ts";
 import {
   getValidatedBody,
@@ -35,6 +42,12 @@ export async function createCustomerBookingController(
     getValidatedBody<CreateCustomerBookingBody>(context),
   );
   sendSuccess(res, { booking }, { statusCode: HTTP_STATUS.CREATED });
+  await recordCustomerInboxNotification(actor.id, {
+    message: CUSTOMER_EVENT_COPY.bookingCreated.message,
+    relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
+    relatedLabel: CUSTOMER_EVENT_COPY.bookingCreated.relatedLabel,
+    title: CUSTOMER_EVENT_COPY.bookingCreated.title,
+  });
   await publishAdminDomainEvent(actor, {
     entityId: booking.id,
     message: ADMIN_EVENT_COPY.bookingCreated.message,
@@ -93,13 +106,20 @@ export async function updateCustomerBookingController(
   context: RequestContext,
 ): Promise<void> {
   const { id } = getValidatedParams<{ id: string }>(context);
+  const actor = customerActorFromContext(context);
   const booking = await getDomainServices().bookings.updateForCustomer(
-    customerActorFromContext(context),
+    actor,
     sessionCustomerIdentityFromContext(context),
     id,
     getValidatedBody<UpdateCustomerBookingBody>(context),
   );
   sendSuccess(res, { booking });
+  await recordCustomerInboxNotification(actor.id, {
+    message: CUSTOMER_EVENT_COPY.bookingUpdated.message,
+    relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
+    relatedLabel: CUSTOMER_EVENT_COPY.bookingUpdated.relatedLabel,
+    title: CUSTOMER_EVENT_COPY.bookingUpdated.title,
+  });
 }
 
 export async function cancelCustomerBookingController(
@@ -115,6 +135,12 @@ export async function cancelCustomerBookingController(
     id,
   );
   sendSuccess(res, { booking });
+  await recordCustomerInboxNotification(actor.id, {
+    message: CUSTOMER_EVENT_COPY.bookingCancelled.message,
+    relatedHref: CUSTOMER_APP_HREFS.booking(booking.id),
+    relatedLabel: CUSTOMER_EVENT_COPY.bookingCancelled.relatedLabel,
+    title: CUSTOMER_EVENT_COPY.bookingCancelled.title,
+  });
   await publishAdminDomainEvent(actor, {
     entityId: booking.id,
     message: ADMIN_EVENT_COPY.bookingCancelled.message,

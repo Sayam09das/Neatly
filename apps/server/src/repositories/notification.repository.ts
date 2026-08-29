@@ -9,6 +9,7 @@ import type {
 } from "../services/notifications/notification.types.ts";
 
 export interface NotificationRepository {
+  countUnread(recipientId: string): Promise<number>;
   create(input: CreateNotificationInput): Promise<NotificationRecord>;
   deleteById(id: string): Promise<boolean>;
   findById(id: string): Promise<NotificationRecord | null>;
@@ -50,6 +51,12 @@ function orderBy(
 }
 
 export class PrismaNotificationRepository implements NotificationRepository {
+  public async countUnread(recipientId: string): Promise<number> {
+    return prisma.notification.count({
+      where: { isRead: false, recipientId },
+    });
+  }
+
   public async findById(id: string): Promise<NotificationRecord | null> {
     const row = await prisma.notification.findUnique({ where: { id } });
     return row === null ? null : toRecord(row);

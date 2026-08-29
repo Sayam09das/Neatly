@@ -489,6 +489,35 @@ export class InMemoryQuoteRepository implements QuoteRepository {
     return this.store.quotes.get(id) ?? null;
   }
 
+  public async findByIdForEmail(
+    id: string,
+    email: string,
+  ): Promise<QuoteRequestRecord | null> {
+    const row = this.store.quotes.get(id);
+    return row !== undefined && row.email === email ? row : null;
+  }
+
+  public async listByEmail(
+    query: Parameters<QuoteRepository["listByEmail"]>[0],
+  ): ReturnType<QuoteRepository["listByEmail"]> {
+    const matches = [...this.store.quotes.values()]
+      .filter((row) => row.email === query.email)
+      .filter((row) =>
+        query.status === undefined ? true : row.status === query.status,
+      )
+      .sort(
+        (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
+      );
+
+    return {
+      items: matches.slice(
+        query.pagination.skip,
+        query.pagination.skip + query.pagination.limit,
+      ),
+      total: matches.length,
+    };
+  }
+
   public async create(
     input: CreateQuoteRequestInput,
   ): Promise<QuoteRequestRecord> {
@@ -499,7 +528,7 @@ export class InMemoryQuoteRepository implements QuoteRepository {
       bathrooms: input.bathrooms ?? null,
       bedrooms: input.bedrooms ?? null,
       createdAt: now,
-      email: input.email,
+      email: input.email.trim().toLowerCase(),
       frequency: input.frequency,
       fullName: input.fullName,
       id: createId(),
@@ -836,6 +865,13 @@ export class InMemoryNotificationRepository implements NotificationRepository {
 
   public constructor(store: InMemoryDomainStore) {
     this.store = store;
+  }
+
+  public async countUnread(recipientId: string): Promise<number> {
+    return countWhere(
+      [...this.store.notifications.values()],
+      (row) => row.recipientId === recipientId && !row.isRead,
+    );
   }
 
   public async findById(id: string): Promise<NotificationRecord | null> {
