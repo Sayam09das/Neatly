@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { requireRole } from "@/lib/auth/authorization";
 import { AuthError } from "@/lib/auth/errors";
 import { isSameOriginRequest } from "@/lib/auth/origin";
-import { isProtectedAdminPath, isPublicAdminPath } from "@/lib/auth/paths";
+import {
+  isProtectedAdminPath,
+  isProtectedCustomerPath,
+  isPublicAdminPath,
+} from "@/lib/auth/paths";
 import type { AuthUser } from "@/types/auth";
 
 const siteUrl = "https://neatly.example";
@@ -49,6 +53,9 @@ describe("admin path protection", (): void => {
     expect(isPublicAdminPath("/admin/verify-email")).toBe(true);
     expect(isProtectedAdminPath("/admin/quotes")).toBe(true);
     expect(isPublicAdminPath("/admin/quotes")).toBe(false);
+    expect(isProtectedCustomerPath("/dashboard")).toBe(true);
+    expect(isProtectedCustomerPath("/dashboard/bookings")).toBe(true);
+    expect(isProtectedCustomerPath("/quote")).toBe(false);
   });
 });
 

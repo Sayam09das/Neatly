@@ -254,6 +254,34 @@ Admin Route Hierarchy (Protected via Middleware)
 * **Middleware Control (`middleware.ts`):** Intercepts all incoming requests matching `/admin/*` (excluding `/admin/login` and `/admin/forgot-password`). Validates session token from `HttpOnly` cookie. Redirects invalid or expired session requests directly to `/admin/login`.
 * **Destructive Action Safeguards:** Deletion operations (e.g., deleting a service, blog post, or portfolio item) MUST require a client-side confirmation dialog and execute via authenticated POST/DELETE Route Handlers with CSRF verification.
 
+### 9.2 Customer application architecture
+
+The customer account area lives under `/dashboard` in `apps/web`. It reuses the existing session cookie (`neatly_session`), `AuthService`, and JSON envelope helpers. It does not introduce a second backend, JWT stack, Axios client, or `CUSTOMER` `UserRole`.
+
+```text
+Customer Route Hierarchy
+├── Public
+│   ├── /services
+│   ├── /services/[slug]
+│   ├── /quote
+│   ├── /booking
+│   └── /booking/confirmation
+└── /dashboard (Protected layout; cookie presence in middleware is UX-only)
+    ├── /dashboard
+    ├── /dashboard/bookings
+    ├── /dashboard/bookings/[id]
+    ├── /dashboard/profile
+    ├── /dashboard/settings
+    ├── /dashboard/notifications
+    ├── /dashboard/reviews
+    └── /dashboard/help
+```
+
+* **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard` requests redirect to `/admin/login` with a safe `next` path. `/login` remains an alias and forwards a safe `next` query. Logout reuses `POST /api/admin/auth/logout`.
+* **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for future ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
+* **Privacy:** `/dashboard` is `force-dynamic` and `robots: noindex`. Customer query keys include the session user id. Logout clears customer client cache listeners.
+* **Customer HTTP APIs:** Reserved under `/api/v1/customer` for later phases. This foundation does not add fake customer endpoints or mock bookings.
+
 ---
 
 ## 10. DOMAIN MODULES SPECIFICATION

@@ -2,6 +2,7 @@ import { AUTH_ADMIN_HOME_PATH, AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
 import {
   isAuthEntryPath,
   isProtectedAdminPath,
+  isProtectedCustomerPath,
   isPublicAdminPath,
 } from "@/lib/auth/paths";
 import type { AuthUser } from "@/types/auth";
@@ -39,6 +40,21 @@ export function getAdminNavigationDecision(input: {
   return { type: "allow" };
 }
 
+export function getCustomerNavigationDecision(input: {
+  pathname: string;
+  user: AuthUser | null;
+}): AdminNavigationDecision {
+  if (!isProtectedCustomerPath(input.pathname)) {
+    return { type: "allow" };
+  }
+
+  if (input.user === null) {
+    return { type: "redirect", to: AUTH_ADMIN_LOGIN_PATH };
+  }
+
+  return { type: "allow" };
+}
+
 export function getFrontendAuthRedirect(input: {
   pathname: string;
   status: FrontendAuthStatus;
@@ -47,12 +63,17 @@ export function getFrontendAuthRedirect(input: {
     return { type: "wait" };
   }
 
-  const isProtected =
+  const isProtectedAdmin =
     isProtectedAdminPath(input.pathname) && !isPublicAdminPath(input.pathname);
+  const isProtectedCustomer = isProtectedCustomerPath(input.pathname);
   const isEntry = isAuthEntryPath(input.pathname);
 
   if (input.status === "unauthenticated") {
-    if (isProtected) {
+    if (isProtectedAdmin) {
+      return { type: "redirect", to: AUTH_ADMIN_LOGIN_PATH };
+    }
+
+    if (isProtectedCustomer) {
       return { type: "redirect", to: AUTH_ADMIN_LOGIN_PATH };
     }
 

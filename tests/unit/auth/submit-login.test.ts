@@ -7,10 +7,16 @@ describe("adminPostLoginPath", (): void => {
     expect(adminPostLoginPath("?next=%2Fadmin%2Fbookings")).toBe(
       "/admin/bookings",
     );
+    expect(adminPostLoginPath("?next=%2Fdashboard%2Fbookings")).toBe(
+      "/dashboard/bookings",
+    );
     expect(adminPostLoginPath("?next=https://example.com")).toBe(
       AUTH_ADMIN_HOME_PATH,
     );
     expect(adminPostLoginPath("?next=%2Flogin")).toBe(AUTH_ADMIN_HOME_PATH);
+    expect(adminPostLoginPath("?next=%2Fdashboard%2F..%2Fadmin")).toBe(
+      AUTH_ADMIN_HOME_PATH,
+    );
   });
 });
 

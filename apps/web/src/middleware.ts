@@ -1,27 +1,30 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { AUTH_ADMIN_LOGIN_PATH, AUTH_SESSION_COOKIE_NAME } from "@/config/auth";
-import { isProtectedAdminPath, isPublicAdminPath } from "@/lib/auth/paths";
+import { AUTH_SESSION_COOKIE_NAME } from "@/config/auth";
+import { getEdgeAuthDecision } from "@/lib/auth/paths";
 
 export function middleware(request: NextRequest): NextResponse {
-  const { pathname } = request.nextUrl;
+  const sessionToken = request.cookies.get(AUTH_SESSION_COOKIE_NAME)?.value;
+  const decision = getEdgeAuthDecision({
+    hasSession: sessionToken !== undefined && sessionToken.trim() !== "",
+    pathname: request.nextUrl.pathname,
+  });
 
-  if (!isProtectedAdminPath(pathname) || isPublicAdminPath(pathname)) {
+  if (decision.type === "next") {
     return NextResponse.next();
   }
 
-  const sessionToken = request.cookies.get(AUTH_SESSION_COOKIE_NAME)?.value;
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = decision.pathname;
+  loginUrl.search = "";
 
-  if (sessionToken === undefined || sessionToken.trim() === "") {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = AUTH_ADMIN_LOGIN_PATH;
-    loginUrl.search = "";
-    return NextResponse.redirect(loginUrl);
+  if (decision.next !== undefined) {
+    loginUrl.searchParams.set("next", decision.next);
   }
 
-  return NextResponse.next();
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/dashboard", "/dashboard/:path*"],
 };

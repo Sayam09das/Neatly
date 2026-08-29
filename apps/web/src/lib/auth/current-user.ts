@@ -61,6 +61,16 @@ export async function requireAdminPage(): Promise<AuthUser> {
   return user;
 }
 
+export async function requireCustomerPage(): Promise<AuthUser> {
+  const user = await getCurrentUser();
+
+  if (user === null) {
+    redirect(AUTH_ADMIN_LOGIN_PATH);
+  }
+
+  return user;
+}
+
 export async function redirectAuthenticatedAdmin(): Promise<void> {
   const user = await getCurrentUser();
 

@@ -1,4 +1,5 @@
 import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
+import { isSafeCustomerNextPath } from "@/lib/auth/paths";
 import type { LoginValues } from "@/lib/validations/auth.schema";
 import type {
   AuthFormBannerCode,
@@ -49,15 +50,24 @@ export async function submitAdminLogin(
   }
 }
 
+export function isSafePostLoginPath(next: string): boolean {
+  if (isSafeCustomerNextPath(next)) {
+    return true;
+  }
+
+  return (
+    next.startsWith("/admin") &&
+    !next.startsWith("//") &&
+    !next.includes("://") &&
+    !next.includes("..")
+  );
+}
+
 export function adminPostLoginPath(search = ""): string {
   const query = search.startsWith("?") ? search.slice(1) : search;
   const next = new URLSearchParams(query).get("next");
 
-  if (
-    next?.startsWith("/admin") === true &&
-    !next.startsWith("//") &&
-    !next.includes("://")
-  ) {
+  if (next !== null && isSafePostLoginPath(next)) {
     return next;
   }
 

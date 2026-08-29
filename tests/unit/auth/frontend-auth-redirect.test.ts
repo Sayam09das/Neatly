@@ -81,5 +81,11 @@ describe("getFrontendAuthRedirect", (): void => {
         status: "authenticated",
       }),
     ).toEqual({ type: "allow" });
+    expect(
+      getFrontendAuthRedirect({
+        pathname: "/dashboard",
+        status: "unauthenticated",
+      }),
+    ).toEqual({ type: "redirect", to: AUTH_ADMIN_LOGIN_PATH });
   });
 });
