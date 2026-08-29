@@ -3,6 +3,7 @@ import { PrismaCatalogRepository } from "../../repositories/catalog.repository.t
 import { PrismaCleanerRepository } from "../../repositories/cleaner.repository.ts";
 import { PrismaCustomerRepository } from "../../repositories/customer.repository.ts";
 import { PrismaNotificationRepository } from "../../repositories/notification.repository.ts";
+import { PrismaQuoteRepository } from "../../repositories/quote.repository.ts";
 import { PrismaReviewRepository } from "../../repositories/review.repository.ts";
 import { PrismaSettingsRepository } from "../../repositories/settings.repository.ts";
 import { PrismaUserRepository } from "../../repositories/user.repository.ts";
@@ -13,6 +14,7 @@ import { CleanerService } from "../../services/cleaners/cleaner.service.ts";
 import { CustomerService } from "../../services/customers/customer.service.ts";
 import { DashboardService } from "../../services/dashboard/dashboard.service.ts";
 import { NotificationService } from "../../services/notifications/notification.service.ts";
+import { QuoteService } from "../../services/quotes/quote.service.ts";
 import { ReviewService } from "../../services/reviews/review.service.ts";
 import { SettingsService } from "../../services/settings/settings.service.ts";
 import { UserService } from "../../services/users/user.service.ts";
@@ -25,6 +27,7 @@ export interface DomainServices {
   customers: CustomerService;
   dashboard: DashboardService;
   notifications: NotificationService;
+  quotes: QuoteService;
   reviews: ReviewService;
   settings: SettingsService;
   users: UserService;
@@ -45,6 +48,7 @@ export function createPrismaDomainServices(): DomainServices {
   const cleanerRepo = new PrismaCleanerRepository();
   const catalogRepo = new PrismaCatalogRepository();
   const bookingRepo = new PrismaBookingRepository();
+  const quoteRepo = new PrismaQuoteRepository();
   const reviewRepo = new PrismaReviewRepository();
   const notificationRepo = new PrismaNotificationRepository();
   const userRepo = new PrismaUserRepository();
@@ -53,11 +57,13 @@ export function createPrismaDomainServices(): DomainServices {
   const customers = new CustomerService(customerRepo);
   const cleaners = new CleanerService(cleanerRepo);
   const catalog = new CatalogService(catalogRepo);
+  const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
     bookingRepo,
     customerRepo,
     cleanerRepo,
     catalogRepo,
+    quoteRepo,
   );
   const reviews = new ReviewService(reviewRepo);
   const notifications = new NotificationService(notificationRepo);
@@ -87,6 +93,7 @@ export function createPrismaDomainServices(): DomainServices {
     customers,
     dashboard,
     notifications,
+    quotes,
     reviews,
     settings,
     users,

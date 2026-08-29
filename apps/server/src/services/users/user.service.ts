@@ -28,6 +28,10 @@ export class UserService {
     return this.users.listAdminIds();
   }
 
+  public async listAdminRecipientIds(): Promise<readonly string[]> {
+    return this.users.listAdminIds();
+  }
+
   public async getById(actor: Actor, id: string): Promise<UserProfile> {
     requireAdminActor(actor);
     const user = await this.users.findById(id);

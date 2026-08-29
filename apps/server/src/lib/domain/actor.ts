@@ -11,6 +11,12 @@ export interface Actor {
   role: ActorRole;
 }
 
+export interface SessionCustomerIdentity {
+  email: string;
+  id: string;
+  name: string;
+}
+
 export function isAdminActor(actor: Actor): boolean {
   if (actor.role === "CUSTOMER" || actor.role === "CLEANER") {
     return false;

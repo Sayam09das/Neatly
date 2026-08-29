@@ -36,7 +36,12 @@ export class NotificationService {
     input: CreateNotificationInput,
   ): Promise<NotificationRecord> {
     requireAdminActor(actor);
+    return this.record(input);
+  }
 
+  public async record(
+    input: CreateNotificationInput,
+  ): Promise<NotificationRecord> {
     return this.notifications.create({
       message: requireText(input.message, "message"),
       recipientId: input.recipientId,

@@ -9,6 +9,7 @@ import type { CatalogRepository } from "../../../apps/server/src/repositories/ca
 import type { CleanerRepository } from "../../../apps/server/src/repositories/cleaner.repository.ts";
 import type { CustomerRepository } from "../../../apps/server/src/repositories/customer.repository.ts";
 import type { NotificationRepository } from "../../../apps/server/src/repositories/notification.repository.ts";
+import type { QuoteRepository } from "../../../apps/server/src/repositories/quote.repository.ts";
 import type { ReviewRepository } from "../../../apps/server/src/repositories/review.repository.ts";
 import type { SettingsRepository } from "../../../apps/server/src/repositories/settings.repository.ts";
 import type { UserRepository } from "../../../apps/server/src/repositories/user.repository.ts";
@@ -49,6 +50,11 @@ import type {
   NotificationListQuery,
   NotificationRecord,
 } from "../../../apps/server/src/services/notifications/notification.types.ts";
+import { QuoteService } from "../../../apps/server/src/services/quotes/quote.service.ts";
+import type {
+  CreateQuoteRequestInput,
+  QuoteRequestRecord,
+} from "../../../apps/server/src/services/quotes/quote.types.ts";
 import { ReviewService } from "../../../apps/server/src/services/reviews/review.service.ts";
 import type {
   CreateReviewInput,
@@ -74,6 +80,7 @@ export class InMemoryDomainStore {
   public readonly cleaners = new Map<string, CleanerRecord>();
   public readonly customers = new Map<string, CustomerRecord>();
   public readonly notifications = new Map<string, NotificationRecord>();
+  public readonly quotes = new Map<string, QuoteRequestRecord>();
   public readonly reviews = new Map<string, ReviewRecord>();
   public settings: SettingsRecord | null = null;
   public readonly users = new Map<string, UserProfile>();
@@ -87,6 +94,7 @@ export interface DomainHarness {
   customers: CustomerService;
   dashboard: DashboardService;
   notifications: NotificationService;
+  quotes: QuoteService;
   reviews: ReviewService;
   settings: SettingsService;
   store: InMemoryDomainStore;
@@ -98,6 +106,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
   const customerRepo = new InMemoryCustomerRepository(store);
   const cleanerRepo = new InMemoryCleanerRepository(store);
   const catalogRepo = new InMemoryCatalogRepository(store);
+  const quoteRepo = new InMemoryQuoteRepository(store);
   const bookingRepo = new InMemoryBookingRepository(store);
   const reviewRepo = new InMemoryReviewRepository(store);
   const notificationRepo = new InMemoryNotificationRepository(store);
@@ -107,11 +116,13 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
   const customers = new CustomerService(customerRepo);
   const cleaners = new CleanerService(cleanerRepo);
   const catalog = new CatalogService(catalogRepo);
+  const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
     bookingRepo,
     customerRepo,
     cleanerRepo,
     catalogRepo,
+    quoteRepo,
   );
   const reviews = new ReviewService(reviewRepo);
   const notifications = new NotificationService(notificationRepo, now);
@@ -141,6 +152,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
     customers,
     dashboard,
     notifications,
+    quotes,
     reviews,
     settings,
     store,
@@ -463,6 +475,46 @@ export class InMemoryCatalogRepository implements CatalogRepository {
 
   public async countActive(): Promise<number> {
     return countWhere([...this.store.catalog.values()], (row) => row.isActive);
+  }
+}
+
+export class InMemoryQuoteRepository implements QuoteRepository {
+  private readonly store: InMemoryDomainStore;
+
+  public constructor(store: InMemoryDomainStore) {
+    this.store = store;
+  }
+
+  public async findById(id: string): Promise<QuoteRequestRecord | null> {
+    return this.store.quotes.get(id) ?? null;
+  }
+
+  public async create(
+    input: CreateQuoteRequestInput,
+  ): Promise<QuoteRequestRecord> {
+    const now = new Date();
+    const row: QuoteRequestRecord = {
+      additionalNotes: input.additionalNotes ?? null,
+      approximateSize: input.approximateSize,
+      bathrooms: input.bathrooms ?? null,
+      bedrooms: input.bedrooms ?? null,
+      createdAt: now,
+      email: input.email,
+      frequency: input.frequency,
+      fullName: input.fullName,
+      id: createId(),
+      phone: input.phone,
+      preferredDate: input.preferredDate,
+      preferredTime: input.preferredTime,
+      propertyType: input.propertyType,
+      serviceAddress: input.serviceAddress,
+      serviceId: input.serviceId ?? null,
+      serviceType: input.serviceType,
+      status: "NEW",
+      updatedAt: now,
+    };
+    this.store.quotes.set(row.id, row);
+    return row;
   }
 }
 

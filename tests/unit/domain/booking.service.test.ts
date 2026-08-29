@@ -153,4 +153,62 @@ describe("BookingService", (): void => {
       bookings.changeStatus(admin, created.id, "CONFIRMED"),
     ).rejects.toBeInstanceOf(ConflictError);
   });
+
+  it("creates a pending customer booking from the session identity", async (): Promise<void> => {
+    const { bookings, catalog, customers } = await seedBookingGraph();
+    const offering = await catalog.create(admin, {
+      fullDescription: "Move-out",
+      name: "Move Out",
+      shortDescription: "Empty home",
+    });
+    const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
+    const created = await bookings.createForCustomer(
+      actor,
+      {
+        email: "ada@neatly.example",
+        id: "customer-a",
+        name: "Ada",
+      },
+      {
+        notes: "Gate code",
+        scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        serviceAddress: "12 Harbour Street",
+        serviceId: offering.id,
+      },
+    );
+
+    expect(created.status).toBe("PENDING");
+    expect(created.serviceAddress).toBe("12 Harbour Street");
+    expect(created.linkedToQuote).toBe(false);
+    expect(JSON.stringify(created)).not.toContain("cleaner");
+
+    const fetched = await bookings.getCustomerBooking(
+      actor,
+      {
+        email: "ada@neatly.example",
+        id: "customer-a",
+        name: "Ada",
+      },
+      created.id,
+    );
+    expect(fetched.id).toBe(created.id);
+
+    const stranger: Actor = { id: "customer-b", role: "CUSTOMER" };
+    await customers.create(admin, {
+      email: "other@neatly.example",
+      name: "Other",
+      userId: "customer-b",
+    });
+    await expect(
+      bookings.getCustomerBooking(
+        stranger,
+        {
+          email: "other@neatly.example",
+          id: "customer-b",
+          name: "Other",
+        },
+        created.id,
+      ),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
 });

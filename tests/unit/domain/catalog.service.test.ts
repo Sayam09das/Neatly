@@ -51,6 +51,39 @@ describe("CatalogService", (): void => {
     expect(adminList.items).toHaveLength(1);
   });
 
+  it("returns a customer-safe public detail by slug and hides inactive offerings", async (): Promise<void> => {
+    const { catalog } = createDomainHarness();
+    const visible = await catalog.create(admin, {
+      ...offeringInput,
+      benefits: ["Dusted surfaces"],
+      excludedTasks: ["Interior oven"],
+      faqs: [{ answer: "Yes, weekly.", question: "Is this recurring?" }],
+      includedTasks: ["Kitchen counters"],
+      seoDescription: "Weekly home tidy.",
+      seoTitle: "Home Refresh Cleaning",
+    });
+
+    const detail = await catalog.getPublicBySlug("home-refresh");
+    expect(detail.id).toBe(visible.id);
+    expect(detail.fullDescription).toBe(offeringInput.fullDescription);
+    expect(detail.benefits).toEqual(["Dusted surfaces"]);
+    expect(detail.includedTasks).toEqual(["Kitchen counters"]);
+    expect(detail.excludedTasks).toEqual(["Interior oven"]);
+    expect(detail.faqs).toEqual([
+      { answer: "Yes, weekly.", question: "Is this recurring?" },
+    ]);
+    expect(JSON.stringify(detail)).not.toContain("isActive");
+    expect(JSON.stringify(detail)).not.toContain("coverMediaId");
+
+    await catalog.archive(admin, visible.id);
+    await expect(
+      catalog.getPublicBySlug("home-refresh"),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(catalog.getPublicBySlug("missing")).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+  });
+
   it("lists only active public offerings and omits admin catalog fields", async (): Promise<void> => {
     const { catalog } = createDomainHarness();
     const visible = await catalog.create(admin, offeringInput);

@@ -10,6 +10,25 @@ export const publicCatalogItemSchema = z.object({
   slug: z.string().min(1),
 });
 
+export const publicCatalogFaqSchema = z.object({
+  answer: z.string().min(1),
+  question: z.string().min(1),
+});
+
+export const publicCatalogDetailSchema = publicCatalogItemSchema.extend({
+  benefits: z.array(z.string()),
+  excludedTasks: z.array(z.string()),
+  faqs: z.array(publicCatalogFaqSchema),
+  fullDescription: z.string(),
+  includedTasks: z.array(z.string()),
+  seoDescription: z.string().nullable(),
+  seoTitle: z.string().nullable(),
+});
+
+export const publicCatalogDetailPayloadSchema = z.object({
+  service: publicCatalogDetailSchema,
+});
+
 export const publicCatalogPaginationSchema = z.object({
   limit: z.number().int().positive(),
   page: z.number().int().positive(),

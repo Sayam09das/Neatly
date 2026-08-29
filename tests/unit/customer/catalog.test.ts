@@ -4,6 +4,8 @@ import {
   customerServicesHref,
   isLocalCustomerServiceImage,
   loadPublicCatalog,
+  loadPublicCatalogDetail,
+  mapPublicCatalogDetail,
   mapPublicCatalogList,
   parseCustomerServicesSearchParams,
 } from "@/lib/customer/catalog";
@@ -58,6 +60,26 @@ describe("customer services query", (): void => {
     expect(isLocalCustomerServiceImage("//cdn.example/kitchen.jpg")).toBe(
       false,
     );
+  });
+
+  it("maps public catalog detail payloads without inventing price or duration", (): void => {
+    const mapped = mapPublicCatalogDetail({
+      service: {
+        ...catalogItem,
+        benefits: ["Kitchen tidy"],
+        excludedTasks: ["Windows"],
+        faqs: [{ answer: "Yes.", question: "Weekly?" }],
+        fullDescription: "A complete residential clean.",
+        includedTasks: ["Counters"],
+        seoDescription: "Weekly tidy.",
+        seoTitle: "Home Refresh",
+      },
+    });
+
+    expect(mapped?.fullDescription).toBe("A complete residential clean.");
+    expect(mapped?.includedTasks).toEqual(["Counters"]);
+    expect(JSON.stringify(mapped)).not.toContain("$");
+    expect(mapPublicCatalogDetail({ service: { name: "Broken" } })).toBeNull();
   });
 });
 
@@ -120,5 +142,71 @@ describe("loadPublicCatalog", (): void => {
     );
 
     expect(await loadPublicCatalog({ page: 1, q: "" })).toEqual({ ok: false });
+  });
+});
+
+describe("loadPublicCatalogDetail", (): void => {
+  afterEach((): void => {
+    vi.unstubAllGlobals();
+  });
+
+  it("loads a published service by slug", async (): Promise<void> => {
+    const detail = {
+      ...catalogItem,
+      benefits: [],
+      excludedTasks: [],
+      faqs: [],
+      fullDescription: "A complete residential clean.",
+      includedTasks: [],
+      seoDescription: null,
+      seoTitle: null,
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async (): Promise<unknown> => ({
+          data: { service: detail },
+          success: true,
+        }),
+        status: 200,
+      }),
+    );
+
+    expect(await loadPublicCatalogDetail("home-refresh")).toEqual({
+      ok: true,
+      service: detail,
+    });
+  });
+
+  it("treats missing services as not-found and network errors as failures", async (): Promise<void> => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async (): Promise<unknown> => ({
+          data: null,
+          error: {
+            code: "NOT_FOUND",
+            message: "Service offering was not found.",
+          },
+          success: false,
+        }),
+        status: 404,
+      }),
+    );
+
+    expect(await loadPublicCatalogDetail("missing")).toEqual({
+      notFound: true,
+      ok: false,
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED")),
+    );
+
+    expect(await loadPublicCatalogDetail("home-refresh")).toEqual({
+      notFound: false,
+      ok: false,
+    });
   });
 });

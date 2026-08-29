@@ -28,12 +28,15 @@ export const CUSTOMER_API_PATHS = {
   bookings: `${CUSTOMER_API_PREFIX}/bookings`,
   notifications: `${CUSTOMER_API_PREFIX}/notifications`,
   profile: `${CUSTOMER_API_PREFIX}/me`,
+  quotes: `${CUSTOMER_API_PREFIX}/quotes`,
   reviews: `${CUSTOMER_API_PREFIX}/reviews`,
+  service: `${CUSTOMER_API_PREFIX}/services/:slug`,
   services: `${CUSTOMER_API_PREFIX}/services`,
 } as const;
 
 export const CUSTOMER_SERVICES_SEARCH_PARAM = "q";
 export const CUSTOMER_SERVICES_PAGE_PARAM = "page";
+export const CUSTOMER_QUOTE_SERVICE_PARAM = "service";
 export const CUSTOMER_SERVICES_SEARCH_MAX_LENGTH = 120;
 export const CUSTOMER_SERVICES_SEARCH_INPUT_ID = "customer-services-search";
 export const CUSTOMER_CATALOG_REQUEST_TIMEOUT_MS = 8_000;
@@ -118,14 +121,15 @@ export const customerEmptyCopy = {
 
 export const customerSurfaceCopy = {
   booking: {
-    description: "Choose a service and time when you are ready to book.",
+    description:
+      "Choose a published service and a preferred time. We will review the request before it is confirmed.",
     heading: "Book a cleaning",
     title: "Book a cleaning",
   },
   bookingConfirmation: {
-    description: "A confirmation will appear here after a booking is created.",
-    heading: "Booking confirmation",
-    title: "Booking confirmation",
+    description: "Your booking details will appear here after you submit.",
+    heading: "Booking received",
+    title: "Booking received",
   },
   bookingDetail: {
     description: "Details for this booking will appear here when available.",
@@ -160,7 +164,7 @@ export const customerSurfaceCopy = {
   },
   quote: {
     description:
-      "Request a quote when you are ready. Nothing is submitted yet.",
+      "Share your property details so we can prepare a quote. This is a request, not a booking.",
     heading: "Request a quote",
     title: "Request a quote",
   },
@@ -188,11 +192,13 @@ export const customerSurfaceCopy = {
 } as const;
 
 export const customerServicesCopy = {
+  backToServices: "Back to services",
   browseAll: "Browse all services",
   imageUnavailable: "No image available",
   paginationLabel: "Services pages",
   paginationNext: "Next",
   paginationPrevious: "Previous",
+  requestQuote: "Request a quote",
   searchClear: "Clear search",
   searchLabel: "Search services",
   searchPlaceholder: "Search by name or description",
@@ -200,8 +206,186 @@ export const customerServicesCopy = {
   viewDetails: "View details",
 } as const;
 
+export const customerServiceDetailCopy = {
+  benefitsHeading: "What you can expect",
+  breadcrumbHome: "Home",
+  breadcrumbLabel: "Service location",
+  breadcrumbServices: "Services",
+  changeService: "Choose a different service",
+  descriptionHeading: "About this service",
+  excludedHeading: "Not included",
+  faqsHeading: "Questions",
+  includedHeading: "What's included",
+  nextStepsBody:
+    "Request a quote with your property details. We will review the request and follow up — this does not create a booking.",
+  nextStepsHeading: "What happens next",
+  quoteCta: "Request a quote",
+} as const;
+
+export const customerQuoteCopy = {
+  changeService: "Change service",
+  confirmationBody:
+    "We received your request. A team member will review the details and follow up with a quote. This is not a booking.",
+  confirmationHeading: "Quote request received",
+  confirmationNext: "Browse services",
+  continue: "Continue",
+  edit: "Edit",
+  honeypotLabel: "Company website",
+  noServiceSelected: "No service selected yet. You can still request a quote.",
+  reviewHeading: "Review your request",
+  selectedService: "Selected service",
+  serverError: "We could not submit your request. Please try again.",
+  stepContact: "Contact",
+  stepDetails: "Details",
+  stepProgress: "Quote request steps",
+  stepProperty: "Property",
+  stepReview: "Review",
+  stepService: "Service",
+  submit: "Submit request",
+  submitting: "Submitting",
+  unavailableService:
+    "That service is no longer available. Choose another service to continue.",
+} as const;
+
+export const customerQuoteFieldCopy = {
+  additionalNotes: "Additional notes",
+  additionalNotesHint:
+    "Optional. Access notes or priorities, up to 1,000 characters.",
+  approximateSize: "Approximate size",
+  bathrooms: "Bathrooms",
+  bedrooms: "Bedrooms",
+  email: "Email",
+  frequency: "How often",
+  fullName: "Full name",
+  phone: "Phone",
+  preferredDate: "Preferred date",
+  preferredTime: "Preferred time of day",
+  propertyType: "Property type",
+  serviceAddress: "Service address",
+  serviceType: "Service type",
+} as const;
+
+export const customerQuoteServiceTypeLabels = {
+  COMMERCIAL: "Commercial",
+  CUSTOM: "Custom",
+  DEEP_CLEAN: "Deep clean",
+  MOVE_IN_OUT: "Move-in / move-out",
+  RESIDENTIAL: "Residential",
+} as const;
+
+export const customerQuotePropertyTypeLabels = {
+  APARTMENT: "Apartment",
+  COMMERCIAL_SPACE: "Commercial space",
+  CONDO: "Condo",
+  HOUSE: "House",
+  OFFICE: "Office",
+} as const;
+
+export const customerQuoteFrequencyLabels = {
+  BI_WEEKLY: "Bi-weekly",
+  MONTHLY: "Monthly",
+  ONE_TIME: "One-time",
+  WEEKLY: "Weekly",
+} as const;
+
+export const QUOTE_APPROXIMATE_SIZES = [
+  "Under 1,000 sq ft",
+  "1,000-2,000 sq ft",
+  "2,000-3,500 sq ft",
+  "3,500+ sq ft",
+] as const;
+
+export const QUOTE_PREFERRED_TIMES = [
+  "Morning (8am-12pm)",
+  "Afternoon (12pm-4pm)",
+  "Evening (4pm-8pm)",
+] as const;
+
+export const customerBookingCopy = {
+  changeService: "Choose a different service",
+  continue: "Continue",
+  detailsHeading: "Booking details",
+  edit: "Edit",
+  noAvailabilityEngine:
+    "Preferred time is a request. We do not reserve a slot until the booking is reviewed.",
+  reviewHeading: "Review booking",
+  scheduleHeading: "Preferred date and time",
+  selectedService: "Service",
+  serverError: "We could not create this booking. Please try again.",
+  signInRequired: "Sign in to create a booking.",
+  stepDetails: "Details",
+  stepProgress: "Booking steps",
+  stepReview: "Review",
+  stepSchedule: "Schedule",
+  stepService: "Service",
+  submit: "Create booking",
+  submitting: "Creating booking",
+  unavailableService:
+    "That service is no longer available. Choose another published service.",
+} as const;
+
+export const customerBookingFieldCopy = {
+  notes: "Special instructions",
+  notesHint: "Optional. Access notes or priorities, up to 1,000 characters.",
+  scheduledDate: "Preferred date",
+  scheduledTime: "Preferred time",
+  serviceAddress: "Service address",
+} as const;
+
+export const customerBookingConfirmationCopy = {
+  copyReference: "Copy reference",
+  copied: "Booking reference copied.",
+  home: "Return home",
+  linkedQuote: "This booking is linked to your quote request.",
+  nextStepsBody:
+    "We will review the booking and contact you if anything needs to change. Assignment details appear once a cleaner is assigned.",
+  nextStepsHeading: "What happens next",
+  pendingHeading: "Booking received",
+  pendingBody:
+    "Your booking is pending review. This is not a confirmed appointment until the status is updated.",
+  confirmedHeading: "Your booking is confirmed",
+  confirmedBody: "The scheduled visit is confirmed.",
+  referenceLabel: "Booking reference",
+  scheduleHeading: "Schedule",
+  services: "Browse services",
+  statusLabel: "Status",
+  addressHeading: "Address",
+  serviceHeading: "Service",
+} as const;
+
+export const customerBookingStatusLabels = {
+  ASSIGNED: "Assigned",
+  CANCELLED: "Cancelled",
+  COMPLETED: "Completed",
+  CONFIRMED: "Confirmed",
+  IN_PROGRESS: "In progress",
+  PENDING: "Pending",
+} as const;
+
 export function customerServicePath(slug: string): string {
   return `${CUSTOMER_PATHS.services}/${encodeURIComponent(slug)}`;
+}
+
+export function customerQuotePath(slug?: string): string {
+  if (slug === undefined || slug.trim() === "") {
+    return CUSTOMER_PATHS.quote;
+  }
+
+  const params = new URLSearchParams();
+  params.set(CUSTOMER_QUOTE_SERVICE_PARAM, slug);
+  return `${CUSTOMER_PATHS.quote}?${params.toString()}`;
+}
+
+export function customerBookingConfirmationPath(id: string): string {
+  return `${CUSTOMER_PATHS.bookingConfirmation}/${encodeURIComponent(id)}`;
+}
+
+export function customerPublicServiceApiPath(slug: string): string {
+  return `${CUSTOMER_API_PATHS.services}/${encodeURIComponent(slug)}`;
+}
+
+export function customerQuoteLabel(name: string): string {
+  return `Request a quote for ${name}`;
 }
 
 export function customerServiceDetailsLabel(name: string): string {

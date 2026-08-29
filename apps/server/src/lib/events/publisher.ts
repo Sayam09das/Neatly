@@ -19,7 +19,7 @@ export async function publishAdminDomainEvent(
   try {
     const services = getDomainServices();
     const recipientIds =
-      options.recipientIds ?? (await services.users.listAdminIds(actor));
+      options.recipientIds ?? (await services.users.listAdminRecipientIds());
     const persistOthers = options.persist ?? true;
     const timestamp = new Date().toISOString();
 
@@ -31,7 +31,7 @@ export async function publishAdminDomainEvent(
         options.notificationId === undefined;
 
       if (shouldPersist) {
-        const notification = await services.notifications.create(actor, {
+        const notification = await services.notifications.record({
           message: input.message,
           recipientId,
           relatedHref: input.relatedHref,

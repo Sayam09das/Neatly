@@ -1,7 +1,7 @@
 import type { AuthUser } from "../auth/types.ts";
 import { AuthenticationError } from "../errors.ts";
 import type { RequestContext } from "../request-context.ts";
-import type { Actor } from "./actor.ts";
+import type { Actor, SessionCustomerIdentity } from "./actor.ts";
 
 export function actorFromUser(user: AuthUser): Actor {
   return {
@@ -16,4 +16,35 @@ export function actorFromContext(context: RequestContext): Actor {
   }
 
   return actorFromUser(context.user);
+}
+
+export function customerActorFromContext(context: RequestContext): Actor {
+  if (context.user === null) {
+    throw new AuthenticationError();
+  }
+
+  return {
+    id: context.user.id,
+    role: "CUSTOMER",
+  };
+}
+
+export function sessionCustomerIdentityFromContext(
+  context: RequestContext,
+): SessionCustomerIdentity {
+  if (context.user === null) {
+    throw new AuthenticationError();
+  }
+
+  return sessionCustomerIdentityFromUser(context.user);
+}
+
+export function sessionCustomerIdentityFromUser(
+  user: AuthUser,
+): SessionCustomerIdentity {
+  return {
+    email: user.email,
+    id: user.id,
+    name: user.name,
+  };
 }

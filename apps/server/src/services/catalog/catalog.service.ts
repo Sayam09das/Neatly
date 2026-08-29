@@ -18,8 +18,10 @@ import {
   type CatalogListQuery,
   type CatalogRecord,
   type CreateCatalogInput,
+  type PublicCatalogDetail,
   type PublicCatalogItem,
   type PublicCatalogListQuery,
+  toPublicCatalogDetail,
   toPublicCatalogItem,
   type UpdateCatalogInput,
 } from "./catalog.types.ts";
@@ -90,6 +92,16 @@ export class CatalogService {
       items: result.items.map(toPublicCatalogItem),
       pagination: result.pagination,
     };
+  }
+
+  public async getPublicBySlug(slug: string): Promise<PublicCatalogDetail> {
+    const item = await this.catalog.findBySlug(slug.trim());
+
+    if (item === null || !item.isActive) {
+      throw catalogItemNotFound();
+    }
+
+    return toPublicCatalogDetail(item);
   }
 
   public async update(

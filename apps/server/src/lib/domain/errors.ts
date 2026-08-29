@@ -12,6 +12,10 @@ export function catalogItemNotFound(): NotFoundError {
   return new NotFoundError("Service offering was not found.");
 }
 
+export function quoteRequestNotFound(): NotFoundError {
+  return new NotFoundError("Quote request was not found.");
+}
+
 export function bookingNotFound(): NotFoundError {
   return new NotFoundError("Booking was not found.");
 }

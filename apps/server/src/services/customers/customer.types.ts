@@ -37,6 +37,7 @@ export interface UpdateCustomerInput {
   email?: string;
   name?: string;
   phone?: string | null;
+  userId?: string | null;
 }
 
 export interface CustomerListQuery {

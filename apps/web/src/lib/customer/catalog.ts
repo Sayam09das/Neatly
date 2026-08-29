@@ -3,9 +3,11 @@ import {
   CUSTOMER_API_PATHS,
   CUSTOMER_CATALOG_REQUEST_TIMEOUT_MS,
   CUSTOMER_PATHS,
+  CUSTOMER_QUOTE_SERVICE_PARAM,
   CUSTOMER_SERVICES_PAGE_PARAM,
   CUSTOMER_SERVICES_SEARCH_MAX_LENGTH,
   CUSTOMER_SERVICES_SEARCH_PARAM,
+  customerPublicServiceApiPath,
 } from "@/config/customer";
 import {
   type JsonApiFailure,
@@ -13,10 +15,15 @@ import {
   parseJsonApiResponse,
 } from "@/lib/api/envelope";
 import {
+  publicCatalogDetailPayloadSchema,
   publicCatalogItemSchema,
   publicCatalogListSchema,
 } from "@/lib/validations/public-catalog.schema";
-import type { CustomerService, CustomerServiceList } from "@/types/customer";
+import type {
+  CustomerService,
+  CustomerServiceDetail,
+  CustomerServiceList,
+} from "@/types/customer";
 
 export interface CustomerServicesQuery {
   page: number;
@@ -26,6 +33,11 @@ export interface CustomerServicesQuery {
 export type PublicCatalogLoadResult =
   | { list: CustomerServiceList; ok: true }
   | { ok: false };
+
+export type PublicCatalogDetailLoadResult =
+  | { ok: true; service: CustomerServiceDetail }
+  | { notFound: true; ok: false }
+  | { notFound: false; ok: false };
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
 
@@ -129,6 +141,54 @@ export async function loadPublicCatalog(
   return { list, ok: true };
 }
 
+export function parseCustomerQuoteServiceSlug(
+  searchParams: SearchParamsInput,
+): string {
+  return readSearchParam(searchParams, CUSTOMER_QUOTE_SERVICE_PARAM)
+    .trim()
+    .slice(0, CUSTOMER_SERVICES_SEARCH_MAX_LENGTH);
+}
+
+export function mapPublicCatalogDetail(
+  value: unknown,
+): CustomerServiceDetail | null {
+  const parsed = publicCatalogDetailPayloadSchema.safeParse(value);
+
+  if (!parsed.success) {
+    return null;
+  }
+
+  return parsed.data.service;
+}
+
+export async function loadPublicCatalogDetail(
+  slug: string,
+): Promise<PublicCatalogDetailLoadResult> {
+  const trimmed = slug.trim();
+
+  if (trimmed === "") {
+    return { notFound: true, ok: false };
+  }
+
+  const result = await requestPublicCatalogDetail(trimmed);
+
+  if (!result.ok) {
+    if (result.status === 404) {
+      return { notFound: true, ok: false };
+    }
+
+    return { notFound: false, ok: false };
+  }
+
+  const service = mapPublicCatalogDetail(result.data);
+
+  if (service === null) {
+    return { notFound: false, ok: false };
+  }
+
+  return { ok: true, service };
+}
+
 async function requestPublicCatalog(
   query: CustomerServicesQuery,
 ): Promise<JsonApiResult<unknown>> {
@@ -145,6 +205,38 @@ async function requestPublicCatalog(
   if (query.page > 1) {
     url.searchParams.set("page", String(query.page));
   }
+
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        accept: "application/json",
+      },
+      signal: AbortSignal.timeout(CUSTOMER_CATALOG_REQUEST_TIMEOUT_MS),
+    });
+
+    let body: unknown = null;
+
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+
+    return parseJsonApiResponse(response.status, body);
+  } catch {
+    return catalogLoadFailure;
+  }
+}
+
+async function requestPublicCatalogDetail(
+  slug: string,
+): Promise<JsonApiResult<unknown>> {
+  const env = loadServerEnv();
+  const origin = env.NEATLY_API_URL.endsWith("/")
+    ? env.NEATLY_API_URL.slice(0, -1)
+    : env.NEATLY_API_URL;
+  const url = new URL(customerPublicServiceApiPath(slug), `${origin}/`);
 
   try {
     const response = await fetch(url, {

@@ -18,8 +18,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${siteUrl}/services`,
     },
-    {
-      url: `${siteUrl}/quote`,
-    },
   ];
 }

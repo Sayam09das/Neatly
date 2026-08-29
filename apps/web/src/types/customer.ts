@@ -55,6 +55,16 @@ export interface CustomerBooking {
   status: CustomerBookingStatus;
 }
 
+export interface CustomerBookingView {
+  id: string;
+  linkedToQuote: boolean;
+  notes: string | null;
+  scheduledAt: string | null;
+  service: { id: string; name: string } | null;
+  serviceAddress: string | null;
+  status: CustomerBookingStatus;
+}
+
 export interface CustomerBookingSummary {
   id: string;
   scheduledAt: string | null;
@@ -90,6 +100,21 @@ export interface CustomerService {
   slug: string;
 }
 
+export interface CustomerServiceFaq {
+  answer: string;
+  question: string;
+}
+
+export interface CustomerServiceDetail extends CustomerService {
+  benefits: string[];
+  excludedTasks: string[];
+  faqs: CustomerServiceFaq[];
+  fullDescription: string;
+  includedTasks: string[];
+  seoDescription: string | null;
+  seoTitle: string | null;
+}
+
 export interface CustomerServicePagination {
   page: number;
   pageSize: number;
@@ -117,6 +142,24 @@ export interface QuoteRequest {
   serviceAddress: string;
   serviceId: string | null;
   serviceType: CustomerQuoteServiceType;
+}
+
+export interface QuoteRequestConfirmation {
+  frequency: CustomerQuoteFrequency;
+  id: string;
+  preferredDate: string;
+  preferredTime: string;
+  propertyType: CustomerQuotePropertyType;
+  serviceId: string | null;
+  serviceType: CustomerQuoteServiceType;
+  status:
+    | "NEW"
+    | "REVIEWING"
+    | "CONTACTED"
+    | "QUOTED"
+    | "CONVERTED"
+    | "DECLINED"
+    | "CLOSED";
 }
 
 export type CustomerUiStatus =

@@ -3,7 +3,11 @@ import {
   AUTH_ENTRY_PATHS,
   AUTH_PUBLIC_ADMIN_PATHS,
 } from "@/config/auth";
-import { CUSTOMER_HOME_PATH, CUSTOMER_LOGIN_PATH } from "@/config/customer";
+import {
+  CUSTOMER_HOME_PATH,
+  CUSTOMER_LOGIN_PATH,
+  CUSTOMER_PATHS,
+} from "@/config/customer";
 
 export function isPublicAdminPath(pathname: string): boolean {
   return AUTH_PUBLIC_ADMIN_PATHS.some(
@@ -18,7 +22,9 @@ export function isProtectedAdminPath(pathname: string): boolean {
 export function isProtectedCustomerPath(pathname: string): boolean {
   return (
     pathname === CUSTOMER_HOME_PATH ||
-    pathname.startsWith(`${CUSTOMER_HOME_PATH}/`)
+    pathname.startsWith(`${CUSTOMER_HOME_PATH}/`) ||
+    pathname === CUSTOMER_PATHS.booking ||
+    pathname.startsWith(`${CUSTOMER_PATHS.booking}/`)
   );
 }
 
@@ -41,8 +47,20 @@ export function isSafeCustomerNextPath(pathname: string): boolean {
     return true;
   }
 
+  if (
+    pathname.startsWith(`${CUSTOMER_HOME_PATH}/`) &&
+    !pathname.includes("//")
+  ) {
+    return true;
+  }
+
+  if (pathname === CUSTOMER_PATHS.booking) {
+    return true;
+  }
+
   return (
-    pathname.startsWith(`${CUSTOMER_HOME_PATH}/`) && !pathname.includes("//")
+    pathname.startsWith(`${CUSTOMER_PATHS.bookingConfirmation}/`) &&
+    !pathname.includes("//")
   );
 }
 

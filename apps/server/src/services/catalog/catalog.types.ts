@@ -24,6 +24,11 @@ export interface CatalogRecord {
   updatedAt: Date;
 }
 
+export interface PublicCatalogFaq {
+  answer: string;
+  question: string;
+}
+
 export interface PublicCatalogItem {
   coverImageAlt: string | null;
   coverImageUrl: string | null;
@@ -32,6 +37,16 @@ export interface PublicCatalogItem {
   name: string;
   shortDescription: string;
   slug: string;
+}
+
+export interface PublicCatalogDetail extends PublicCatalogItem {
+  benefits: string[];
+  excludedTasks: string[];
+  faqs: PublicCatalogFaq[];
+  fullDescription: string;
+  includedTasks: string[];
+  seoDescription: string | null;
+  seoTitle: string | null;
 }
 
 export interface PublicCatalogListQuery {
@@ -104,4 +119,84 @@ export function toPublicCatalogItem(record: CatalogRecord): PublicCatalogItem {
     shortDescription: record.shortDescription,
     slug: record.slug,
   };
+}
+
+export function toPublicCatalogDetail(
+  record: CatalogRecord,
+): PublicCatalogDetail {
+  return {
+    ...toPublicCatalogItem(record),
+    benefits: sanitizeStringList(record.benefits),
+    excludedTasks: sanitizeStringList(record.excludedTasks),
+    faqs: toPublicCatalogFaqs(record.faqs),
+    fullDescription: record.fullDescription,
+    includedTasks: toPublicTaskList(record.includedTasks),
+    seoDescription: emptyToNull(record.seoDescription),
+    seoTitle: emptyToNull(record.seoTitle),
+  };
+}
+
+export function toPublicTaskList(value: unknown): string[] {
+  return sanitizeStringList(Array.isArray(value) ? value : []);
+}
+
+export function toPublicCatalogFaqs(value: unknown): PublicCatalogFaq[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const faqs: PublicCatalogFaq[] = [];
+
+  for (const item of value) {
+    if (!isPlainRecord(item)) {
+      continue;
+    }
+
+    const question = readTrimmedString(item.question);
+    const answer = readTrimmedString(item.answer);
+
+    if (question === null || answer === null) {
+      continue;
+    }
+
+    faqs.push({ answer, question });
+  }
+
+  return faqs;
+}
+
+function sanitizeStringList(values: readonly unknown[]): string[] {
+  const items: string[] = [];
+
+  for (const value of values) {
+    const text = readTrimmedString(value);
+
+    if (text !== null) {
+      items.push(text);
+    }
+  }
+
+  return items;
+}
+
+function emptyToNull(value: string | null): string | null {
+  if (value === null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+function readTrimmedString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

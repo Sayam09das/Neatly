@@ -27,8 +27,11 @@ describe("customer route protection", (): void => {
     expect(isProtectedCustomerPath("/dashboard/bookings/123")).toBe(true);
     expect(isProtectedCustomerPath("/quote")).toBe(false);
     expect(isProtectedCustomerPath("/services")).toBe(false);
-    expect(isProtectedCustomerPath("/login")).toBe(false);
+    expect(isProtectedCustomerPath("/booking")).toBe(true);
+    expect(isProtectedCustomerPath("/booking/confirmation/abc")).toBe(true);
     expect(isSafeCustomerNextPath("/dashboard/profile")).toBe(true);
+    expect(isSafeCustomerNextPath("/booking")).toBe(true);
+    expect(isSafeCustomerNextPath("/booking/confirmation/abc")).toBe(true);
     expect(isSafeCustomerNextPath("https://evil.example")).toBe(false);
     expect(isSafeCustomerNextPath("/dashboard/../admin")).toBe(false);
   });

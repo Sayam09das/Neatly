@@ -146,4 +146,44 @@ describe("Public catalog APIs", (): void => {
     expect(body.data.items).toHaveLength(1);
     expect(body.data.items[0]?.slug).toBe("studio-reset");
   });
+
+  it("returns public service details by slug and 404s inactive records", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    mockedDomain.mockReturnValue(harness as never);
+
+    const active = await harness.catalog.create(admin, {
+      benefits: ["Tidy kitchen"],
+      excludedTasks: ["Windows"],
+      fullDescription: "A complete residential clean.",
+      includedTasks: ["Counters"],
+      name: "Home Refresh",
+      shortDescription: "Weekly tidy",
+    });
+    const archived = await harness.catalog.create(admin, {
+      fullDescription: "Retired offering.",
+      name: "Archived Clean",
+      shortDescription: "No longer listed",
+    });
+    await harness.catalog.archive(admin, archived.id);
+
+    const found = await dispatchApi({
+      method: "GET",
+      url: `${API_PATHS.customerServices}/${active.slug}`,
+    });
+    const foundBody = parseJsonBody(found.body) as Envelope<{
+      service: { id: string; slug: string; fullDescription: string };
+    }>;
+
+    expect(found.statusCode).toBe(HTTP_STATUS.OK);
+    expect(foundBody.data.service.id).toBe(active.id);
+    expect(foundBody.data.service.fullDescription).toContain("residential");
+    expect(JSON.stringify(foundBody.data)).not.toContain("adminNotes");
+    expect(JSON.stringify(foundBody.data)).not.toContain("isActive");
+
+    const missing = await dispatchApi({
+      method: "GET",
+      url: `${API_PATHS.customerServices}/${archived.slug}`,
+    });
+    expect(missing.statusCode).toBe(HTTP_STATUS.NOT_FOUND);
+  });
 });

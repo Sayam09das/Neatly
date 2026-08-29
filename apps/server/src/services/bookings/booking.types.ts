@@ -39,6 +39,39 @@ export interface CreateBookingInput {
   serviceId: string;
 }
 
+export interface CreateCustomerBookingInput {
+  notes?: string | null;
+  quoteRequestId?: string | null;
+  scheduledAt: Date;
+  serviceAddress: string;
+  serviceId: string;
+}
+
+export interface CustomerBookingView {
+  id: string;
+  linkedToQuote: boolean;
+  notes: string | null;
+  scheduledAt: string | null;
+  service: BookingParty | null;
+  serviceAddress: string | null;
+  status: BookingStatus;
+}
+
+export function toCustomerBookingView(
+  record: BookingRecord,
+): CustomerBookingView {
+  return {
+    id: record.id,
+    linkedToQuote: record.quoteRequestId !== null,
+    notes: record.notes,
+    scheduledAt:
+      record.scheduledAt === null ? null : record.scheduledAt.toISOString(),
+    service: record.service,
+    serviceAddress: record.serviceAddress,
+    status: record.status,
+  };
+}
+
 export interface UpdateBookingInput {
   notes?: string | null;
   scheduledAt?: Date | null;

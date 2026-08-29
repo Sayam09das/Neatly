@@ -265,7 +265,7 @@ Customer Route Hierarchy
 │   ├── /services/[slug]
 │   ├── /quote
 │   ├── /booking
-│   └── /booking/confirmation
+│   └── /booking/confirmation/[bookingId]
 └── /dashboard (Protected layout; cookie presence in middleware is UX-only)
     ├── /dashboard
     ├── /dashboard/bookings
@@ -280,10 +280,14 @@ Customer Route Hierarchy
 * **Navigation:** Public marketing pages reuse `Navbar` with a server-fetched session (name and email only). `/dashboard` uses `CustomerNavbar`. Public and account shells reuse `SiteFooter`. Frontend navigation is UX only; backend authorization remains authoritative.
 * **Home:** `/` keeps the existing landing composition and animation architecture. CTAs use real routes (`/quote`, `/services`, `/about`, `/dashboard` for customers). Unpublished portfolio, blog, and contact indexes are not linked. Home does not fetch catalog, booking, notification, or admin data. JSON-LD `LocalBusiness` omits unpublished NAP fields.
 * **Services discovery:** `/services` is a public Server Component. It reads `q` and `page` from the URL and loads active catalog items from `GET /api/v1/customer/services`. `CatalogService.listPublic()` always scopes to `isActive: true`; the UI is not the visibility boundary. Cards use real slugs and link to `/services/[slug]`. Search matches `name` and `shortDescription`. There is no category or price filter because those fields are not on `Service`.
-* **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard` requests redirect to `/admin/login` with a safe `next` path. `/login` remains an alias and forwards a safe `next` query. Logout reuses `POST /api/admin/auth/logout`.
-* **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for future ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
-* **Privacy:** `/dashboard` is `force-dynamic` and `robots: noindex`. Customer query keys include the session user id. Logout clears customer client cache listeners.
-* **Customer HTTP APIs:** Public catalog listing lives at `GET /api/v1/customer/services` (no auth). Remaining customer account endpoints stay reserved; this phase does not add fake bookings or quote APIs.
+* **Service details:** `/services/[slug]` is a public Server Component. `GET /api/v1/customer/services/:slug` returns a customer-safe detail DTO for active offerings only. Missing or inactive slugs use Next.js `notFound()`. The page does not invent price, duration, category, or reviews. The primary CTA is Request a quote (`/quote?service=[slug]`).
+* **Quote request:** `/quote` is a public multi-step visitor form. `POST /api/v1/customer/quotes` persists a `QuoteRequest` with status `NEW`. The server ignores client identity fields, `status`, and `adminNotes`. Optional `serviceId` must reference an active catalog item. Honeypot plus IP rate limiting (3 / 15 minutes) apply. Confirmation is request-received, not a booking.
+* **Booking flow:** `/booking` requires a session. `POST /api/v1/customer/bookings` creates a `PENDING` booking for the session customer (provisioned from the authenticated user). The client cannot set status, cleaner, customer id, or price. There is no availability-slot engine; `scheduledAt` is a preferred time stored as UTC, not a reserved slot.
+* **Booking confirmation:** `/booking/confirmation/[bookingId]` fetches the existing booking. It never creates a booking. Other customers' bookings return the same not-found experience.
+* **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard` and `/booking` requests redirect to `/admin/login` with a safe `next` path. `/login` remains an alias and forwards a safe `next` query. Logout reuses `POST /api/admin/auth/logout`.
+* **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for customer booking ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
+* **Privacy:** `/dashboard` and booking confirmation are `force-dynamic` and `robots: noindex`. Customer query keys include the session user id. Logout clears customer client cache listeners.
+* **Customer HTTP APIs:** Public catalog listing lives at `GET /api/v1/customer/services`. Public catalog detail lives at `GET /api/v1/customer/services/:slug`. Quote create lives at `POST /api/v1/customer/quotes`. Authenticated booking create/get live at `POST /api/v1/customer/bookings` and `GET /api/v1/customer/bookings/:id`. Same-origin browser mutations proxy through `apps/web` `/api/v1/customer/*`.
 
 ---
 
