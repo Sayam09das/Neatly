@@ -119,6 +119,38 @@ describe("CatalogService", (): void => {
     expect(JSON.stringify(result.items)).not.toContain("coverMediaId");
   });
 
+  it("lists only active service FAQs for customer help", async (): Promise<void> => {
+    const { catalog } = createDomainHarness();
+    await catalog.create(admin, {
+      ...offeringInput,
+      faqs: [{ answer: "Yes, weekly.", question: "Is this recurring?" }],
+    });
+    await catalog.create(admin, {
+      fullDescription: "Office clean.",
+      name: "Studio Reset",
+      shortDescription: "Desk and kitchen tidy",
+    });
+    const archived = await catalog.create(admin, {
+      faqs: [{ answer: "No longer offered.", question: "Is this available?" }],
+      fullDescription: "Archived offering.",
+      name: "Retired Clean",
+      shortDescription: "No longer offered",
+    });
+    await catalog.archive(admin, archived.id);
+
+    const help = await catalog.listPublicHelp();
+
+    expect(help.topics).toEqual([
+      {
+        faqs: [{ answer: "Yes, weekly.", question: "Is this recurring?" }],
+        name: "Home Refresh",
+        slug: "home-refresh",
+      },
+    ]);
+    expect(JSON.stringify(help)).not.toContain("isActive");
+    expect(JSON.stringify(help)).not.toContain("coverMediaId");
+  });
+
   it("rejects missing offerings", async (): Promise<void> => {
     const { catalog } = createDomainHarness();
     await expect(catalog.getById("missing")).rejects.toBeInstanceOf(

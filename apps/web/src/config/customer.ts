@@ -33,6 +33,7 @@ export const CUSTOMER_API_PATHS = {
   bookingCancel: `${CUSTOMER_API_PREFIX}/bookings/:id/cancel`,
   bookings: `${CUSTOMER_API_PREFIX}/bookings`,
   dashboard: `${CUSTOMER_API_PREFIX}/dashboard`,
+  help: `${CUSTOMER_API_PREFIX}/help`,
   notifications: `${CUSTOMER_API_PREFIX}/notifications`,
   profile: `${CUSTOMER_API_PREFIX}/me`,
   quotes: `${CUSTOMER_API_PREFIX}/quotes`,
@@ -165,7 +166,7 @@ export const customerSurfaceCopy = {
     title: "Overview",
   },
   help: {
-    description: "Help for bookings and your account will appear here.",
+    description: "Answers from published services and links for your account.",
     heading: "Help",
     title: "Help",
   },
@@ -378,6 +379,7 @@ export const customerDashboardCopy = {
   bookAction: "Book a cleaning",
   greetingFallback: "Welcome",
   greetingNamed: "Welcome, {name}",
+  helpAction: "Help",
   nextBookingEmptyAction: "Browse services",
   nextBookingEmptyDescription:
     "When you have an upcoming visit, it will appear here.",
@@ -505,6 +507,57 @@ export const customerSettingsCopy = {
   verified: "Verified",
   unverified: "Not verified",
 } as const;
+
+export const customerHelpCopy = {
+  allTopics: "All topics",
+  clearSearch: "Clear search",
+  contactEmpty:
+    "Support requests cannot be submitted from this page yet. Use the account links above, or a published phone or email when it is available.",
+  contactHeading: "Contact support",
+  description:
+    "Search published service questions or open the account page you need.",
+  emptyFaqs:
+    "Published service questions will appear here when they are available.",
+  emptyFaqsTitle: "No help articles yet",
+  heading: "Help",
+  noResults: "No results found",
+  noResultsAction: "Contact support",
+  noResultsDescription:
+    "Nothing matched that search. Try another phrase or contact support below.",
+  resourcesHeading: "Your account",
+  resultCount: "{count} results",
+  searchLabel: "Search help",
+  searchPlaceholder: "Search questions",
+  topicsHeading: "Questions",
+} as const;
+
+export const customerHelpResources = [
+  {
+    description: "View, update, or cancel a booking you own.",
+    href: CUSTOMER_PATHS.bookings,
+    title: "Manage a booking",
+  },
+  {
+    description: "Update the name, phone, or address on your account.",
+    href: CUSTOMER_PATHS.profile,
+    title: "Update your profile",
+  },
+  {
+    description: "Change your password or review signed-in sessions.",
+    href: CUSTOMER_PATHS.settings,
+    title: "Account security",
+  },
+  {
+    description: "Review a completed booking you own.",
+    href: CUSTOMER_PATHS.reviews,
+    title: "Reviews",
+  },
+  {
+    description: "Request a quote for a published service.",
+    href: CUSTOMER_PATHS.quote,
+    title: "Request a quote",
+  },
+] as const;
 
 export const customerReviewsCopy = {
   cancelEdit: "Cancel",

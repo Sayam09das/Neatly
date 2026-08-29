@@ -49,6 +49,12 @@ export interface PublicCatalogDetail extends PublicCatalogItem {
   seoTitle: string | null;
 }
 
+export interface PublicHelpTopic {
+  faqs: PublicCatalogFaq[];
+  name: string;
+  slug: string;
+}
+
 export interface PublicCatalogListQuery {
   pagination?: PaginationQuery;
   search?: string;
@@ -138,6 +144,22 @@ export function toPublicCatalogDetail(
 
 export function toPublicTaskList(value: unknown): string[] {
   return sanitizeStringList(Array.isArray(value) ? value : []);
+}
+
+export function toPublicHelpTopic(
+  record: CatalogRecord,
+): PublicHelpTopic | null {
+  const faqs = toPublicCatalogFaqs(record.faqs);
+
+  if (faqs.length === 0) {
+    return null;
+  }
+
+  return {
+    faqs,
+    name: record.name,
+    slug: record.slug,
+  };
 }
 
 export function toPublicCatalogFaqs(value: unknown): PublicCatalogFaq[] {

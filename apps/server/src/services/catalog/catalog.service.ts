@@ -1,3 +1,4 @@
+import { PAGINATION_MAX_LIMIT } from "../../config/constants.ts";
 import {
   type Actor,
   isAdminActor,
@@ -21,8 +22,10 @@ import {
   type PublicCatalogDetail,
   type PublicCatalogItem,
   type PublicCatalogListQuery,
+  type PublicHelpTopic,
   toPublicCatalogDetail,
   toPublicCatalogItem,
+  toPublicHelpTopic,
   type UpdateCatalogInput,
 } from "./catalog.types.ts";
 
@@ -92,6 +95,36 @@ export class CatalogService {
       items: result.items.map(toPublicCatalogItem),
       pagination: result.pagination,
     };
+  }
+
+  public async listPublicHelp(): Promise<{ topics: PublicHelpTopic[] }> {
+    const topics: PublicHelpTopic[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+      const result = await this.list({
+        pagination: {
+          limit: PAGINATION_MAX_LIMIT,
+          page,
+          skip: (page - 1) * PAGINATION_MAX_LIMIT,
+        },
+        sort: { direction: "asc", field: "sortOrder" },
+      });
+      totalPages = Math.max(result.pagination.totalPages, 1);
+
+      for (const item of result.items) {
+        const topic = toPublicHelpTopic(item);
+
+        if (topic !== null) {
+          topics.push(topic);
+        }
+      }
+
+      page += 1;
+    } while (page <= totalPages);
+
+    return { topics };
   }
 
   public async getPublicBySlug(slug: string): Promise<PublicCatalogDetail> {

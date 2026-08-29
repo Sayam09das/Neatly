@@ -46,6 +46,7 @@ export const API_PATHS = {
   customerBookingCancel: `${API_PREFIX}/customer/bookings/:id/cancel`,
   customerBookings: `${API_PREFIX}/customer/bookings`,
   customerDashboard: `${API_PREFIX}/customer/dashboard`,
+  customerHelp: `${API_PREFIX}/customer/help`,
   customerMe: `${API_PREFIX}/customer/me`,
   customerQuotes: `${API_PREFIX}/customer/quotes`,
   customerReview: `${API_PREFIX}/customer/reviews/:id`,

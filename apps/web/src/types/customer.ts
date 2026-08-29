@@ -185,6 +185,23 @@ export interface CustomerServicePagination {
   totalPages: number;
 }
 
+export interface CustomerHelpTopic {
+  faqs: CustomerServiceFaq[];
+  name: string;
+  slug: string;
+}
+
+export interface CustomerHelpWorkspace {
+  topics: CustomerHelpTopic[];
+}
+
+export interface CustomerPublishedContact {
+  address: string | null;
+  email: string | null;
+  hours: string | null;
+  phone: string | null;
+}
+
 export interface CustomerServiceList {
   pagination: CustomerServicePagination;
   services: CustomerService[];

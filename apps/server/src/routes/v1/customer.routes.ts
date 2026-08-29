@@ -14,6 +14,7 @@ import {
   listCustomerBookingsController,
   updateCustomerBookingController,
 } from "../../controllers/customer/bookings.controller.ts";
+import { listCustomerHelpController } from "../../controllers/customer/help.controller.ts";
 import {
   getCustomerProfileController,
   updateCustomerProfileController,
@@ -86,6 +87,12 @@ export const customerRoutes: readonly RouteDefinition[] = [
     method: "GET",
     middleware: [requireAuth],
     path: API_PATHS.customerDashboard,
+  },
+  {
+    handler: listCustomerHelpController,
+    method: "GET",
+    middleware: [requireAuth],
+    path: API_PATHS.customerHelp,
   },
   {
     handler: listCustomerBookingsController,

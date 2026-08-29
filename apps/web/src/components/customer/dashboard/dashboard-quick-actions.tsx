@@ -31,6 +31,13 @@ export function DashboardQuickActions(): ReactElement {
             </Link>
           </Button>
         </li>
+        <li>
+          <Button asChild variant="ghost">
+            <Link href={CUSTOMER_PATHS.help}>
+              {customerDashboardCopy.helpAction}
+            </Link>
+          </Button>
+        </li>
       </ul>
     </nav>
   );
