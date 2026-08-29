@@ -22,7 +22,11 @@ interface CustomerAppLayoutProps {
 export default async function CustomerAppLayout({
   children,
 }: CustomerAppLayoutProps): Promise<ReactElement> {
-  await requireCustomerPage();
+  const user = await requireCustomerPage();
 
-  return <CustomerShell>{children}</CustomerShell>;
+  return (
+    <CustomerShell identity={{ email: user.email, name: user.name }}>
+      {children}
+    </CustomerShell>
+  );
 }

@@ -2,19 +2,37 @@ import { Button } from "@neatly/ui";
 import { cn } from "@neatly/utils";
 import Link from "next/link";
 import type { ReactElement, SVGProps } from "react";
+import { CustomerBellIcon } from "@/components/customer/customer-icons";
+import { CustomerUserMenu } from "@/components/customer/customer-user-menu";
 import { isNavItemActive } from "@/components/layout/navbar/is-nav-item-active";
+import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
+import {
+  CUSTOMER_LOGIN_PATH,
+  CUSTOMER_PATHS,
+  customerNavbarCopy,
+} from "@/config/customer";
+import { isCustomerNavItemActive } from "@/config/customer-nav";
 import {
   getPublishedPhone,
   landingNavLinks,
   navbarCta,
 } from "@/config/landing";
+import { signOutAdmin } from "@/lib/admin/session";
+import type { CustomerNavbarSession } from "@/lib/customer/navbar";
+import { getCustomerNavbarPresentation } from "@/lib/customer/navbar";
+import { signOutCustomer } from "@/lib/customer/session";
 
 interface DesktopNavProps {
   pathname: string;
+  session?: CustomerNavbarSession | null;
 }
 
-export function DesktopNav({ pathname }: DesktopNavProps): ReactElement {
+export function DesktopNav({
+  pathname,
+  session = null,
+}: DesktopNavProps): ReactElement {
   const phone = getPublishedPhone();
+  const presentation = getCustomerNavbarPresentation(session, "public");
 
   return (
     <>
@@ -56,16 +74,80 @@ export function DesktopNav({ pathname }: DesktopNavProps): ReactElement {
             <span>{phone}</span>
           </a>
         )}
-        <Button
-          asChild
-          className="uppercase focus-visible:ring-offset-secondary"
-          size="sm"
-        >
-          <Link href={navbarCta.href}>
-            {navbarCta.label}
-            <ArrowUpRightIcon />
+        {presentation.showLogin ? (
+          <Link
+            className="inline-flex min-h-touch items-center rounded-sm text-body-small font-medium text-secondary-foreground/80 transition-colors duration-normal ease-standard hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+            href={CUSTOMER_LOGIN_PATH}
+          >
+            {customerNavbarCopy.loginLabel}
           </Link>
-        </Button>
+        ) : null}
+        {presentation.showAdmin ? (
+          <Link
+            className="inline-flex min-h-touch items-center rounded-sm text-body-small font-medium text-secondary-foreground/80 transition-colors duration-normal ease-standard hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+            href={AUTH_ADMIN_HOME_PATH}
+          >
+            {customerNavbarCopy.adminLabel}
+          </Link>
+        ) : null}
+        {presentation.accountLinks.map((item) => (
+          <Link
+            className={cn(
+              "hidden min-h-touch items-center rounded-sm text-body-small font-medium transition-colors duration-normal ease-standard xl:inline-flex",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary",
+              isCustomerNavItemActive(pathname, item.href)
+                ? "text-primary underline decoration-primary underline-offset-8"
+                : "text-secondary-foreground/80 hover:text-secondary-foreground",
+            )}
+            href={item.href}
+            key={item.href}
+          >
+            {item.label}
+          </Link>
+        ))}
+        {presentation.showNotifications ? (
+          <Button
+            asChild
+            className="text-secondary-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground focus-visible:ring-offset-secondary"
+            size="icon"
+            variant="ghost"
+          >
+            <Link
+              aria-label={customerNavbarCopy.notificationsLabel}
+              href={CUSTOMER_PATHS.notifications}
+            >
+              <CustomerBellIcon />
+            </Link>
+          </Button>
+        ) : null}
+        {presentation.showQuote ? (
+          <Button
+            asChild
+            className="uppercase focus-visible:ring-offset-secondary"
+            size="sm"
+          >
+            <Link href={navbarCta.href}>
+              {navbarCta.label}
+              <ArrowUpRightIcon />
+            </Link>
+          </Button>
+        ) : null}
+        {session !== null && presentation.showUserMenu ? (
+          <CustomerUserMenu
+            identity={session.identity}
+            onLogout={(): void => {
+              if (presentation.mode === "admin") {
+                void signOutAdmin();
+                return;
+              }
+
+              void signOutCustomer();
+            }}
+            showAccountLinks={presentation.mode === "customer"}
+            showAdmin={false}
+            tone="public"
+          />
+        ) : null}
       </div>
     </>
   );

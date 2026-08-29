@@ -37,14 +37,29 @@ export const FORBIDDEN_CUSTOMER_AUTH_QUERY_KEYS = [
   "userId",
 ] as const;
 
+export const CUSTOMER_HEADER_HEIGHT_CLASS = "min-h-16";
+export const CUSTOMER_MOBILE_NAV_ID = "customer-mobile-navigation";
+
 export const customerShellCopy = {
-  brandLabel: `${APP_NAME} account home`,
+  brandLabel: `${APP_NAME} home`,
   brandName: APP_NAME,
   loadingLabel: "Loading",
   logoutLabel: "Log out",
   mainLabel: "Account content",
   navigationLabel: "Account navigation",
   skipToContent: "Skip to content",
+} as const;
+
+export const customerNavbarCopy = {
+  accountMenuLabel: "Open account menu",
+  adminLabel: "Admin",
+  loginLabel: "Log in",
+  menuCloseLabel: "Close menu",
+  menuDescription: "Site and account navigation",
+  menuOpenLabel: "Open menu",
+  menuTitle: "Menu",
+  notificationsLabel: "Notifications",
+  primaryNavigationLabel: "Primary",
 } as const;
 
 export const customerErrorCopy = {

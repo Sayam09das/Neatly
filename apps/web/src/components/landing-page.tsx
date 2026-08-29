@@ -16,8 +16,15 @@ import { WhyNeatly } from "@/components/sections/why-neatly";
 import { WordMarquee } from "@/components/sections/word-marquee";
 import { FeaturedWork } from "@/components/sections/work";
 import { TEMPORARY_COPY_NOTE } from "@/config/landing";
+import type { CustomerNavbarSession } from "@/lib/customer/navbar";
 
-export function LandingPage(): ReactElement {
+interface LandingPageProps {
+  session?: CustomerNavbarSession | null;
+}
+
+export function LandingPage({
+  session = null,
+}: LandingPageProps): ReactElement {
   return (
     <>
       <a
@@ -26,7 +33,7 @@ export function LandingPage(): ReactElement {
       >
         Skip to content
       </a>
-      <Navbar />
+      <Navbar session={session} />
       <main id="main-content">
         <p className="sr-only">{TEMPORARY_COPY_NOTE}</p>
         <Hero />

@@ -9,6 +9,8 @@ import {
   withCustomerApiId,
 } from "@/config/customer";
 import {
+  customerAccountMenuItems,
+  customerHeaderNavigation,
   customerNavigation,
   getCustomerNavItems,
   getCustomerPageTitle,
@@ -59,6 +61,15 @@ describe("customer navigation", (): void => {
     expect(customerNavigation.some((item) => /\d/.test(item.label))).toBe(
       false,
     );
+    expect(customerHeaderNavigation.map((item) => item.href)).toEqual([
+      CUSTOMER_PATHS.dashboard,
+      CUSTOMER_PATHS.bookings,
+    ]);
+    expect(customerAccountMenuItems.map((item) => item.href)).toEqual([
+      CUSTOMER_PATHS.profile,
+      CUSTOMER_PATHS.settings,
+      CUSTOMER_PATHS.notifications,
+    ]);
   });
 
   it("treats the account home path as exact-only", (): void => {

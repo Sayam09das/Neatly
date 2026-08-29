@@ -11,10 +11,11 @@ import {
   CustomerResourceUnavailableState,
 } from "@/components/customer/customer-states";
 import {
-  CUSTOMER_HOME_PATH,
   CUSTOMER_MAIN_CONTENT_ID,
+  CUSTOMER_PATHS,
   customerEmptyCopy,
   customerErrorCopy,
+  customerNavbarCopy,
   customerNotFoundCopy,
   customerShellCopy,
 } from "@/config/customer";
@@ -23,10 +24,15 @@ vi.mock("next/navigation", () => ({
   usePathname: (): string => "/dashboard",
 }));
 
+const shellIdentity = {
+  email: "ada@neatly.example",
+  name: "Ada",
+};
+
 describe("CustomerShell", (): void => {
   it("renders landmarks, skip link, and account navigation without business records", (): void => {
     render(
-      <CustomerShell>
+      <CustomerShell identity={shellIdentity}>
         <h1>Your account</h1>
       </CustomerShell>,
     );
@@ -34,7 +40,7 @@ describe("CustomerShell", (): void => {
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", {
-        name: customerShellCopy.navigationLabel,
+        name: customerNavbarCopy.primaryNavigationLabel,
       }),
     ).toBeInTheDocument();
     expect(
@@ -45,10 +51,25 @@ describe("CustomerShell", (): void => {
     ).toHaveAttribute("href", `#${CUSTOMER_MAIN_CONTENT_ID}`);
     expect(
       screen.getByRole("link", { name: customerShellCopy.brandLabel }),
-    ).toHaveAttribute("href", CUSTOMER_HOME_PATH);
+    ).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+      "href",
+      CUSTOMER_PATHS.dashboard,
+    );
+    expect(screen.getByRole("link", { name: "Bookings" })).toHaveAttribute(
+      "href",
+      CUSTOMER_PATHS.bookings,
+    );
     expect(
-      screen.getByRole("button", { name: customerShellCopy.logoutLabel }),
+      screen.getByRole("link", { name: customerNavbarCopy.notificationsLabel }),
+    ).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
+    expect(
+      screen.getByRole("button", { name: customerNavbarCopy.accountMenuLabel }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: customerShellCopy.logoutLabel }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(shellIdentity.email)).not.toBeInTheDocument();
     expect(screen.queryByText(/booking_#/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
   });

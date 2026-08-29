@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Button,
   buttonVariants,
   Separator,
   Sheet,
@@ -18,20 +19,41 @@ import { type ReactElement, type SVGProps, useEffect, useState } from "react";
 import { getLenis } from "@/animations/lenis/smooth-scroll";
 import { BrandLink } from "@/components/layout/navbar/brand-link";
 import { isNavItemActive } from "@/components/layout/navbar/is-nav-item-active";
+import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
+import {
+  CUSTOMER_LOGIN_PATH,
+  customerNavbarCopy,
+  customerShellCopy,
+} from "@/config/customer";
+import {
+  customerAccountMenuItems,
+  isCustomerNavItemActive,
+} from "@/config/customer-nav";
 import {
   getPublishedPhone,
   landingFooter,
   landingNavLinks,
   navbarCta,
 } from "@/config/landing";
+import { signOutAdmin } from "@/lib/admin/session";
+import type { CustomerNavbarSession } from "@/lib/customer/navbar";
+import { getCustomerNavbarPresentation } from "@/lib/customer/navbar";
+import { signOutCustomer } from "@/lib/customer/session";
+
+const PUBLIC_MOBILE_NAV_ID = "primary-mobile-navigation";
 
 interface MobileNavProps {
   pathname: string;
+  session?: CustomerNavbarSession | null;
 }
 
-export function MobileNav({ pathname }: MobileNavProps): ReactElement {
+export function MobileNav({
+  pathname,
+  session = null,
+}: MobileNavProps): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const phone = getPublishedPhone();
+  const presentation = getCustomerNavbarPresentation(session, "public");
 
   useEffect((): (() => void) => {
     return (): void => {
@@ -53,6 +75,8 @@ export function MobileNav({ pathname }: MobileNavProps): ReactElement {
     <div className="ml-auto lg:hidden">
       <Sheet onOpenChange={handleOpenChange} open={isOpen}>
         <SheetTrigger
+          aria-controls={PUBLIC_MOBILE_NAV_ID}
+          aria-expanded={isOpen}
           aria-label="Open menu"
           className={cn(
             buttonVariants({ size: "icon", variant: "ghost" }),
@@ -65,6 +89,7 @@ export function MobileNav({ pathname }: MobileNavProps): ReactElement {
           className="gap-8 bg-secondary text-secondary-foreground"
           closeLabel="Close menu"
           data-lenis-prevent
+          id={PUBLIC_MOBILE_NAV_ID}
           side="right"
         >
           <SheetHeader>
@@ -122,7 +147,77 @@ export function MobileNav({ pathname }: MobileNavProps): ReactElement {
               </SheetClose>
             )}
           </div>
+          {session !== null ? (
+            <>
+              <Separator className="bg-secondary-foreground/15" />
+              <div className="px-3">
+                <p className="truncate text-body font-medium">
+                  {session.identity.name}
+                </p>
+                <p className="mt-1 truncate text-body-small text-secondary-foreground/70">
+                  {session.identity.email}
+                </p>
+              </div>
+              {presentation.mode === "customer" ? (
+                <ul className="flex flex-col gap-1">
+                  {presentation.accountLinks.map((item) => (
+                    <li key={item.href}>
+                      <SheetClose asChild>
+                        <Link
+                          className={cn(
+                            "flex min-h-touch items-center rounded-md px-3 text-body font-medium",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary",
+                            isCustomerNavItemActive(pathname, item.href)
+                              ? "bg-secondary-foreground/10 text-primary"
+                              : "text-secondary-foreground/90 hover:bg-secondary-foreground/10",
+                          )}
+                          href={item.href}
+                        >
+                          {item.label}
+                        </Link>
+                      </SheetClose>
+                    </li>
+                  ))}
+                  {customerAccountMenuItems.map((item) => (
+                    <li key={item.href}>
+                      <SheetClose asChild>
+                        <Link
+                          className="flex min-h-touch items-center rounded-md px-3 text-body font-medium text-secondary-foreground/90 hover:bg-secondary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                          href={item.href}
+                        >
+                          {item.label}
+                        </Link>
+                      </SheetClose>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {presentation.showAdmin ? (
+                <SheetClose asChild>
+                  <Link
+                    className="flex min-h-touch items-center rounded-md px-3 text-body font-medium text-secondary-foreground/90 hover:bg-secondary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                    href={AUTH_ADMIN_HOME_PATH}
+                  >
+                    {customerNavbarCopy.adminLabel}
+                  </Link>
+                </SheetClose>
+              ) : null}
+            </>
+          ) : null}
           <SheetFooter>
+            {presentation.showLogin ? (
+              <SheetClose asChild>
+                <Link
+                  className={cn(
+                    buttonVariants({ size: "default", variant: "outline" }),
+                    "w-full focus-visible:ring-offset-secondary",
+                  )}
+                  href={CUSTOMER_LOGIN_PATH}
+                >
+                  {customerNavbarCopy.loginLabel}
+                </Link>
+              </SheetClose>
+            ) : null}
             <SheetClose asChild>
               <Link
                 className={cn(
@@ -135,6 +230,23 @@ export function MobileNav({ pathname }: MobileNavProps): ReactElement {
                 <ArrowUpRightIcon />
               </Link>
             </SheetClose>
+            {session === null ? null : (
+              <Button
+                className="w-full text-secondary-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground focus-visible:ring-offset-secondary"
+                onClick={(): void => {
+                  handleOpenChange(false);
+                  if (presentation.mode === "admin") {
+                    void signOutAdmin();
+                    return;
+                  }
+                  void signOutCustomer();
+                }}
+                type="button"
+                variant="ghost"
+              >
+                {customerShellCopy.logoutLabel}
+              </Button>
+            )}
           </SheetFooter>
         </SheetContent>
       </Sheet>

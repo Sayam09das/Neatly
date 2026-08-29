@@ -4,6 +4,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Navbar } from "@/components/layout/navbar";
+import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
+import {
+  CUSTOMER_LOGIN_PATH,
+  CUSTOMER_PATHS,
+  customerNavbarCopy,
+} from "@/config/customer";
 import { landingNavLinks, navbarCta } from "@/config/landing";
 
 const { useActivePathname } = vi.hoisted(() => ({
@@ -44,7 +50,11 @@ describe("Navbar", (): void => {
 
     const cta = screen.getAllByRole("link", { name: navbarCta.label });
     expect(cta[0]).toHaveAttribute("href", navbarCta.href);
+    expect(
+      screen.getAllByRole("link", { name: customerNavbarCopy.loginLabel })[0],
+    ).toHaveAttribute("href", CUSTOMER_LOGIN_PATH);
     expect(screen.queryByText("+123 456 789 0")).not.toBeInTheDocument();
+    expect(screen.queryByText("3")).not.toBeInTheDocument();
   });
 
   it("exposes an accessible menu button and opens a closeable sheet", async (): Promise<void> => {
@@ -124,5 +134,53 @@ describe("Navbar", (): void => {
     await waitFor((): void => {
       expect(header.className).toMatch(/backdrop-blur-md/);
     });
+  });
+
+  it("keeps admin visitors on public navigation without customer account links", (): void => {
+    render(
+      <Navbar
+        session={{
+          identity: { email: "ops@neatly.example", name: "Ops" },
+          role: "ADMIN",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getAllByRole("link", { name: customerNavbarCopy.adminLabel })[0],
+    ).toHaveAttribute("href", AUTH_ADMIN_HOME_PATH);
+    expect(
+      screen.queryByRole("link", { name: customerNavbarCopy.loginLabel }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Dashboard" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: customerNavbarCopy.notificationsLabel,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("exposes customer account actions for a non-admin public session", (): void => {
+    render(
+      <Navbar
+        session={{
+          identity: { email: "ada@neatly.example", name: "Ada" },
+          role: "CUSTOMER",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getAllByRole("link", { name: "Dashboard" })[0],
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
+    expect(
+      screen.getByRole("link", { name: customerNavbarCopy.notificationsLabel }),
+    ).toHaveAttribute("href", CUSTOMER_PATHS.notifications);
+    expect(
+      screen.queryByRole("link", { name: customerNavbarCopy.adminLabel }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("3")).not.toBeInTheDocument();
   });
 });

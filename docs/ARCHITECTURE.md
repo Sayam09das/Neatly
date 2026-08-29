@@ -277,6 +277,7 @@ Customer Route Hierarchy
     └── /dashboard/help
 ```
 
+* **Navigation:** Public marketing pages reuse `Navbar` with a server-fetched session (name and email only). `/dashboard` uses `CustomerNavbar`. Frontend navigation is UX only; backend authorization remains authoritative.
 * **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard` requests redirect to `/admin/login` with a safe `next` path. `/login` remains an alias and forwards a safe `next` query. Logout reuses `POST /api/admin/auth/logout`.
 * **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for future ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
 * **Privacy:** `/dashboard` is `force-dynamic` and `robots: noindex`. Customer query keys include the session user id. Logout clears customer client cache listeners.

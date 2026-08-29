@@ -15,6 +15,17 @@ export const customerNavigation: readonly CustomerNavItem[] = [
   { href: CUSTOMER_PATHS.help, label: "Help" },
 ] as const;
 
+export const customerHeaderNavigation: readonly CustomerNavItem[] = [
+  { href: CUSTOMER_PATHS.dashboard, label: "Dashboard" },
+  { href: CUSTOMER_PATHS.bookings, label: "Bookings" },
+] as const;
+
+export const customerAccountMenuItems: readonly CustomerNavItem[] = [
+  { href: CUSTOMER_PATHS.profile, label: "Profile" },
+  { href: CUSTOMER_PATHS.settings, label: "Settings" },
+  { href: CUSTOMER_PATHS.notifications, label: "Notifications" },
+] as const;
+
 export function getCustomerNavItems(): readonly CustomerNavItem[] {
   return customerNavigation;
 }

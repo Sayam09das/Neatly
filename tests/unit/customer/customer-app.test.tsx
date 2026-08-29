@@ -49,6 +49,8 @@ describe("Customer application routes", (): void => {
       screen.getByRole("main", { name: customerShellCopy.mainLabel }),
     ).toBeInTheDocument();
     expect(screen.getByText("Protected account child")).toBeInTheDocument();
+    expect(screen.getByText(layoutUser.name)).toBeInTheDocument();
+    expect(screen.queryByText(layoutUser.id)).not.toBeInTheDocument();
     expect(screen.queryByText(AUTH_LOGIN_ALIAS_PATH)).not.toBeInTheDocument();
   });
 

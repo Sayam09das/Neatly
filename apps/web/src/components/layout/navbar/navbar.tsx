@@ -6,11 +6,17 @@ import { BrandLink } from "@/components/layout/navbar/brand-link";
 import { DesktopNav } from "@/components/layout/navbar/desktop-nav";
 import { MobileNav } from "@/components/layout/navbar/mobile-nav";
 import { useActivePathname } from "@/components/layout/navbar/use-active-pathname";
+import { CUSTOMER_HEADER_HEIGHT_CLASS } from "@/config/customer";
+import type { CustomerNavbarSession } from "@/lib/customer/navbar";
 
 const NAVBAR_ELEVATION_SCROLL_PX = 20;
 const CINEMATIC_NAV_PATHS = new Set(["/"]);
 
-export function Navbar(): ReactElement {
+interface NavbarProps {
+  session?: CustomerNavbarSession | null;
+}
+
+export function Navbar({ session = null }: NavbarProps): ReactElement {
   const pathname = useActivePathname();
   const isElevated = useNavbarElevation();
   const isCinematicOverlay = CINEMATIC_NAV_PATHS.has(pathname) && !isElevated;
@@ -27,10 +33,15 @@ export function Navbar(): ReactElement {
             : "border-b border-transparent bg-secondary",
       )}
     >
-      <div className="mx-auto flex min-h-16 max-w-page items-center justify-between gap-4 px-gutter">
+      <div
+        className={cn(
+          "mx-auto flex max-w-page items-center justify-between gap-3 px-gutter md:gap-4",
+          CUSTOMER_HEADER_HEIGHT_CLASS,
+        )}
+      >
         <BrandLink />
-        <DesktopNav pathname={pathname} />
-        <MobileNav pathname={pathname} />
+        <DesktopNav pathname={pathname} session={session} />
+        <MobileNav pathname={pathname} session={session} />
       </div>
     </header>
   );

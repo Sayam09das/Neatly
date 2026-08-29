@@ -1,14 +1,18 @@
 import type { ReactElement, ReactNode } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { SiteFooter } from "@/components/sections/site-footer";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { toCustomerNavbarSession } from "@/lib/customer/navbar";
 
 interface CustomerPublicFrameProps {
   children: ReactNode;
 }
 
-export function CustomerPublicFrame({
+export async function CustomerPublicFrame({
   children,
-}: CustomerPublicFrameProps): ReactElement {
+}: CustomerPublicFrameProps): Promise<ReactElement> {
+  const session = toCustomerNavbarSession(await getCurrentUser());
+
   return (
     <>
       <a
@@ -17,7 +21,7 @@ export function CustomerPublicFrame({
       >
         Skip to content
       </a>
-      <Navbar />
+      <Navbar session={session} />
       <main
         className="mx-auto w-full min-w-0 max-w-page px-gutter py-section"
         id="main-content"

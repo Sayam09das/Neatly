@@ -16,8 +16,13 @@ import { ClosingBand } from "@/components/sections/closing-band";
 import { Newsletter } from "@/components/sections/newsletter";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { TEMPORARY_COPY_NOTE } from "@/config/landing";
+import type { CustomerNavbarSession } from "@/lib/customer/navbar";
 
-export function AboutPage(): ReactElement {
+interface AboutPageProps {
+  session?: CustomerNavbarSession | null;
+}
+
+export function AboutPage({ session = null }: AboutPageProps): ReactElement {
   return (
     <>
       <a
@@ -26,7 +31,7 @@ export function AboutPage(): ReactElement {
       >
         Skip to content
       </a>
-      <Navbar />
+      <Navbar session={session} />
       <main id="main-content">
         <p className="sr-only">{TEMPORARY_COPY_NOTE}</p>
         <AboutHero />
