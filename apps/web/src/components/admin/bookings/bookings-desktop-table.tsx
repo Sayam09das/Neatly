@@ -6,7 +6,10 @@ import type { ReactElement } from "react";
 import { fade } from "@/animations/motion/variants";
 import { BookingRowActions } from "@/components/admin/bookings/booking-row-actions";
 import { BookingStatusBadge } from "@/components/admin/bookings/booking-status-badge";
-import { adminBookingCopy } from "@/config/admin-bookings";
+import {
+  adminBookingCopy,
+  emptyAdminBookingFilterCatalog,
+} from "@/config/admin-bookings";
 import {
   formatBookingSchedule,
   getBookingCleanerLabel,
@@ -14,14 +17,21 @@ import {
   getBookingIdLabel,
   getBookingServiceLabel,
 } from "@/lib/admin/bookings";
-import type { AdminBooking } from "@/types/admin-booking";
+import type {
+  AdminBooking,
+  AdminBookingFilterCatalog,
+} from "@/types/admin-booking";
 
 interface BookingsDesktopTableProps {
   bookings: readonly AdminBooking[];
+  catalog?: AdminBookingFilterCatalog;
+  onMutated?: () => void;
 }
 
 export function BookingsDesktopTable({
   bookings,
+  catalog = emptyAdminBookingFilterCatalog,
+  onMutated,
 }: BookingsDesktopTableProps): ReactElement {
   return (
     <Card className="hidden overflow-x-auto shadow-none md:block">
@@ -54,7 +64,12 @@ export function BookingsDesktopTable({
         </thead>
         <tbody>
           {bookings.map((booking) => (
-            <BookingTableRow booking={booking} key={booking.id} />
+            <BookingTableRow
+              booking={booking}
+              catalog={catalog}
+              key={booking.id}
+              onMutated={onMutated}
+            />
           ))}
         </tbody>
       </table>
@@ -64,9 +79,15 @@ export function BookingsDesktopTable({
 
 interface BookingTableRowProps {
   booking: AdminBooking;
+  catalog: AdminBookingFilterCatalog;
+  onMutated?: () => void;
 }
 
-function BookingTableRow({ booking }: BookingTableRowProps): ReactElement {
+function BookingTableRow({
+  booking,
+  catalog,
+  onMutated,
+}: BookingTableRowProps): ReactElement {
   return (
     <motion.tr
       className="border-b border-border last:border-b-0"
@@ -92,7 +113,11 @@ function BookingTableRow({ booking }: BookingTableRowProps): ReactElement {
         <BookingStatusBadge status={booking.status} />
       </td>
       <td className="px-4 py-3">
-        <BookingRowActions />
+        <BookingRowActions
+          booking={booking}
+          catalog={catalog}
+          onMutated={onMutated}
+        />
       </td>
     </motion.tr>
   );

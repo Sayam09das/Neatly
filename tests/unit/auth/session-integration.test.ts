@@ -131,6 +131,7 @@ describe("parseAdminApiResponse", (): void => {
       ok: false,
       status: 401,
       code: "UNAUTHORIZED",
+      fields: {},
       message: "Authentication is required.",
       unauthorized: true,
       forbidden: false,

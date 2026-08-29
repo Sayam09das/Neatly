@@ -8,6 +8,7 @@ import {
   adminBookingCopy,
   adminBookingStatusLabels,
 } from "@/config/admin-bookings";
+import { emptyToNull } from "@/lib/admin/mutation-input";
 import { mapAdminResult } from "@/lib/admin/parse-result";
 import {
   isRecord,
@@ -381,11 +382,107 @@ function mapBooking(value: unknown): AdminBooking | null {
     customerId: readNullableString(value.customerId),
     customerName: readPartyName(value.customer),
     id,
+    notes: readNullableString(value.notes),
     scheduledAt: readIsoDate(value.scheduledAt),
+    serviceAddress: readNullableString(value.serviceAddress),
     serviceId: readNullableString(value.serviceId),
     serviceName: readPartyName(value.service),
     status,
   };
+}
+
+export interface AdminBookingCreateInput {
+  cleanerId: string;
+  customerId: string;
+  notes: string;
+  scheduledAt: string;
+  serviceAddress: string;
+  serviceId: string;
+}
+
+export interface AdminBookingUpdateInput {
+  notes: string;
+  scheduledAt: string;
+  serviceAddress: string;
+}
+
+export async function createAdminBooking(
+  input: AdminBookingCreateInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBooking>> {
+  const result = await adminRequest<unknown>(ADMIN_API_PATHS.bookings, {
+    ...init,
+    body: JSON.stringify({
+      cleanerId: emptyToNull(input.cleanerId),
+      customerId: input.customerId,
+      notes: emptyToNull(input.notes),
+      scheduledAt: emptyToNull(input.scheduledAt),
+      serviceAddress: emptyToNull(input.serviceAddress),
+      serviceId: input.serviceId,
+    }),
+    method: "POST",
+  });
+  return mapAdminResult(result, mapBookingPayload);
+}
+
+export async function updateAdminBooking(
+  id: string,
+  input: AdminBookingUpdateInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBooking>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.booking, id),
+    {
+      ...init,
+      body: JSON.stringify({
+        notes: emptyToNull(input.notes),
+        scheduledAt: emptyToNull(input.scheduledAt),
+        serviceAddress: emptyToNull(input.serviceAddress),
+      }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapBookingPayload);
+}
+
+export async function updateAdminBookingStatus(
+  id: string,
+  status: AdminBookingStatus,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBooking>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.bookingStatus, id),
+    {
+      ...init,
+      body: JSON.stringify({ status }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapBookingPayload);
+}
+
+export async function assignAdminBookingCleaner(
+  id: string,
+  cleanerId: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBooking>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.bookingAssign, id),
+    {
+      ...init,
+      body: JSON.stringify({ cleanerId }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapBookingPayload);
+}
+
+function mapBookingPayload(value: unknown): AdminBooking | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapBooking(value.booking ?? value);
 }
 
 function mapNamedOptions(
@@ -431,6 +528,38 @@ function isBookingStatus(value: string | null): value is AdminBookingStatus {
     value !== null &&
     (adminBookingStatuses as readonly string[]).includes(value)
   );
+}
+
+export function toDatetimeLocalValue(iso: string | null): string {
+  if (iso === null || iso === "") {
+    return "";
+  }
+
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const pad = (value: number): string => String(value).padStart(2, "0");
+
+  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function fromDatetimeLocalValue(value: string): string {
+  const trimmed = value.trim();
+
+  if (trimmed === "") {
+    return "";
+  }
+
+  const date = new Date(trimmed);
+
+  if (Number.isNaN(date.getTime())) {
+    return trimmed;
+  }
+
+  return date.toISOString();
 }
 
 function extractDateOnly(value: string): string | null {

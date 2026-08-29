@@ -25,6 +25,7 @@ interface ServicesTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   pagination?: AdminServicePagination;
   presentation: AdminServicePresentation;
@@ -35,6 +36,7 @@ export function ServicesTable({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onMutated,
   onPageChange,
   pagination,
   presentation,
@@ -46,6 +48,7 @@ export function ServicesTable({
         hasActiveFilters={hasActiveFilters}
         onClearFilters={onClearFilters}
         onCreate={onCreate}
+        onMutated={onMutated}
         presentation={presentation}
         services={services}
       />
@@ -65,6 +68,7 @@ interface ServicesTableBodyProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onMutated?: () => void;
   presentation: AdminServicePresentation;
   services: readonly AdminService[];
 }
@@ -73,6 +77,7 @@ function ServicesTableBody({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onMutated,
   presentation,
   services,
 }: ServicesTableBodyProps): ReactElement {
@@ -128,8 +133,8 @@ function ServicesTableBody({
           },
         }}
       >
-        <ServiceCardList services={services} />
-        <ServicesDesktopTable services={services} />
+        <ServiceCardList onMutated={onMutated} services={services} />
+        <ServicesDesktopTable onMutated={onMutated} services={services} />
       </motion.div>
     </AnimatePresence>
   );

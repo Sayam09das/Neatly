@@ -59,6 +59,7 @@ vi.mock("@/lib/admin/customers", async (importOriginal) => {
 });
 
 const TEST_CUSTOMER: AdminCustomer = {
+  address: null,
   avatarUrl: null,
   bookingCount: null,
   email: null,
@@ -203,8 +204,8 @@ describe("Admin customers page", (): void => {
       }),
     ).toHaveAttribute("data-disabled");
     expect(
-      screen.getByText(adminCustomerCopy.comingSoonHint),
-    ).toBeInTheDocument();
+      screen.getAllByText(adminCustomerCopy.comingSoonHint).length,
+    ).toBeGreaterThan(0);
   });
 
   it("opens filter and create dialogs without creating customers", async (): Promise<void> => {

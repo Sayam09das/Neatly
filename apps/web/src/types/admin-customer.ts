@@ -1,4 +1,5 @@
 export interface AdminCustomer {
+  address: string | null;
   avatarUrl: string | null;
   bookingCount: number | null;
   email: string | null;

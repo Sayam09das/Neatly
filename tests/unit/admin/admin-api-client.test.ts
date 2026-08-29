@@ -3,19 +3,43 @@
 import { describe, expect, it, vi } from "vitest";
 import { ADMIN_API_PATHS } from "@/config/admin-api";
 import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
-import { listAdminBookings } from "@/lib/admin/bookings";
-import { listAdminCleaners } from "@/lib/admin/cleaners";
-import { listAdminCustomers } from "@/lib/admin/customers";
+import {
+  assignAdminBookingCleaner,
+  createAdminBooking,
+  listAdminBookings,
+  updateAdminBooking,
+  updateAdminBookingStatus,
+} from "@/lib/admin/bookings";
+import {
+  createAdminCleaner,
+  listAdminCleaners,
+  updateAdminCleaner,
+} from "@/lib/admin/cleaners";
+import {
+  createAdminCustomer,
+  listAdminCustomers,
+  updateAdminCustomer,
+  updateAdminCustomerStatus,
+} from "@/lib/admin/customers";
 import {
   getAdminDashboard,
   toAdminDashboardViewModel,
 } from "@/lib/admin/dashboard";
-import { listAdminNotifications } from "@/lib/admin/notifications";
+import {
+  listAdminNotifications,
+  markAdminNotificationRead,
+  markAllAdminNotificationsRead,
+} from "@/lib/admin/notifications";
 import { buildAdminSearchParams } from "@/lib/admin/query";
-import { listAdminReviews } from "@/lib/admin/reviews";
-import { listAdminServices } from "@/lib/admin/services";
+import { hideAdminReview, listAdminReviews } from "@/lib/admin/reviews";
+import {
+  archiveAdminService,
+  createAdminService,
+  listAdminServices,
+  updateAdminService,
+} from "@/lib/admin/services";
 import { handleAdminApiFailure } from "@/lib/admin/session";
-import { getAdminSettings } from "@/lib/admin/settings";
+import { getAdminSettings, updateAdminSettings } from "@/lib/admin/settings";
 import { adminRequest, parseAdminApiResponse } from "@/lib/api/admin-request";
 import { ADMIN_BOOKING_STATUS_ALL } from "@/types/admin-booking";
 
@@ -357,6 +381,7 @@ describe("Admin API clients", (): void => {
   it("treats missing site settings as an empty read, not an error", async (): Promise<void> => {
     mockedAdminRequest.mockResolvedValueOnce({
       code: "NOT_FOUND",
+      fields: {},
       forbidden: false,
       message: "Not found",
       ok: false,
@@ -385,6 +410,7 @@ describe("handleAdminApiFailure", (): void => {
 
     handleAdminApiFailure({
       code: "UNAUTHORIZED",
+      fields: {},
       forbidden: false,
       message: "Session expired",
       ok: false,
@@ -399,6 +425,7 @@ describe("handleAdminApiFailure", (): void => {
     assign.mockClear();
     handleAdminApiFailure({
       code: "FORBIDDEN",
+      fields: {},
       forbidden: true,
       message: "Forbidden",
       ok: false,
@@ -408,5 +435,280 @@ describe("handleAdminApiFailure", (): void => {
     expect(assign).not.toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+});
+
+describe("Admin mutation clients", (): void => {
+  it("sends allowlisted create and update payloads with POST and PATCH", async (): Promise<void> => {
+    mockedAdminRequest.mockResolvedValue({
+      data: {
+        customer: {
+          createdAt: "2026-03-01T12:00:00.000Z",
+          email: "ada@neatly.test",
+          id: "cus_1",
+          name: "Ada Lovelace",
+          status: "ACTIVE",
+        },
+      },
+      ok: true,
+      status: 200,
+    });
+
+    await createAdminCustomer({
+      address: "",
+      email: "ada@neatly.test",
+      name: "Ada Lovelace",
+      phone: "",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      ADMIN_API_PATHS.customers,
+      expect.objectContaining({
+        body: JSON.stringify({
+          address: null,
+          email: "ada@neatly.test",
+          name: "Ada Lovelace",
+          phone: null,
+        }),
+        method: "POST",
+      }),
+    );
+
+    await updateAdminCustomer("cus_1", {
+      address: "1 Harbour Street",
+      email: "ada@neatly.test",
+      name: "Ada Lovelace",
+      phone: "",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/customers/cus_1",
+      expect.objectContaining({
+        body: JSON.stringify({
+          address: "1 Harbour Street",
+          email: "ada@neatly.test",
+          name: "Ada Lovelace",
+          phone: null,
+        }),
+        method: "PATCH",
+      }),
+    );
+
+    await updateAdminCustomerStatus("cus_1", "INACTIVE");
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/customers/cus_1/status",
+      expect.objectContaining({
+        body: JSON.stringify({ status: "INACTIVE" }),
+        method: "PATCH",
+      }),
+    );
+  });
+
+  it("creates and updates cleaners and services without extra fields", async (): Promise<void> => {
+    mockedAdminRequest.mockResolvedValue({
+      data: { cleaner: { id: "cln_1", name: "Priya", status: "ACTIVE" } },
+      ok: true,
+      status: 200,
+    });
+
+    await createAdminCleaner({
+      email: "priya@neatly.test",
+      name: "Priya",
+      phone: "",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      ADMIN_API_PATHS.cleaners,
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: "priya@neatly.test",
+          name: "Priya",
+          phone: null,
+        }),
+        method: "POST",
+      }),
+    );
+
+    await updateAdminCleaner("cln_1", {
+      email: "",
+      name: "Priya Chen",
+      phone: "555-0100",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/cleaners/cln_1",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+
+    mockedAdminRequest.mockResolvedValue({
+      data: {
+        service: {
+          fullDescription: "Full kitchen reset.",
+          id: "svc_1",
+          name: "Kitchen reset",
+          shortDescription: "Reset a kitchen.",
+        },
+      },
+      ok: true,
+      status: 200,
+    });
+
+    await createAdminService({
+      fullDescription: "Full kitchen reset.",
+      name: "Kitchen reset",
+      shortDescription: "Reset a kitchen.",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      ADMIN_API_PATHS.services,
+      expect.objectContaining({
+        body: JSON.stringify({
+          fullDescription: "Full kitchen reset.",
+          name: "Kitchen reset",
+          shortDescription: "Reset a kitchen.",
+        }),
+        method: "POST",
+      }),
+    );
+
+    await updateAdminService("svc_1", {
+      fullDescription: "Updated",
+      name: "Kitchen reset",
+      shortDescription: "Reset a kitchen.",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/services/svc_1",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+
+    await archiveAdminService("svc_1");
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/services/svc_1/archive",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("creates bookings and uses dedicated status and assign endpoints", async (): Promise<void> => {
+    mockedAdminRequest.mockResolvedValue({
+      data: {
+        booking: {
+          customerId: "cus_1",
+          id: "bkg_1",
+          serviceId: "svc_1",
+          status: "PENDING",
+        },
+      },
+      ok: true,
+      status: 200,
+    });
+
+    await createAdminBooking({
+      cleanerId: "",
+      customerId: "cus_1",
+      notes: "",
+      scheduledAt: "",
+      serviceAddress: "",
+      serviceId: "svc_1",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      ADMIN_API_PATHS.bookings,
+      expect.objectContaining({
+        body: JSON.stringify({
+          cleanerId: null,
+          customerId: "cus_1",
+          notes: null,
+          scheduledAt: null,
+          serviceAddress: null,
+          serviceId: "svc_1",
+        }),
+        method: "POST",
+      }),
+    );
+
+    await updateAdminBooking("bkg_1", {
+      notes: "Gate code 12",
+      scheduledAt: "2026-04-01T09:00:00.000Z",
+      serviceAddress: "1 Harbour Street",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/bookings/bkg_1",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+
+    await updateAdminBookingStatus("bkg_1", "CONFIRMED");
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/bookings/bkg_1/status",
+      expect.objectContaining({
+        body: JSON.stringify({ status: "CONFIRMED" }),
+        method: "PATCH",
+      }),
+    );
+
+    await assignAdminBookingCleaner("bkg_1", "cln_1");
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/bookings/bkg_1/assign",
+      expect.objectContaining({
+        body: JSON.stringify({ cleanerId: "cln_1" }),
+        method: "PATCH",
+      }),
+    );
+  });
+
+  it("hides reviews, marks notifications read, and patches settings", async (): Promise<void> => {
+    mockedAdminRequest.mockResolvedValue({
+      data: { review: { id: "rev_1", isActive: false } },
+      ok: true,
+      status: 200,
+    });
+    await hideAdminReview("rev_1");
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/reviews/rev_1/hide",
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    mockedAdminRequest.mockResolvedValue({
+      data: { notification: { id: "ntf_1", isRead: true } },
+      ok: true,
+      status: 200,
+    });
+    await markAdminNotificationRead("ntf_1");
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      "/api/v1/admin/notifications/ntf_1/read",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+
+    mockedAdminRequest.mockResolvedValue({
+      data: { updated: 3 },
+      ok: true,
+      status: 200,
+    });
+    await markAllAdminNotificationsRead();
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      ADMIN_API_PATHS.notificationsReadAll,
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    mockedAdminRequest.mockResolvedValue({
+      data: {
+        settings: {
+          address: "1 Harbour Street",
+          businessName: "Neatly",
+          defaultSeoDesc: "desc",
+          defaultSeoTitle: "title",
+          email: "hello@neatly.test",
+          notificationEmail: "ops@neatly.test",
+          phone: "555-0100",
+          serviceAreas: [],
+          tagline: "Calm cleaning",
+        },
+      },
+      ok: true,
+      status: 200,
+    });
+    await updateAdminSettings({
+      notificationEmail: "ops@neatly.test",
+    });
+    expect(mockedAdminRequest).toHaveBeenCalledWith(
+      ADMIN_API_PATHS.settings,
+      expect.objectContaining({
+        body: JSON.stringify({ notificationEmail: "ops@neatly.test" }),
+        method: "PATCH",
+      }),
+    );
   });
 });

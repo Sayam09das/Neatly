@@ -3,6 +3,7 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   withAdminApiId,
 } from "@/config/admin-api";
+import { emptyToNull } from "@/lib/admin/mutation-input";
 import { mapAdminResult } from "@/lib/admin/parse-result";
 import {
   isRecord,
@@ -125,4 +126,70 @@ function mapCleaner(value: unknown): AdminCleaner | null {
           ? "Inactive"
           : status,
   };
+}
+
+export interface AdminCleanerWriteInput {
+  email: string;
+  name: string;
+  phone: string;
+}
+
+export async function createAdminCleaner(
+  input: AdminCleanerWriteInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCleaner>> {
+  const result = await adminRequest<unknown>(ADMIN_API_PATHS.cleaners, {
+    ...init,
+    body: JSON.stringify({
+      email: emptyToNull(input.email),
+      name: input.name.trim(),
+      phone: emptyToNull(input.phone),
+    }),
+    method: "POST",
+  });
+  return mapAdminResult(result, mapCleanerPayload);
+}
+
+export async function updateAdminCleaner(
+  id: string,
+  input: AdminCleanerWriteInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCleaner>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.cleaner, id),
+    {
+      ...init,
+      body: JSON.stringify({
+        email: emptyToNull(input.email),
+        name: input.name.trim(),
+        phone: emptyToNull(input.phone),
+      }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapCleanerPayload);
+}
+
+export async function updateAdminCleanerStatus(
+  id: string,
+  status: "ACTIVE" | "INACTIVE",
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCleaner>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.cleanerStatus, id),
+    {
+      ...init,
+      body: JSON.stringify({ status }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapCleanerPayload);
+}
+
+function mapCleanerPayload(value: unknown): AdminCleaner | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapCleaner(value.cleaner ?? value);
 }

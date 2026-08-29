@@ -15,10 +15,14 @@ import {
 import type { AdminService } from "@/types/admin-service";
 
 interface ServiceCardProps {
+  onMutated?: () => void;
   service: AdminService;
 }
 
-export function ServiceCard({ service }: ServiceCardProps): ReactElement {
+export function ServiceCard({
+  onMutated,
+  service,
+}: ServiceCardProps): ReactElement {
   const slug = getServiceSlugLabel(service.slug);
 
   return (
@@ -43,7 +47,7 @@ export function ServiceCard({ service }: ServiceCardProps): ReactElement {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <ServiceStatusBadge isActive={service.isActive} />
-          <ServiceRowActions />
+          <ServiceRowActions onMutated={onMutated} service={service} />
         </div>
       </div>
       <p className="mt-3 line-clamp-2 text-caption text-muted-foreground">
@@ -54,10 +58,12 @@ export function ServiceCard({ service }: ServiceCardProps): ReactElement {
 }
 
 interface ServiceCardListProps {
+  onMutated?: () => void;
   services: readonly AdminService[];
 }
 
 export function ServiceCardList({
+  onMutated,
   services,
 }: ServiceCardListProps): ReactElement {
   return (
@@ -66,7 +72,7 @@ export function ServiceCardList({
       data-slot="service-card-list"
     >
       {services.map((service) => (
-        <ServiceCard key={service.id} service={service} />
+        <ServiceCard key={service.id} onMutated={onMutated} service={service} />
       ))}
     </Card>
   );

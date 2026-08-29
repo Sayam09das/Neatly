@@ -17,15 +17,18 @@ import {
 import { shouldRenderBookingPagination } from "@/lib/admin/bookings";
 import type {
   AdminBooking,
+  AdminBookingFilterCatalog,
   AdminBookingPagination,
   AdminBookingPresentation,
 } from "@/types/admin-booking";
 
 interface BookingsTableProps {
   bookings: readonly AdminBooking[];
+  catalog?: AdminBookingFilterCatalog;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   pagination?: AdminBookingPagination;
   presentation: AdminBookingPresentation;
@@ -33,9 +36,11 @@ interface BookingsTableProps {
 
 export function BookingsTable({
   bookings,
+  catalog,
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onMutated,
   onPageChange,
   pagination,
   presentation,
@@ -44,9 +49,11 @@ export function BookingsTable({
     <div className="flex flex-col gap-4" data-slot="bookings-table">
       <BookingsTableBody
         bookings={bookings}
+        catalog={catalog}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={onClearFilters}
         onCreate={onCreate}
+        onMutated={onMutated}
         presentation={presentation}
       />
       {presentation.status === "ready" &&
@@ -63,17 +70,21 @@ export function BookingsTable({
 
 interface BookingsTableBodyProps {
   bookings: readonly AdminBooking[];
+  catalog?: AdminBookingFilterCatalog;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onMutated?: () => void;
   presentation: AdminBookingPresentation;
 }
 
 function BookingsTableBody({
   bookings,
+  catalog,
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onMutated,
   presentation,
 }: BookingsTableBodyProps): ReactElement {
   const prefersReducedMotion = useReducedMotion();
@@ -128,8 +139,16 @@ function BookingsTableBody({
           },
         }}
       >
-        <BookingCardList bookings={bookings} />
-        <BookingsDesktopTable bookings={bookings} />
+        <BookingCardList
+          bookings={bookings}
+          catalog={catalog}
+          onMutated={onMutated}
+        />
+        <BookingsDesktopTable
+          bookings={bookings}
+          catalog={catalog}
+          onMutated={onMutated}
+        />
       </motion.div>
     </AnimatePresence>
   );

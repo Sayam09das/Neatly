@@ -101,6 +101,7 @@ const emptyPagination = {
 
 const apiFailure = {
   code: "INTERNAL_ERROR" as const,
+  fields: {},
   forbidden: false,
   message: "Unable to complete this request. Please try again.",
   ok: false as const,
@@ -150,6 +151,7 @@ describe("Admin live API surfaces", (): void => {
       data: {
         customers: [
           {
+            address: null,
             avatarUrl: null,
             bookingCount: 2,
             email: "ada@neatly.test",
@@ -174,7 +176,9 @@ describe("Admin live API surfaces", (): void => {
             customerId: "cus_live",
             customerName: "Ada Lovelace",
             id: "bkg_live",
+            notes: null,
             scheduledAt: "2026-04-01T09:00:00.000Z",
+            serviceAddress: null,
             serviceId: "svc_live",
             serviceName: "Kitchen reset",
             status: "PENDING",
@@ -191,6 +195,7 @@ describe("Admin live API surfaces", (): void => {
         services: [
           {
             coverImageUrl: null,
+            fullDescription: "Full kitchen reset.",
             id: "svc_live",
             isActive: true,
             name: "Kitchen reset",
@@ -361,6 +366,7 @@ describe("Admin live API surfaces", (): void => {
     vi.mocked(listAdminCustomers)
       .mockResolvedValueOnce({
         code: "FORBIDDEN",
+        fields: {},
         forbidden: true,
         message: "You do not have access.",
         ok: false,
@@ -369,6 +375,7 @@ describe("Admin live API surfaces", (): void => {
       })
       .mockResolvedValueOnce({
         code: "UNAUTHORIZED",
+        fields: {},
         forbidden: false,
         message: "Session expired",
         ok: false,

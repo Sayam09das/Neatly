@@ -61,6 +61,7 @@ vi.mock("@/lib/admin/services", async (importOriginal) => {
 
 const TEST_SERVICE: AdminService = {
   coverImageUrl: null,
+  fullDescription: null,
   id: "service_test",
   isActive: null,
   name: null,
@@ -194,8 +195,8 @@ describe("Admin services page", (): void => {
       }),
     ).toHaveAttribute("data-disabled");
     expect(
-      screen.getByText(adminServiceCopy.comingSoonHint),
-    ).toBeInTheDocument();
+      screen.getAllByText(adminServiceCopy.comingSoonHint).length,
+    ).toBeGreaterThan(0);
   });
 
   it("opens filter and create dialogs without creating services", async (): Promise<void> => {

@@ -4,6 +4,7 @@ import {
   withAdminApiId,
 } from "@/config/admin-api";
 import { adminCustomerCopy } from "@/config/admin-customers";
+import { emptyToNull } from "@/lib/admin/mutation-input";
 import { mapAdminResult } from "@/lib/admin/parse-result";
 import {
   isRecord,
@@ -308,6 +309,7 @@ function mapCustomer(value: unknown): AdminCustomer | null {
   }
 
   return {
+    address: readNullableString(value.address),
     avatarUrl: null,
     bookingCount: readNumber(value.bookingCount),
     email: readNullableString(value.email),
@@ -317,6 +319,75 @@ function mapCustomer(value: unknown): AdminCustomer | null {
     phone: readNullableString(value.phone),
     statusLabel: mapCustomerStatusLabel(readNullableString(value.status)),
   };
+}
+
+export interface AdminCustomerWriteInput {
+  address: string;
+  email: string;
+  name: string;
+  phone: string;
+}
+
+export async function createAdminCustomer(
+  input: AdminCustomerWriteInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCustomer>> {
+  const result = await adminRequest<unknown>(ADMIN_API_PATHS.customers, {
+    ...init,
+    body: JSON.stringify({
+      address: emptyToNull(input.address),
+      email: input.email.trim(),
+      name: input.name.trim(),
+      phone: emptyToNull(input.phone),
+    }),
+    method: "POST",
+  });
+  return mapAdminResult(result, mapCustomerPayload);
+}
+
+export async function updateAdminCustomer(
+  id: string,
+  input: AdminCustomerWriteInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCustomer>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.customer, id),
+    {
+      ...init,
+      body: JSON.stringify({
+        address: emptyToNull(input.address),
+        email: input.email.trim(),
+        name: input.name.trim(),
+        phone: emptyToNull(input.phone),
+      }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapCustomerPayload);
+}
+
+export async function updateAdminCustomerStatus(
+  id: string,
+  status: "ACTIVE" | "INACTIVE",
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminCustomer>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.customerStatus, id),
+    {
+      ...init,
+      body: JSON.stringify({ status }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapCustomerPayload);
+}
+
+function mapCustomerPayload(value: unknown): AdminCustomer | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapCustomer(value.customer ?? value);
 }
 
 function mapCustomerStatusLabel(status: string | null): string | null {

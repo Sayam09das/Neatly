@@ -17,10 +17,14 @@ import {
 import type { AdminReview } from "@/types/admin-review";
 
 interface ReviewCardProps {
+  onMutated?: () => void;
   review: AdminReview;
 }
 
-export function ReviewCard({ review }: ReviewCardProps): ReactElement {
+export function ReviewCard({
+  onMutated,
+  review,
+}: ReviewCardProps): ReactElement {
   return (
     <motion.article
       className="rounded-lg border border-border bg-surface p-4"
@@ -38,7 +42,7 @@ export function ReviewCard({ review }: ReviewCardProps): ReactElement {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <ReviewStatusBadge isActive={review.isActive} />
-          <ReviewRowActions />
+          <ReviewRowActions onMutated={onMutated} review={review} />
         </div>
       </div>
       <div className="mt-3">
@@ -56,17 +60,21 @@ export function ReviewCard({ review }: ReviewCardProps): ReactElement {
 }
 
 interface ReviewCardListProps {
+  onMutated?: () => void;
   reviews: readonly AdminReview[];
 }
 
-export function ReviewCardList({ reviews }: ReviewCardListProps): ReactElement {
+export function ReviewCardList({
+  onMutated,
+  reviews,
+}: ReviewCardListProps): ReactElement {
   return (
     <Card
       className="flex flex-col gap-3 p-3 shadow-none md:hidden"
       data-slot="review-card-list"
     >
       {reviews.map((review) => (
-        <ReviewCard key={review.id} review={review} />
+        <ReviewCard key={review.id} onMutated={onMutated} review={review} />
       ))}
     </Card>
   );

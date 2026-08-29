@@ -17,10 +17,12 @@ import {
 import type { AdminReview } from "@/types/admin-review";
 
 interface ReviewsDesktopTableProps {
+  onMutated?: () => void;
   reviews: readonly AdminReview[];
 }
 
 export function ReviewsDesktopTable({
+  onMutated,
   reviews,
 }: ReviewsDesktopTableProps): ReactElement {
   return (
@@ -54,7 +56,11 @@ export function ReviewsDesktopTable({
         </thead>
         <tbody>
           {reviews.map((review) => (
-            <ReviewTableRow key={review.id} review={review} />
+            <ReviewTableRow
+              key={review.id}
+              onMutated={onMutated}
+              review={review}
+            />
           ))}
         </tbody>
       </table>
@@ -63,10 +69,14 @@ export function ReviewsDesktopTable({
 }
 
 interface ReviewTableRowProps {
+  onMutated?: () => void;
   review: AdminReview;
 }
 
-function ReviewTableRow({ review }: ReviewTableRowProps): ReactElement {
+function ReviewTableRow({
+  onMutated,
+  review,
+}: ReviewTableRowProps): ReactElement {
   return (
     <motion.tr
       className="border-b border-border align-top last:border-b-0"
@@ -92,7 +102,7 @@ function ReviewTableRow({ review }: ReviewTableRowProps): ReactElement {
         <ReviewStatusBadge isActive={review.isActive} />
       </td>
       <td className="px-4 py-3">
-        <ReviewRowActions />
+        <ReviewRowActions onMutated={onMutated} review={review} />
       </td>
     </motion.tr>
   );

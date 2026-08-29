@@ -40,6 +40,7 @@ import {
   filterNotifications,
   hasActiveNotificationFilters,
   listAdminNotifications,
+  markAllAdminNotificationsRead,
   shouldRenderNotificationPagination,
 } from "@/lib/admin/notifications";
 import { useAdminListState } from "@/lib/admin/use-admin-list-state";
@@ -48,6 +49,7 @@ import {
   useAdminQuery,
 } from "@/lib/admin/use-admin-query";
 import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
+import { toast } from "@/lib/toast";
 import type {
   AdminNotificationFilters,
   AdminNotificationPresentation,
@@ -98,6 +100,7 @@ function AdminNotificationsLive(): ReactElement {
     <AdminNotificationsView
       filters={filters}
       onFiltersChange={setFilters}
+      onMutated={query.retry}
       onPageChange={setPage}
       presentation={toLiveNotificationPresentation(
         query,
@@ -110,6 +113,7 @@ function AdminNotificationsLive(): ReactElement {
 interface AdminNotificationsViewProps {
   filters?: AdminNotificationFilters;
   onFiltersChange?: (filters: AdminNotificationFilters) => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   presentation: AdminNotificationPresentation;
 }
@@ -117,6 +121,7 @@ interface AdminNotificationsViewProps {
 function AdminNotificationsView({
   filters: filtersProp,
   onFiltersChange,
+  onMutated,
   onPageChange,
   presentation,
 }: AdminNotificationsViewProps): ReactElement {
@@ -127,6 +132,7 @@ function AdminNotificationsView({
     defaultAdminNotificationFilters,
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
   const filters = filtersProp ?? localFilters;
   const setFilters = onFiltersChange ?? setLocalFilters;
   const source =
@@ -257,7 +263,34 @@ function AdminNotificationsView({
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button disabled={!canMarkAll} type="button" variant="outline">
+                <Button
+                  disabled={!canMarkAll || markingAll}
+                  onClick={(): void => {
+                    if (onMutated === undefined) {
+                      return;
+                    }
+
+                    void (async (): Promise<void> => {
+                      setMarkingAll(true);
+                      const result = await markAllAdminNotificationsRead();
+                      setMarkingAll(false);
+
+                      if (!result.ok) {
+                        toast.error({
+                          title: adminNotificationCopy.markAllError,
+                        });
+                        return;
+                      }
+
+                      onMutated();
+                      toast.success({
+                        title: adminNotificationCopy.markAllSuccess,
+                      });
+                    })();
+                  }}
+                  type="button"
+                  variant="outline"
+                >
                   {adminNotificationCopy.markAllAction}
                 </Button>
               </div>
@@ -302,7 +335,7 @@ function AdminNotificationsView({
             </NotificationsUnavailableCard>
           ) : null}
           {presentation.status === "ready" && visible.length > 0 ? (
-            <NotificationsList notifications={visible} />
+            <NotificationsList notifications={visible} onMutated={onMutated} />
           ) : null}
           {presentation.status === "ready" &&
           shouldRenderNotificationPagination(

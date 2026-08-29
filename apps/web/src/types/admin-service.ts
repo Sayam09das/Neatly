@@ -2,6 +2,7 @@ export type AdminServiceStatus = "active" | "inactive";
 
 export interface AdminService {
   coverImageUrl: string | null;
+  fullDescription: string | null;
   id: string;
   isActive: boolean | null;
   name: string | null;

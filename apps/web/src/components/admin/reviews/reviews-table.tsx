@@ -25,6 +25,7 @@ import type {
 interface ReviewsTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   pagination?: AdminReviewPagination;
   presentation: AdminReviewPresentation;
@@ -34,6 +35,7 @@ interface ReviewsTableProps {
 export function ReviewsTable({
   hasActiveFilters,
   onClearFilters,
+  onMutated,
   onPageChange,
   pagination,
   presentation,
@@ -47,6 +49,7 @@ export function ReviewsTable({
       <ReviewsTableBody
         hasActiveFilters={hasActiveFilters}
         onClearFilters={onClearFilters}
+        onMutated={onMutated}
         presentation={presentation}
         reviews={reviews}
       />
@@ -65,6 +68,7 @@ export function ReviewsTable({
 interface ReviewsTableBodyProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  onMutated?: () => void;
   presentation: AdminReviewPresentation;
   reviews: readonly AdminReview[];
 }
@@ -72,6 +76,7 @@ interface ReviewsTableBodyProps {
 function ReviewsTableBody({
   hasActiveFilters,
   onClearFilters,
+  onMutated,
   presentation,
   reviews,
 }: ReviewsTableBodyProps): ReactElement {
@@ -127,8 +132,8 @@ function ReviewsTableBody({
           },
         }}
       >
-        <ReviewCardList reviews={reviews} />
-        <ReviewsDesktopTable reviews={reviews} />
+        <ReviewCardList onMutated={onMutated} reviews={reviews} />
+        <ReviewsDesktopTable onMutated={onMutated} reviews={reviews} />
       </motion.div>
     </AnimatePresence>
   );

@@ -21,6 +21,13 @@ import {
 import { EyeIcon, EyeOffIcon } from "@/components/auth/auth-icons";
 import { adminSettingsCopy } from "@/config/admin-settings";
 import { AUTH_PASSWORD_MIN_LENGTH } from "@/config/auth";
+import { collectZodFieldErrors } from "@/lib/admin/mutation-input";
+import { updateAdminSettings } from "@/lib/admin/settings";
+import { toast } from "@/lib/toast";
+import {
+  updateBusinessSettingsFormSchema,
+  updateSettingsEmailFormSchema,
+} from "@/lib/validations/admin-mutation.schema";
 import { useTheme } from "@/providers/theme-provider";
 
 export function ProfileFields({
@@ -123,23 +130,65 @@ export function AccountFields({
 
 export function NotificationFields({
   initialEmail = "",
+  persistable = false,
 }: {
   initialEmail?: string;
+  persistable?: boolean;
 }): ReactElement {
   const emailId = useId();
+  const [savedEmail, setSavedEmail] = useState(initialEmail);
   const [email, setEmail] = useState(initialEmail);
-  const [unavailableOpen, setUnavailableOpen] = useState(false);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    event.preventDefault();
+
+    if (!persistable) {
+      setError(adminSettingsCopy.settingsMissing);
+      return;
+    }
+
+    const parsed = updateSettingsEmailFormSchema.safeParse({
+      notificationEmail: email,
+    });
+
+    if (!parsed.success) {
+      const fields = collectZodFieldErrors(parsed.error.issues);
+      setFieldError(
+        fields.notificationEmail ?? parsed.error.issues[0]?.message ?? null,
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    setFieldError(null);
+    const result = await updateAdminSettings({
+      notificationEmail: parsed.data.notificationEmail,
+    });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setFieldError(result.fields.notificationEmail ?? null);
+      setError(result.message);
+      toast.error({ title: adminSettingsCopy.saveError });
+      return;
+    }
+
+    setSavedEmail(result.data.notificationEmail);
+    setEmail(result.data.notificationEmail);
+    toast.success({ title: adminSettingsCopy.saveSuccess });
+  }
 
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(event): void => {
-        event.preventDefault();
-        setUnavailableOpen(true);
-      }}
-    >
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <SettingsField
         description={adminSettingsCopy.notificationEmailDescription}
+        error={fieldError}
         htmlFor={emailId}
         label={adminSettingsCopy.notificationEmailLabel}
       >
@@ -147,20 +196,25 @@ export function NotificationFields({
           id={emailId}
           onChange={(event): void => {
             setEmail(event.target.value);
+            setFieldError(null);
           }}
           type="email"
           value={email}
         />
       </SettingsField>
+      {error !== null ? (
+        <p className="text-caption text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       <SaveBar
-        dirty={email !== initialEmail}
+        dirty={email !== savedEmail}
         onCancel={(): void => {
-          setEmail(initialEmail);
+          setEmail(savedEmail);
+          setFieldError(null);
+          setError(null);
         }}
-      />
-      <UnavailableDialog
-        onOpenChange={setUnavailableOpen}
-        open={unavailableOpen}
+        submitting={submitting}
       />
     </form>
   );
@@ -268,39 +322,90 @@ export function BusinessFields({
   initialEmail = "",
   initialName = "",
   initialPhone = "",
+  persistable = false,
 }: {
   initialAddress?: string;
   initialEmail?: string;
   initialName?: string;
   initialPhone?: string;
+  persistable?: boolean;
 }): ReactElement {
+  const [saved, setSaved] = useState({
+    address: initialAddress,
+    email: initialEmail,
+    name: initialName,
+    phone: initialPhone,
+  });
   const [values, setValues] = useState({
     address: initialAddress,
     email: initialEmail,
     name: initialName,
     phone: initialPhone,
   });
-  const [unavailableOpen, setUnavailableOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const dirty =
-    values.address !== initialAddress ||
-    values.email !== initialEmail ||
-    values.name !== initialName ||
-    values.phone !== initialPhone;
+    values.address !== saved.address ||
+    values.email !== saved.email ||
+    values.name !== saved.name ||
+    values.phone !== saved.phone;
   const nameId = useId();
   const emailId = useId();
   const phoneId = useId();
   const addressId = useId();
 
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    event.preventDefault();
+
+    if (!persistable) {
+      setError(adminSettingsCopy.settingsMissing);
+      return;
+    }
+
+    const parsed = updateBusinessSettingsFormSchema.safeParse(values);
+
+    if (!parsed.success) {
+      setFieldErrors(collectZodFieldErrors(parsed.error.issues));
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    setFieldErrors({});
+    const result = await updateAdminSettings({
+      address: parsed.data.address,
+      businessName: parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+    });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setFieldErrors(result.fields);
+      setError(result.message);
+      toast.error({ title: adminSettingsCopy.saveError });
+      return;
+    }
+
+    const next = {
+      address: result.data.address,
+      email: result.data.email,
+      name: result.data.businessName,
+      phone: result.data.phone,
+    };
+    setSaved(next);
+    setValues(next);
+    toast.success({ title: adminSettingsCopy.saveSuccess });
+  }
+
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(event): void => {
-        event.preventDefault();
-        setUnavailableOpen(true);
-      }}
-    >
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <UnsavedNotice dirty={dirty} />
       <SettingsField
+        error={fieldErrors.name}
         htmlFor={nameId}
         label={adminSettingsCopy.businessNameLabel}
       >
@@ -313,6 +418,7 @@ export function BusinessFields({
         />
       </SettingsField>
       <SettingsField
+        error={fieldErrors.email}
         htmlFor={emailId}
         label={adminSettingsCopy.businessEmailLabel}
       >
@@ -326,6 +432,7 @@ export function BusinessFields({
         />
       </SettingsField>
       <SettingsField
+        error={fieldErrors.phone}
         htmlFor={phoneId}
         label={adminSettingsCopy.businessPhoneLabel}
       >
@@ -339,6 +446,7 @@ export function BusinessFields({
         />
       </SettingsField>
       <SettingsField
+        error={fieldErrors.address}
         htmlFor={addressId}
         label={adminSettingsCopy.businessAddressLabel}
       >
@@ -350,20 +458,19 @@ export function BusinessFields({
           value={values.address}
         />
       </SettingsField>
+      {error !== null ? (
+        <p className="text-caption text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       <SaveBar
         dirty={dirty}
         onCancel={(): void => {
-          setValues({
-            address: initialAddress,
-            email: initialEmail,
-            name: initialName,
-            phone: initialPhone,
-          });
+          setValues(saved);
+          setFieldErrors({});
+          setError(null);
         }}
-      />
-      <UnavailableDialog
-        onOpenChange={setUnavailableOpen}
-        open={unavailableOpen}
+        submitting={submitting}
       />
     </form>
   );
@@ -463,16 +570,21 @@ function PasswordField({
 interface SaveBarProps {
   dirty: boolean;
   onCancel: () => void;
+  submitting?: boolean;
 }
 
-function SaveBar({ dirty, onCancel }: SaveBarProps): ReactElement {
+function SaveBar({
+  dirty,
+  onCancel,
+  submitting = false,
+}: SaveBarProps): ReactElement {
   return (
     <div className="flex flex-wrap gap-2">
-      <Button disabled={!dirty} type="submit">
-        {adminSettingsCopy.saveLabel}
+      <Button disabled={!dirty || submitting} type="submit">
+        {submitting ? "Saving…" : adminSettingsCopy.saveLabel}
       </Button>
       <Button
-        disabled={!dirty}
+        disabled={!dirty || submitting}
         onClick={onCancel}
         type="button"
         variant="outline"

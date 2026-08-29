@@ -21,7 +21,9 @@ export interface AdminBooking {
   customerId: string | null;
   customerName: string | null;
   id: string;
+  notes: string | null;
   scheduledAt: string | null;
+  serviceAddress: string | null;
   serviceId: string | null;
   serviceName: string | null;
   status: AdminBookingStatus;

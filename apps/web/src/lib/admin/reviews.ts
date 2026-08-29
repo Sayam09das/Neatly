@@ -274,13 +274,29 @@ export async function getAdminReview(
     withAdminApiId(ADMIN_API_PATHS.review, id),
     init,
   );
-  return mapAdminResult(result, (value) => {
-    if (!isRecord(value)) {
-      return null;
-    }
+  return mapAdminResult(result, mapReviewPayload);
+}
 
-    return mapReview(value.review ?? value);
-  });
+export async function hideAdminReview(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminReview>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.reviewHide, id),
+    {
+      ...init,
+      method: "POST",
+    },
+  );
+  return mapAdminResult(result, mapReviewPayload);
+}
+
+function mapReviewPayload(value: unknown): AdminReview | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapReview(value.review ?? value);
 }
 
 function mapReviewList(value: unknown): AdminReviewList | null {

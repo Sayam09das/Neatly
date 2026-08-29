@@ -21,7 +21,11 @@ export const adminNotificationCopy = {
   heading: "Notifications",
   loadingLabel: "Loading notifications",
   markAllAction: "Mark all as read",
+  markAllError: "Unable to mark notifications as read.",
+  markAllSuccess: "Notifications marked as read.",
   markReadAction: "Mark as read",
+  markReadError: "Unable to mark notification as read.",
+  markReadSuccess: "Notification marked as read.",
   noMatchesDescription:
     "No notifications match the current filters. Clear filters to reset the list.",
   noMatchesTitle: "No matching notifications",

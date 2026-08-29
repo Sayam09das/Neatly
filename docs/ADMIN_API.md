@@ -45,12 +45,28 @@ Audit logging is not in the schema yet. Important mutations (status, assignment,
 
 The Admin UI calls same-origin `GET /api/v1/admin/*` through `adminRequest()`. Next.js proxies those GETs in `apps/web/src/app/api/v1/admin/[...path]/route.ts`: it forwards the HttpOnly session cookie as `x-session-token` to `NEATLY_API_URL` and never exposes the token or server secrets to the browser. Typed clients and mappers live in `apps/web/src/lib/admin/`. List filters, search, and pagination are server-backed. HTTP 401 uses the existing login redirect; 403 stays a page error. Failed GETs show the existing error/retry UI and never fall back to mock rows.
 
+## Frontend mutation integration (phase 33)
+
+The same BFF now forwards `POST` and `PATCH` with `assertSameOrigin` CSRF protection. Admin dialogs and row actions call typed clients in `apps/web/src/lib/admin/` (never Prisma, never raw `fetch` in components). Success waits for the server response, then refreshes the current list and shows a toast. Failures keep the dialog open and do not invent success.
+
+Connected UI:
+
+* Customers: create, edit, activate/deactivate via status. Hard delete stays disabled.
+* Services: create, edit, archive (`POST /services/:id/archive`). Activate stays disabled (no API). Service media is not uploaded from Admin.
+* Bookings: create, edit (notes/schedule/address), status, assign cleaner, cancel (status `CANCELLED` when the backend transition allows it).
+* Reviews: hide. Hard delete stays unavailable.
+* Notifications: mark one read, mark all read. No send UI and no real-time delivery.
+* Settings: business contact + notification email persist through `PATCH /settings` when `site_settings` id=1 exists. Profile and password remain unavailable (no Admin `/me` or password PATCH). Appearance stays local theme.
+
 Known gaps (do not invent UI or data for these):
 
-* There is no Admin Cleaners page. `GET /api/v1/admin/cleaners` and `src/lib/admin/cleaners.ts` exist for later UI.
-* There is no customer detail route. `GET /api/v1/admin/customers/:id` is wired in the client; the customers table view action stays disabled until mutations/detail work.
+* There is no Admin Cleaners page. Cleaner create/update/status clients exist in `src/lib/admin/cleaners.ts` for later UI.
+* There is no customer or service detail route. View actions stay disabled.
+* There is no service activate or service media upload API. Do not add a second storage system.
+* Customer and review hard delete are not supported. Use deactivate / hide.
 * Notification list search is not a backend query (`search` is ignored). Unread uses `unreadOnly`; a “read only” filter is not in the API and is applied only to the current page.
-* `GET /api/v1/admin/settings` returns 404 until `site_settings` id=1 is seeded. The UI treats that as empty settings, not an error.
+* `GET /api/v1/admin/settings` returns 404 until `site_settings` id=1 is seeded. The UI treats that as empty settings; save shows an error instead of a fake success.
 * Quote, contact, and blog Admin APIs are not part of this namespace. Dashboard quick actions that point at those screens remain navigation only.
 * Review rating averages in the UI are computed from the current page, not a backend aggregate.
-* Write/mutation flows are phase 33. Real-time notification delivery is phase 34.
+* Audit logging is not in the schema yet. Important mutations should be audited in a later phase.
+* Real-time notification delivery is phase 34.

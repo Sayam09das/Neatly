@@ -100,6 +100,7 @@ function AdminCustomersLive({
       filterCatalog={filterCatalog}
       filters={filters}
       onFiltersChange={setFilters}
+      onMutated={query.retry}
       onPageChange={setPage}
       presentation={presentation}
     />
@@ -110,6 +111,7 @@ interface AdminCustomersViewProps {
   filterCatalog: AdminCustomerFilterCatalog;
   filters?: AdminCustomerFilters;
   onFiltersChange?: (filters: AdminCustomerFilters) => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   presentation: AdminCustomerPresentation;
 }
@@ -118,6 +120,7 @@ function AdminCustomersView({
   filterCatalog,
   filters: filtersProp,
   onFiltersChange,
+  onMutated,
   onPageChange,
   presentation,
 }: AdminCustomersViewProps): ReactElement {
@@ -178,6 +181,7 @@ function AdminCustomersView({
             onCreate={(): void => {
               setCreateOpen(true);
             }}
+            onMutated={onMutated}
             onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"
@@ -188,7 +192,11 @@ function AdminCustomersView({
           />
         </AdminDashboardBlock>
       </AdminDashboardMotion>
-      <CustomersCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
+      <CustomersCreateDialog
+        onCreated={onMutated}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
     </div>
   );
 }

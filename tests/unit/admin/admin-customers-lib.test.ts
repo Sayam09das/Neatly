@@ -14,6 +14,7 @@ import {
 import type { AdminCustomer } from "@/types/admin-customer";
 
 const CUSTOMER: AdminCustomer = {
+  address: null,
   avatarUrl: null,
   bookingCount: null,
   email: "alpha@test.local",

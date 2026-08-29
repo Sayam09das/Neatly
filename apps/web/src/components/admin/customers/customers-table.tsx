@@ -26,6 +26,7 @@ interface CustomersTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   pagination?: AdminCustomerPagination;
   presentation: AdminCustomerPresentation;
@@ -36,6 +37,7 @@ export function CustomersTable({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onMutated,
   onPageChange,
   pagination,
   presentation,
@@ -47,6 +49,7 @@ export function CustomersTable({
         hasActiveFilters={hasActiveFilters}
         onClearFilters={onClearFilters}
         onCreate={onCreate}
+        onMutated={onMutated}
         presentation={presentation}
       />
       {presentation.status === "ready" &&
@@ -66,6 +69,7 @@ interface CustomersTableBodyProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   onCreate: () => void;
+  onMutated?: () => void;
   presentation: AdminCustomerPresentation;
 }
 
@@ -74,6 +78,7 @@ function CustomersTableBody({
   hasActiveFilters,
   onClearFilters,
   onCreate,
+  onMutated,
   presentation,
 }: CustomersTableBodyProps): ReactElement {
   const prefersReducedMotion = useReducedMotion();
@@ -128,8 +133,8 @@ function CustomersTableBody({
           },
         }}
       >
-        <CustomerCardList customers={customers} />
-        <CustomersDesktopTable customers={customers} />
+        <CustomerCardList customers={customers} onMutated={onMutated} />
+        <CustomersDesktopTable customers={customers} onMutated={onMutated} />
       </motion.div>
     </AnimatePresence>
   );

@@ -92,6 +92,7 @@ function AdminReviewsLive({
       filterCatalog={filterCatalog}
       filters={filters}
       onFiltersChange={setFilters}
+      onMutated={query.retry}
       onPageChange={setPage}
       presentation={toLiveReviewPresentation(
         query,
@@ -105,6 +106,7 @@ interface AdminReviewsViewProps {
   filterCatalog: AdminReviewFilterCatalog;
   filters?: AdminReviewFilters;
   onFiltersChange?: (filters: AdminReviewFilters) => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   presentation: AdminReviewPresentation;
 }
@@ -113,6 +115,7 @@ function AdminReviewsView({
   filterCatalog,
   filters: filtersProp,
   onFiltersChange,
+  onMutated,
   onPageChange,
   presentation,
 }: AdminReviewsViewProps): ReactElement {
@@ -165,6 +168,7 @@ function AdminReviewsView({
             onClearFilters={(): void => {
               setFilters(defaultAdminReviewFilters);
             }}
+            onMutated={onMutated}
             onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"

@@ -16,6 +16,7 @@ import type { AdminService } from "@/types/admin-service";
 
 const SERVICE: AdminService = {
   coverImageUrl: null,
+  fullDescription: null,
   id: "service_alpha",
   isActive: true,
   name: "Alpha package",

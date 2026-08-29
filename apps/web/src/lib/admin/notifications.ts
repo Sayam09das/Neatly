@@ -1,4 +1,8 @@
-import { ADMIN_API_PATHS, ADMIN_LIST_PAGE_SIZE } from "@/config/admin-api";
+import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
 import { adminNotificationCopy } from "@/config/admin-notifications";
 import { mapAdminResult } from "@/lib/admin/parse-result";
 import {
@@ -116,6 +120,45 @@ export async function listAdminNotifications(
     init,
   );
   return mapAdminResult(result, mapNotificationList);
+}
+
+export async function markAdminNotificationRead(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminNotification>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.notificationRead, id),
+    {
+      ...init,
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapNotification(value.notification ?? value);
+  });
+}
+
+export async function markAllAdminNotificationsRead(
+  init: RequestInit = {},
+): Promise<AdminApiResult<{ updated: number }>> {
+  const result = await adminRequest<unknown>(
+    ADMIN_API_PATHS.notificationsReadAll,
+    {
+      ...init,
+      method: "POST",
+    },
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value) || typeof value.updated !== "number") {
+      return null;
+    }
+
+    return { updated: value.updated };
+  });
 }
 
 function mapNotificationList(value: unknown): AdminNotificationList | null {

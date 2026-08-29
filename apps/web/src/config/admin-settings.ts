@@ -31,7 +31,11 @@ export const adminSettingsCopy = {
   navLabel: "Settings sections",
   newPasswordLabel: "New password",
   notificationEmailDescription:
-    "Admin alert email is loaded from site settings. Saving changes is not available yet.",
+    "Admin alert email is stored with site settings when that record exists.",
+  saveError: "Unable to update settings.",
+  saveSuccess: "Settings updated.",
+  settingsMissing:
+    "Site settings are not seeded yet, so these values cannot be saved.",
   notificationEmailLabel: "Notification email",
   notificationsDescription:
     "Email alert destination for quotes and contact inquiries.",

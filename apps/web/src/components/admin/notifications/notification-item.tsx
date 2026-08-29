@@ -4,7 +4,7 @@ import { Button, Card } from "@neatly/ui";
 import { cn } from "@neatly/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import { fadeUp } from "@/animations/motion/variants";
 import { BellIcon } from "@/components/admin/admin-icons";
 import { adminNotificationCopy } from "@/config/admin-notifications";
@@ -13,20 +13,44 @@ import {
   getNotificationMessageLabel,
   getNotificationReadState,
   getNotificationTitleLabel,
+  markAdminNotificationRead,
 } from "@/lib/admin/notifications";
+import { toast } from "@/lib/toast";
 import type { AdminNotification } from "@/types/admin-notification";
 
 interface NotificationItemProps {
   notification: AdminNotification;
+  onMutated?: () => void;
 }
 
 export function NotificationItem({
   notification,
+  onMutated,
 }: NotificationItemProps): ReactElement {
   const readState = getNotificationReadState(notification.isRead);
   const isUnread = readState === "unread";
   const relatedHref = notification.relatedHref;
   const relatedLabel = notification.relatedLabel;
+  const [submitting, setSubmitting] = useState(false);
+  const canMarkRead = onMutated !== undefined && isUnread;
+
+  async function handleMarkRead(): Promise<void> {
+    if (!canMarkRead) {
+      return;
+    }
+
+    setSubmitting(true);
+    const result = await markAdminNotificationRead(notification.id);
+    setSubmitting(false);
+
+    if (!result.ok) {
+      toast.error({ title: adminNotificationCopy.markReadError });
+      return;
+    }
+
+    onMutated();
+    toast.success({ title: adminNotificationCopy.markReadSuccess });
+  }
 
   return (
     <motion.article
@@ -66,7 +90,15 @@ export function NotificationItem({
           {getNotificationMessageLabel(notification.message)}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button disabled size="sm" type="button" variant="outline">
+          <Button
+            disabled={!canMarkRead || submitting}
+            onClick={(): void => {
+              void handleMarkRead();
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
             {adminNotificationCopy.markReadAction}
           </Button>
           {relatedHref !== null &&
@@ -85,10 +117,12 @@ export function NotificationItem({
 
 interface NotificationsListProps {
   notifications: readonly AdminNotification[];
+  onMutated?: () => void;
 }
 
 export function NotificationsList({
   notifications,
+  onMutated,
 }: NotificationsListProps): ReactElement {
   return (
     <Card
@@ -96,7 +130,11 @@ export function NotificationsList({
       data-slot="notifications-list"
     >
       {notifications.map((notification) => (
-        <NotificationItem key={notification.id} notification={notification} />
+        <NotificationItem
+          key={notification.id}
+          notification={notification}
+          onMutated={onMutated}
+        />
       ))}
     </Card>
   );

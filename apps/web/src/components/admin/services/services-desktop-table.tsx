@@ -16,10 +16,12 @@ import {
 import type { AdminService } from "@/types/admin-service";
 
 interface ServicesDesktopTableProps {
+  onMutated?: () => void;
   services: readonly AdminService[];
 }
 
 export function ServicesDesktopTable({
+  onMutated,
   services,
 }: ServicesDesktopTableProps): ReactElement {
   return (
@@ -44,7 +46,11 @@ export function ServicesDesktopTable({
         </thead>
         <tbody>
           {services.map((service) => (
-            <ServiceTableRow key={service.id} service={service} />
+            <ServiceTableRow
+              key={service.id}
+              onMutated={onMutated}
+              service={service}
+            />
           ))}
         </tbody>
       </table>
@@ -53,10 +59,14 @@ export function ServicesDesktopTable({
 }
 
 interface ServiceTableRowProps {
+  onMutated?: () => void;
   service: AdminService;
 }
 
-function ServiceTableRow({ service }: ServiceTableRowProps): ReactElement {
+function ServiceTableRow({
+  onMutated,
+  service,
+}: ServiceTableRowProps): ReactElement {
   const slug = getServiceSlugLabel(service.slug);
 
   return (
@@ -89,7 +99,7 @@ function ServiceTableRow({ service }: ServiceTableRowProps): ReactElement {
         <ServiceStatusBadge isActive={service.isActive} />
       </td>
       <td className="px-4 py-3">
-        <ServiceRowActions />
+        <ServiceRowActions onMutated={onMutated} service={service} />
       </td>
     </motion.tr>
   );

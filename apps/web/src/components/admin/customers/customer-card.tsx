@@ -18,9 +18,13 @@ import type { AdminCustomer } from "@/types/admin-customer";
 
 interface CustomerCardProps {
   customer: AdminCustomer;
+  onMutated?: () => void;
 }
 
-export function CustomerCard({ customer }: CustomerCardProps): ReactElement {
+export function CustomerCard({
+  customer,
+  onMutated,
+}: CustomerCardProps): ReactElement {
   return (
     <motion.article
       className="rounded-lg border border-border bg-surface p-4"
@@ -41,7 +45,7 @@ export function CustomerCard({ customer }: CustomerCardProps): ReactElement {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <CustomerStatusBadge label={customer.statusLabel} />
-          <CustomerRowActions />
+          <CustomerRowActions customer={customer} onMutated={onMutated} />
         </div>
       </div>
       <dl className="mt-3 grid grid-cols-1 gap-2">
@@ -77,10 +81,12 @@ function CustomerCardField({
 
 interface CustomerCardListProps {
   customers: readonly AdminCustomer[];
+  onMutated?: () => void;
 }
 
 export function CustomerCardList({
   customers,
+  onMutated,
 }: CustomerCardListProps): ReactElement {
   return (
     <Card
@@ -88,7 +94,11 @@ export function CustomerCardList({
       data-slot="customer-card-list"
     >
       {customers.map((customer) => (
-        <CustomerCard customer={customer} key={customer.id} />
+        <CustomerCard
+          customer={customer}
+          key={customer.id}
+          onMutated={onMutated}
+        />
       ))}
     </Card>
   );

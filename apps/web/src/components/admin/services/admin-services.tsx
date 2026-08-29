@@ -89,6 +89,7 @@ function AdminServicesLive({
       filterCatalog={filterCatalog}
       filters={filters}
       onFiltersChange={setFilters}
+      onMutated={query.retry}
       onPageChange={setPage}
       presentation={toLiveServicePresentation(
         query,
@@ -102,6 +103,7 @@ interface AdminServicesViewProps {
   filterCatalog: AdminServiceFilterCatalog;
   filters?: AdminServiceFilters;
   onFiltersChange?: (filters: AdminServiceFilters) => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   presentation: AdminServicePresentation;
 }
@@ -110,6 +112,7 @@ function AdminServicesView({
   filterCatalog,
   filters: filtersProp,
   onFiltersChange,
+  onMutated,
   onPageChange,
   presentation,
 }: AdminServicesViewProps): ReactElement {
@@ -169,6 +172,7 @@ function AdminServicesView({
             onCreate={(): void => {
               setCreateOpen(true);
             }}
+            onMutated={onMutated}
             onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"
@@ -180,7 +184,11 @@ function AdminServicesView({
           />
         </AdminDashboardBlock>
       </AdminDashboardMotion>
-      <ServicesCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
+      <ServicesCreateDialog
+        onCreated={onMutated}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
     </div>
   );
 }

@@ -18,10 +18,12 @@ import type { AdminCustomer } from "@/types/admin-customer";
 
 interface CustomersDesktopTableProps {
   customers: readonly AdminCustomer[];
+  onMutated?: () => void;
 }
 
 export function CustomersDesktopTable({
   customers,
+  onMutated,
 }: CustomersDesktopTableProps): ReactElement {
   return (
     <Card className="hidden overflow-x-auto shadow-none md:block">
@@ -51,7 +53,11 @@ export function CustomersDesktopTable({
         </thead>
         <tbody>
           {customers.map((customer) => (
-            <CustomerTableRow customer={customer} key={customer.id} />
+            <CustomerTableRow
+              customer={customer}
+              key={customer.id}
+              onMutated={onMutated}
+            />
           ))}
         </tbody>
       </table>
@@ -61,9 +67,13 @@ export function CustomersDesktopTable({
 
 interface CustomerTableRowProps {
   customer: AdminCustomer;
+  onMutated?: () => void;
 }
 
-function CustomerTableRow({ customer }: CustomerTableRowProps): ReactElement {
+function CustomerTableRow({
+  customer,
+  onMutated,
+}: CustomerTableRowProps): ReactElement {
   return (
     <motion.tr
       className="border-b border-border last:border-b-0"
@@ -91,7 +101,7 @@ function CustomerTableRow({ customer }: CustomerTableRowProps): ReactElement {
         {formatCustomerJoinedDate(customer.joinedAt)}
       </td>
       <td className="px-4 py-3">
-        <CustomerRowActions />
+        <CustomerRowActions customer={customer} onMutated={onMutated} />
       </td>
     </motion.tr>
   );

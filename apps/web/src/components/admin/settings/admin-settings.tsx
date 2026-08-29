@@ -227,6 +227,7 @@ function SettingsSectionPanel({
         {section === "notifications" ? (
           <NotificationFields
             initialEmail={settings?.notificationEmail ?? ""}
+            persistable={settings !== null}
           />
         ) : null}
         {section === "appearance" ? <AppearanceFields /> : null}
@@ -237,6 +238,7 @@ function SettingsSectionPanel({
             initialEmail={settings?.email ?? ""}
             initialName={settings?.businessName ?? ""}
             initialPhone={settings?.phone ?? ""}
+            persistable={settings !== null}
           />
         ) : null}
       </div>

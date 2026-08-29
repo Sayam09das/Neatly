@@ -202,8 +202,8 @@ describe("Admin reviews page", (): void => {
       }),
     ).toHaveAttribute("data-disabled");
     expect(
-      screen.getByText(adminReviewCopy.comingSoonHint),
-    ).toBeInTheDocument();
+      screen.getAllByText(adminReviewCopy.comingSoonHint).length,
+    ).toBeGreaterThan(0);
   });
 
   it("opens filters and a delete confirmation that cannot complete", async (): Promise<void> => {

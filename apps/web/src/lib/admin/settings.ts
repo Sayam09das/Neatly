@@ -73,6 +73,32 @@ export async function getAdminSettingsPayload(
   };
 }
 
+export interface AdminSettingsUpdateInput {
+  address?: string;
+  businessName?: string;
+  email?: string;
+  notificationEmail?: string;
+  phone?: string;
+}
+
+export async function updateAdminSettings(
+  input: AdminSettingsUpdateInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminSiteSettings>> {
+  const result = await adminRequest<unknown>(ADMIN_API_PATHS.settings, {
+    ...init,
+    body: JSON.stringify(input),
+    method: "PATCH",
+  });
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapSettings(value.settings ?? value);
+  });
+}
+
 function mapSettings(value: unknown): AdminSiteSettings | null {
   if (!isRecord(value)) {
     return null;

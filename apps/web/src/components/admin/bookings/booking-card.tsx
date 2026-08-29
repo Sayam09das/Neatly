@@ -6,7 +6,10 @@ import type { ReactElement } from "react";
 import { fadeUp } from "@/animations/motion/variants";
 import { BookingRowActions } from "@/components/admin/bookings/booking-row-actions";
 import { BookingStatusBadge } from "@/components/admin/bookings/booking-status-badge";
-import { adminBookingCopy } from "@/config/admin-bookings";
+import {
+  adminBookingCopy,
+  emptyAdminBookingFilterCatalog,
+} from "@/config/admin-bookings";
 import {
   formatBookingSchedule,
   getBookingCleanerLabel,
@@ -14,13 +17,22 @@ import {
   getBookingIdLabel,
   getBookingServiceLabel,
 } from "@/lib/admin/bookings";
-import type { AdminBooking } from "@/types/admin-booking";
+import type {
+  AdminBooking,
+  AdminBookingFilterCatalog,
+} from "@/types/admin-booking";
 
 interface BookingCardProps {
   booking: AdminBooking;
+  catalog?: AdminBookingFilterCatalog;
+  onMutated?: () => void;
 }
 
-export function BookingCard({ booking }: BookingCardProps): ReactElement {
+export function BookingCard({
+  booking,
+  catalog = emptyAdminBookingFilterCatalog,
+  onMutated,
+}: BookingCardProps): ReactElement {
   return (
     <motion.article
       className="rounded-lg border border-border bg-surface p-4"
@@ -38,7 +50,11 @@ export function BookingCard({ booking }: BookingCardProps): ReactElement {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <BookingStatusBadge status={booking.status} />
-          <BookingRowActions />
+          <BookingRowActions
+            booking={booking}
+            catalog={catalog}
+            onMutated={onMutated}
+          />
         </div>
       </div>
       <dl className="mt-3 grid grid-cols-1 gap-2">
@@ -78,10 +94,14 @@ function BookingCardField({
 
 interface BookingCardListProps {
   bookings: readonly AdminBooking[];
+  catalog?: AdminBookingFilterCatalog;
+  onMutated?: () => void;
 }
 
 export function BookingCardList({
   bookings,
+  catalog = emptyAdminBookingFilterCatalog,
+  onMutated,
 }: BookingCardListProps): ReactElement {
   return (
     <Card
@@ -89,7 +109,12 @@ export function BookingCardList({
       data-slot="booking-card-list"
     >
       {bookings.map((booking) => (
-        <BookingCard booking={booking} key={booking.id} />
+        <BookingCard
+          booking={booking}
+          catalog={catalog}
+          key={booking.id}
+          onMutated={onMutated}
+        />
       ))}
     </Card>
   );

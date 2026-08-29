@@ -71,7 +71,9 @@ const TEST_BOOKING: AdminBooking = {
   customerId: null,
   customerName: null,
   id: "booking_test",
+  notes: null,
   scheduledAt: null,
+  serviceAddress: null,
   serviceId: null,
   serviceName: null,
   status: "PENDING",
@@ -211,8 +213,8 @@ describe("Admin bookings page", (): void => {
       }),
     ).toHaveAttribute("data-disabled");
     expect(
-      screen.getByText(adminBookingCopy.comingSoonHint),
-    ).toBeInTheDocument();
+      screen.getAllByText(adminBookingCopy.comingSoonHint).length,
+    ).toBeGreaterThan(0);
   });
 
   it("opens filter and create dialogs without creating bookings", async (): Promise<void> => {

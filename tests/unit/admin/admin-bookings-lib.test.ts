@@ -3,8 +3,10 @@ import { defaultAdminBookingFilters } from "@/config/admin-bookings";
 import {
   filterBookings,
   formatBookingSchedule,
+  fromDatetimeLocalValue,
   hasActiveBookingFilters,
   shouldRenderBookingPagination,
+  toDatetimeLocalValue,
 } from "@/lib/admin/bookings";
 import type { AdminBooking } from "@/types/admin-booking";
 
@@ -14,7 +16,9 @@ const BOOKING: AdminBooking = {
   customerId: "customer_test",
   customerName: null,
   id: "booking_alpha",
+  notes: null,
   scheduledAt: "2026-03-12T10:00:00.000Z",
+  serviceAddress: null,
   serviceId: "service_test",
   serviceName: null,
   status: "CONFIRMED",
@@ -83,5 +87,15 @@ describe("booking presentation helpers", (): void => {
         10,
       ),
     ).toBe(true);
+  });
+});
+
+describe("booking datetime local conversion", (): void => {
+  it("round-trips an ISO timestamp through datetime-local", (): void => {
+    const local = toDatetimeLocalValue("2026-04-01T09:00:00.000Z");
+    expect(local).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    expect(fromDatetimeLocalValue(local)).toBe(new Date(local).toISOString());
+    expect(toDatetimeLocalValue(null)).toBe("");
+    expect(fromDatetimeLocalValue("")).toBe("");
   });
 });

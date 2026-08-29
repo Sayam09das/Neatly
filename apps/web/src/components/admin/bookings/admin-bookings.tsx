@@ -103,6 +103,7 @@ function AdminBookingsLive({
       }
       filters={filters}
       onFiltersChange={setFilters}
+      onMutated={query.retry}
       onPageChange={setPage}
       presentation={toLiveBookingPresentation(query, hasActiveFilters)}
     />
@@ -113,6 +114,7 @@ interface AdminBookingsViewProps {
   filterCatalog: AdminBookingFilterCatalog;
   filters?: AdminBookingFilters;
   onFiltersChange?: (filters: AdminBookingFilters) => void;
+  onMutated?: () => void;
   onPageChange?: (page: number) => void;
   presentation: AdminBookingPresentation;
 }
@@ -121,6 +123,7 @@ function AdminBookingsView({
   filterCatalog,
   filters: filtersProp,
   onFiltersChange,
+  onMutated,
   onPageChange,
   presentation,
 }: AdminBookingsViewProps): ReactElement {
@@ -174,6 +177,7 @@ function AdminBookingsView({
         <AdminDashboardBlock>
           <BookingsTable
             bookings={visibleBookings}
+            catalog={filterCatalog}
             hasActiveFilters={hasActiveFilters}
             onClearFilters={(): void => {
               setFilters(defaultAdminBookingFilters);
@@ -181,6 +185,7 @@ function AdminBookingsView({
             onCreate={(): void => {
               setCreateOpen(true);
             }}
+            onMutated={onMutated}
             onPageChange={onPageChange}
             pagination={
               presentation.status === "ready"
@@ -191,7 +196,12 @@ function AdminBookingsView({
           />
         </AdminDashboardBlock>
       </AdminDashboardMotion>
-      <BookingsCreateDialog onOpenChange={setCreateOpen} open={createOpen} />
+      <BookingsCreateDialog
+        catalog={filterCatalog}
+        onCreated={onMutated}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
     </div>
   );
 }

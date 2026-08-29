@@ -193,12 +193,77 @@ function mapService(value: unknown): AdminService | null {
 
   return {
     coverImageUrl: readNullableString(value.coverImageUrl),
+    fullDescription: readNullableString(value.fullDescription),
     id,
     isActive: readBoolean(value.isActive),
     name: readNullableString(value.name),
     shortDescription: readNullableString(value.shortDescription),
     slug: readNullableString(value.slug),
   };
+}
+
+export interface AdminServiceWriteInput {
+  fullDescription: string;
+  name: string;
+  shortDescription: string;
+}
+
+export async function createAdminService(
+  input: AdminServiceWriteInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminService>> {
+  const result = await adminRequest<unknown>(ADMIN_API_PATHS.services, {
+    ...init,
+    body: JSON.stringify({
+      fullDescription: input.fullDescription.trim(),
+      name: input.name.trim(),
+      shortDescription: input.shortDescription.trim(),
+    }),
+    method: "POST",
+  });
+  return mapAdminResult(result, mapServicePayload);
+}
+
+export async function updateAdminService(
+  id: string,
+  input: AdminServiceWriteInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminService>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.service, id),
+    {
+      ...init,
+      body: JSON.stringify({
+        fullDescription: input.fullDescription.trim(),
+        name: input.name.trim(),
+        shortDescription: input.shortDescription.trim(),
+      }),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, mapServicePayload);
+}
+
+export async function archiveAdminService(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminService>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.serviceArchive, id),
+    {
+      ...init,
+      method: "POST",
+    },
+  );
+  return mapAdminResult(result, mapServicePayload);
+}
+
+function mapServicePayload(value: unknown): AdminService | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapService(value.service ?? value);
 }
 
 export function shouldRenderServicePagination(

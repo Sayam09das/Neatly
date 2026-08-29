@@ -17,10 +17,25 @@ import {
 } from "@neatly/ui";
 import { type ReactElement, useState } from "react";
 import { MoreIcon } from "@/components/admin/admin-icons";
+import { AdminConfirmDialog } from "@/components/admin/admin-mutation-dialogs";
 import { adminReviewCopy } from "@/config/admin-reviews";
+import { hideAdminReview } from "@/lib/admin/reviews";
+import { toast } from "@/lib/toast";
+import type { AdminReview } from "@/types/admin-review";
 
-export function ReviewRowActions(): ReactElement {
-  const [confirmOpen, setConfirmOpen] = useState(false);
+interface ReviewRowActionsProps {
+  onMutated?: () => void;
+  review: AdminReview;
+}
+
+export function ReviewRowActions({
+  onMutated,
+  review,
+}: ReviewRowActionsProps): ReactElement {
+  const [hideOpen, setHideOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const mutationsEnabled = onMutated !== undefined;
+  const canHide = mutationsEnabled && review.isActive !== false;
 
   return (
     <>
@@ -45,19 +60,30 @@ export function ReviewRowActions(): ReactElement {
           <DropdownMenuItem disabled>
             {adminReviewCopy.editAction}
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem
+            disabled={!canHide}
+            onSelect={(): void => {
+              setHideOpen(true);
+            }}
+          >
             {adminReviewCopy.hideAction}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(): void => {
-              setConfirmOpen(true);
+              setDeleteOpen(true);
             }}
           >
             {adminReviewCopy.deleteAction}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
+      <ReviewHideDialog
+        onMutated={onMutated}
+        onOpenChange={setHideOpen}
+        open={hideOpen}
+        review={review}
+      />
+      <Dialog onOpenChange={setDeleteOpen} open={deleteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{adminReviewCopy.confirmDeleteTitle}</DialogTitle>
@@ -67,7 +93,7 @@ export function ReviewRowActions(): ReactElement {
           </DialogHeader>
           <DialogFooter>
             <Button
-              onClick={(): void => setConfirmOpen(false)}
+              onClick={(): void => setDeleteOpen(false)}
               type="button"
               variant="outline"
             >
@@ -80,5 +106,54 @@ export function ReviewRowActions(): ReactElement {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function ReviewHideDialog({
+  onMutated,
+  onOpenChange,
+  open,
+  review,
+}: {
+  onMutated?: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  review: AdminReview;
+}): ReactElement {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConfirm(): Promise<void> {
+    setSubmitting(true);
+    setError(null);
+    const result = await hideAdminReview(review.id);
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      toast.error({ title: adminReviewCopy.hideError });
+      return;
+    }
+
+    onOpenChange(false);
+    onMutated?.();
+    toast.success({ title: adminReviewCopy.hideSuccess });
+  }
+
+  return (
+    <AdminConfirmDialog
+      cancelLabel={adminReviewCopy.confirmCancel}
+      confirmLabel={adminReviewCopy.confirmHideAction}
+      description={adminReviewCopy.confirmHideDescription}
+      error={error}
+      onCancel={(): void => onOpenChange(false)}
+      onConfirm={(): void => {
+        void handleConfirm();
+      }}
+      onOpenChange={onOpenChange}
+      open={open}
+      submitting={submitting}
+      title={adminReviewCopy.confirmHideTitle}
+    />
   );
 }
