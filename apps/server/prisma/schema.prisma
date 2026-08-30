@@ -75,6 +75,7 @@ enum QuoteStatus {
   REVIEWING
   CONTACTED
   QUOTED
+  ACCEPTED
   CONVERTED
   DECLINED
   CLOSED
@@ -276,6 +277,7 @@ model QuoteRequest {
   additionalNotes String?
   serviceId       String?
   status          QuoteStatus       @default(NEW)
+  quotedAmount    Decimal?          @db.Decimal(10, 2)
   adminNotes      String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt

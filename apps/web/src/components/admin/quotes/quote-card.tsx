@@ -13,6 +13,7 @@ import {
   getAdminQuoteDetailsPath,
 } from "@/config/admin-quotes";
 import {
+  formatQuoteAmount,
   formatQuoteRequestedAt,
   getQuoteCustomerName,
   getQuoteServiceLabel,
@@ -58,6 +59,10 @@ export function QuoteCard({ quote }: QuoteCardProps): ReactElement {
             quote.preferredDate,
             quote.preferredTime,
           )}
+        />
+        <QuoteCardField
+          label={adminQuoteCopy.amountLabel}
+          value={formatQuoteAmount(quote.quotedAmount)}
         />
       </dl>
       <Button asChild className="mt-4 w-full" variant="outline">

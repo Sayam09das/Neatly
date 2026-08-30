@@ -5,6 +5,7 @@ export const adminQuoteStatuses = [
   "REVIEWING",
   "CONTACTED",
   "QUOTED",
+  "ACCEPTED",
   "CONVERTED",
   "DECLINED",
   "CLOSED",
@@ -57,11 +58,19 @@ export const adminQuoteDateRanges = [
 
 export type AdminQuoteDateRange = (typeof adminQuoteDateRanges)[number];
 
+export interface AdminQuoteServiceSummary {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface AdminQuote {
   additionalNotes: string | null;
+  adminNotes: string | null;
   approximateSize: string;
   bathrooms: number | null;
   bedrooms: number | null;
+  bookingId: string | null;
   createdAt: string;
   email: string;
   frequency: AdminQuoteFrequency;
@@ -71,6 +80,8 @@ export interface AdminQuote {
   preferredDate: string;
   preferredTime: string;
   propertyType: AdminQuotePropertyType;
+  quotedAmount: number | null;
+  service: AdminQuoteServiceSummary | null;
   serviceAddress: string;
   serviceId: string | null;
   serviceType: AdminQuoteServiceType;

@@ -28,6 +28,9 @@ Mutations are rate-limited outside `test` (60 / 15 minutes per user + route).
 | POST | `/api/v1/admin/services/:id/archive` | Sets `isActive: false` |
 | GET/POST | `/api/v1/admin/bookings` | Create: `customerId`, `serviceId`, optional cleaner/schedule/notes |
 | GET/PATCH | `/api/v1/admin/bookings/:id` | PATCH notes/schedule/address only |
+| GET | `/api/v1/admin/quotes` | Query: `page`, `limit`, `search`, `sort`, `order`, `status`, `serviceType`, `createdFrom`, `createdTo` |
+| GET | `/api/v1/admin/quotes/:id` | Full quote request including `quotedAmount` and `adminNotes` |
+| PATCH | `/api/v1/admin/quotes/:id` | `{ quotedAmount?, status?, adminNotes? }`. Pricing `NEW`/`REVIEWING`/`CONTACTED` → `QUOTED`. Admin cannot set `ACCEPTED` or `CONVERTED`. |
 | PATCH | `/api/v1/admin/bookings/:id/status` | Transition table from phase 30 |
 | PATCH | `/api/v1/admin/bookings/:id/assign` | `{ cleanerId }` |
 | GET | `/api/v1/admin/reviews` | Testimonials. Query: `active`, `category`, `rating`, dates, search |
@@ -68,7 +71,7 @@ Known gaps (do not invent UI or data for these):
 * Customer and review hard delete are not supported. Use deactivate / hide.
 * Notification list search is not a backend query (`search` is ignored). Unread uses `unreadOnly`; a “read only” filter is not in the API and is applied only to the current page.
 * `GET /api/v1/admin/settings` returns 404 until `site_settings` id=1 is seeded. The UI treats that as empty settings; save shows an error instead of a fake success.
-* Quote, contact, and blog Admin APIs are not part of this namespace. Dashboard quick actions that point at those screens remain navigation only.
+* Contact and blog Admin APIs are not part of this namespace. Dashboard quick actions that point at those screens remain navigation only.
 * Review rating averages in the UI are computed from the current page, not a backend aggregate.
 * Audit logging is not in the schema yet. Important mutations should be audited in a later phase.
 ## Real-time Admin notifications (phase 34)

@@ -47,7 +47,7 @@ export interface CreateBookingInput {
 
 export interface CreateCustomerBookingInput {
   notes?: string | null;
-  quoteRequestId?: string | null;
+  quoteRequestId: string;
   scheduledAt: Date;
   serviceAddress: string;
   serviceId: string;

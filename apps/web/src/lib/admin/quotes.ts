@@ -1,4 +1,8 @@
-import { ADMIN_LIST_PAGE_SIZE } from "@/config/admin-api";
+import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
 import {
   adminQuoteCopy,
   adminQuoteDateRangeLabels,
@@ -7,6 +11,16 @@ import {
   adminQuoteServiceTypeLabels,
   adminQuoteStatusLabels,
 } from "@/config/admin-quotes";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readIsoDate,
+  readNullableString,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import {
   ADMIN_QUOTE_DATE_RANGE_ALL,
   ADMIN_QUOTE_STATUS_ALL,
@@ -16,6 +30,7 @@ import {
   type AdminQuoteFrequency,
   type AdminQuotePagination,
   type AdminQuotePropertyType,
+  type AdminQuoteServiceSummary,
   type AdminQuoteServiceType,
   type AdminQuoteStatus,
   type AdminQuoteStatusFilter,
@@ -399,4 +414,220 @@ export function isAdminQuoteDateRange(
   value: string,
 ): value is AdminQuoteDateRange {
   return adminQuoteDateRanges.some((range) => range === value);
+}
+
+export function formatQuoteAmount(amount: number | null): string {
+  if (amount === null || !Number.isFinite(amount)) {
+    return adminQuoteCopy.emptyValue;
+  }
+
+  return new Intl.NumberFormat("en-IN", {
+    currency: "INR",
+    style: "currency",
+  }).format(amount);
+}
+
+export interface AdminQuoteList {
+  pagination: AdminQuotePagination;
+  quotes: readonly AdminQuote[];
+}
+
+export interface AdminQuoteListQuery extends AdminQuoteFilters {
+  page: number;
+}
+
+export async function listAdminQuotes(
+  query: AdminQuoteListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminQuoteList>> {
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.quotes, {
+      filters: {
+        createdFrom: query.requestedFrom,
+        createdTo: query.requestedTo,
+        serviceType: query.serviceType === "" ? undefined : query.serviceType,
+        status:
+          query.status === ADMIN_QUOTE_STATUS_ALL ? undefined : query.status,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapQuoteList);
+}
+
+export async function getAdminQuote(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminQuote>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.quote, id),
+    init,
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapQuote(value.quoteRequest ?? value);
+  });
+}
+
+export interface AdminQuoteUpdateInput {
+  adminNotes?: string | null;
+  quotedAmount?: number;
+  status?: AdminQuoteStatus;
+}
+
+export async function updateAdminQuote(
+  id: string,
+  input: AdminQuoteUpdateInput,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminQuote>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.quote, id),
+    {
+      ...init,
+      body: JSON.stringify(input),
+      method: "PATCH",
+    },
+  );
+  return mapAdminResult(result, (value) => {
+    if (!isRecord(value)) {
+      return null;
+    }
+
+    return mapQuote(value.quoteRequest ?? value);
+  });
+}
+
+function mapQuoteList(value: unknown): AdminQuoteList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const quotes: AdminQuote[] = [];
+
+  for (const item of value.items) {
+    const quote = mapQuote(item);
+
+    if (quote === null) {
+      return null;
+    }
+
+    quotes.push(quote);
+  }
+
+  return { pagination, quotes };
+}
+
+function mapQuote(value: unknown): AdminQuote | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+  const status = readString(value.status);
+  const serviceType = readString(value.serviceType);
+  const propertyType = readString(value.propertyType);
+  const frequency = readString(value.frequency);
+
+  if (
+    id === null ||
+    status === null ||
+    serviceType === null ||
+    propertyType === null ||
+    frequency === null ||
+    !isAdminQuoteStatus(status) ||
+    !isAdminQuoteServiceType(serviceType) ||
+    !isAdminQuotePropertyType(propertyType) ||
+    !isAdminQuoteFrequency(frequency)
+  ) {
+    return null;
+  }
+
+  const approximateSize = readString(value.approximateSize);
+  const email = readString(value.email);
+  const fullName = readString(value.fullName);
+  const phone = readString(value.phone);
+  const preferredTime = readString(value.preferredTime);
+  const serviceAddress = readString(value.serviceAddress);
+  const createdAt = readIsoDate(value.createdAt);
+  const updatedAt = readIsoDate(value.updatedAt);
+  const preferredDate = readIsoDate(value.preferredDate);
+
+  if (
+    approximateSize === null ||
+    email === null ||
+    fullName === null ||
+    phone === null ||
+    preferredTime === null ||
+    serviceAddress === null ||
+    createdAt === null ||
+    updatedAt === null ||
+    preferredDate === null
+  ) {
+    return null;
+  }
+
+  return {
+    additionalNotes: readNullableString(value.additionalNotes),
+    adminNotes: readNullableString(value.adminNotes),
+    approximateSize,
+    bathrooms: readNullableNumber(value.bathrooms),
+    bedrooms: readNullableNumber(value.bedrooms),
+    bookingId: readNullableString(value.bookingId),
+    createdAt,
+    email,
+    frequency,
+    fullName,
+    id,
+    phone,
+    preferredDate,
+    preferredTime,
+    propertyType,
+    quotedAmount: readNullableNumber(value.quotedAmount),
+    service: mapQuoteService(value.service),
+    serviceAddress,
+    serviceId: readNullableString(value.serviceId),
+    serviceType,
+    status,
+    updatedAt,
+  };
+}
+
+function mapQuoteService(value: unknown): AdminQuoteServiceSummary | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+  const name = readString(value.name);
+  const slug = readString(value.slug);
+
+  if (id === null || name === null || slug === null) {
+    return null;
+  }
+
+  return { id, name, slug };
+}
+
+function readNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return value;
 }

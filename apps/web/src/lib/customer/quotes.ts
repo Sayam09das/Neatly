@@ -4,12 +4,14 @@ import { ADMIN_SESSION_TOKEN_HEADER } from "@/config/admin-api";
 import {
   CUSTOMER_API_PATHS,
   CUSTOMER_QUOTE_REQUEST_TIMEOUT_MS,
+  withCustomerApiId,
 } from "@/config/customer";
 import {
   type JsonApiFailure,
   type JsonApiResult,
   parseJsonApiResponse,
 } from "@/lib/api/envelope";
+import { customerRequest } from "@/lib/customer/request";
 import type { CustomerQuoteList, CustomerQuoteView } from "@/types/customer";
 
 export const customerQuoteViewSchema = z.object({
@@ -41,11 +43,21 @@ export const customerQuoteViewSchema = z.object({
     "COMMERCIAL",
     "CUSTOM",
   ]),
+  bookingId: z.string().min(1).nullable(),
+  quotedAmount: z.number().nonnegative().nullable(),
+  service: z
+    .object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+      slug: z.string().min(1),
+    })
+    .nullable(),
   status: z.enum([
     "NEW",
     "REVIEWING",
     "CONTACTED",
     "QUOTED",
+    "ACCEPTED",
     "CONVERTED",
     "DECLINED",
     "CLOSED",
@@ -112,6 +124,101 @@ export async function loadCustomerQuotes(
   }
 
   return { list: parsed.data, ok: true };
+}
+
+export type CustomerQuoteLoadResult =
+  | { ok: true; quote: CustomerQuoteView }
+  | { notFound: boolean; ok: false; unauthorized: boolean };
+
+const quotePayloadSchema = z.object({
+  quoteRequest: customerQuoteViewSchema,
+});
+
+export async function loadCustomerQuote(
+  id: string,
+  sessionToken: string | undefined,
+): Promise<CustomerQuoteLoadResult> {
+  const result = await requestCustomerJson(
+    withCustomerApiId(CUSTOMER_API_PATHS.quote, id),
+    sessionToken,
+  );
+
+  if (!result.ok) {
+    return {
+      notFound: result.status === 404,
+      ok: false,
+      unauthorized: result.unauthorized,
+    };
+  }
+
+  const parsed = quotePayloadSchema.safeParse(result.data);
+
+  if (!parsed.success) {
+    return { notFound: false, ok: false, unauthorized: false };
+  }
+
+  return { ok: true, quote: parsed.data.quoteRequest };
+}
+
+export async function acceptCustomerQuote(
+  id: string,
+): Promise<JsonApiResult<CustomerQuoteView>> {
+  const result = await customerRequest<unknown>(
+    withCustomerApiId(CUSTOMER_API_PATHS.quoteAccept, id),
+    { method: "POST" },
+  );
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const parsed = quotePayloadSchema.safeParse(result.data);
+
+  if (!parsed.success) {
+    return loadFailure;
+  }
+
+  return {
+    data: parsed.data.quoteRequest,
+    ok: true,
+    status: result.status,
+  };
+}
+
+export async function declineCustomerQuote(
+  id: string,
+): Promise<JsonApiResult<CustomerQuoteView>> {
+  const result = await customerRequest<unknown>(
+    withCustomerApiId(CUSTOMER_API_PATHS.quoteDecline, id),
+    { method: "POST" },
+  );
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const parsed = quotePayloadSchema.safeParse(result.data);
+
+  if (!parsed.success) {
+    return loadFailure;
+  }
+
+  return {
+    data: parsed.data.quoteRequest,
+    ok: true,
+    status: result.status,
+  };
+}
+
+export function formatQuoteAmount(amount: number | null): string | null {
+  if (amount === null || !Number.isFinite(amount)) {
+    return null;
+  }
+
+  return new Intl.NumberFormat("en-IN", {
+    currency: "INR",
+    style: "currency",
+  }).format(amount);
 }
 
 async function requestCustomerJson(

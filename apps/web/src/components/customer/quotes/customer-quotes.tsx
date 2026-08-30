@@ -5,11 +5,17 @@ import { CustomerRefreshErrorState } from "@/components/customer/customer-refres
 import { CustomerQuotesEmptyState } from "@/components/customer/customer-states";
 import {
   CUSTOMER_PATHS,
+  customerBookingDetailPath,
+  customerBookingFromQuotePath,
+  customerQuoteDetailPath,
   customerQuoteServiceTypeLabels,
   customerQuoteStatusLabels,
   customerQuotesCopy,
 } from "@/config/customer";
-import { formatCustomerQuoteDate } from "@/lib/customer/quotes";
+import {
+  formatCustomerQuoteDate,
+  formatQuoteAmount,
+} from "@/lib/customer/quotes";
 import type { CustomerQuoteList, CustomerQuoteView } from "@/types/customer";
 
 interface CustomerQuotesProps {
@@ -71,11 +77,18 @@ function QuotesList({ items }: QuotesListProps): ReactElement {
           </caption>
           <thead>
             <tr className="border-b border-border text-caption text-muted-foreground">
-              <th className="py-3 pr-4 font-medium">Service</th>
+              <th className="py-3 pr-4 font-medium">
+                {customerQuotesCopy.serviceLabel}
+              </th>
               <th className="py-3 pr-4 font-medium">
                 {customerQuotesCopy.preferredDate}
               </th>
-              <th className="py-3 pr-4 font-medium">Status</th>
+              <th className="py-3 pr-4 font-medium">
+                {customerQuotesCopy.statusLabel}
+              </th>
+              <th className="py-3 pr-4 font-medium">
+                {customerQuotesCopy.amountLabel}
+              </th>
               <th className="py-3 font-medium">
                 {customerQuotesCopy.referenceLabel}
               </th>
@@ -93,8 +106,11 @@ function QuotesList({ items }: QuotesListProps): ReactElement {
                 <td className="py-4 pr-4">
                   <QuoteStatusBadge status={quote.status} />
                 </td>
-                <td className="py-4 text-body text-muted-foreground">
-                  {quote.id}
+                <td className="py-4 pr-4 text-body text-muted-foreground">
+                  {formatQuoteAmount(quote.quotedAmount) ?? "—"}
+                </td>
+                <td className="py-4">
+                  <QuoteActions quote={quote} />
                 </td>
               </tr>
             ))}
@@ -120,7 +136,48 @@ function QuoteCard({ quote }: { quote: CustomerQuoteView }): ReactElement {
       <p className="mt-1 text-caption text-muted-foreground">
         {customerQuotesCopy.referenceLabel}: {quote.id}
       </p>
+      {quote.quotedAmount === null ? null : (
+        <p className="mt-2 text-body text-foreground">
+          {formatQuoteAmount(quote.quotedAmount)}
+        </p>
+      )}
+      <div className="mt-3">
+        <QuoteActions quote={quote} />
+      </div>
     </article>
+  );
+}
+
+function QuoteActions({ quote }: { quote: CustomerQuoteView }): ReactElement {
+  if (quote.status === "CONVERTED" && quote.bookingId !== null) {
+    return (
+      <Link
+        className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        href={customerBookingDetailPath(quote.bookingId)}
+      >
+        {customerQuotesCopy.viewBookingAction}
+      </Link>
+    );
+  }
+
+  if (quote.status === "ACCEPTED") {
+    return (
+      <Link
+        className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        href={customerBookingFromQuotePath(quote.id, quote.service?.slug)}
+      >
+        {customerQuotesCopy.bookAction}
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      href={customerQuoteDetailPath(quote.id)}
+    >
+      {customerQuotesCopy.viewAction}
+    </Link>
   );
 }
 

@@ -18,6 +18,7 @@ const quote: CustomerQuoteView = {
   approximateSize: "1,000-2,000 sq ft",
   bathrooms: 1,
   bedrooms: 2,
+  bookingId: null,
   createdAt: "2026-08-30T10:00:00.000Z",
   email: "ada@neatly.example",
   frequency: "ONE_TIME",
@@ -27,6 +28,8 @@ const quote: CustomerQuoteView = {
   preferredDate: "2026-09-04T00:00:00.000Z",
   preferredTime: "Morning (8am-12pm)",
   propertyType: "APARTMENT",
+  quotedAmount: null,
+  service: null,
   serviceAddress: "14 Park Street",
   serviceId: null,
   serviceType: "RESIDENTIAL",
@@ -72,7 +75,13 @@ describe("CustomerQuotes", (): void => {
     expect(
       screen.getAllByText(customerQuoteStatusLabels.NEW).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText(quote.id).length).toBeGreaterThan(0);
+    const viewLinks = screen.getAllByRole("link", {
+      name: customerQuotesCopy.viewAction,
+    });
+    expect(viewLinks.length).toBeGreaterThan(0);
+    for (const link of viewLinks) {
+      expect(link).toHaveAttribute("href", `/dashboard/quotes/${quote.id}`);
+    }
     expect(formatCustomerQuoteDate(quote.preferredDate)).toMatch(/2026/);
   });
 });

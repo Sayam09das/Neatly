@@ -5,9 +5,37 @@ import {
   ConflictError,
   NotFoundError,
 } from "../../../apps/server/src/lib/errors.ts";
+import type { QuoteService } from "../../../apps/server/src/services/quotes/quote.service.ts";
 import { createDomainHarness } from "./in-memory-domain.ts";
 
 const admin: Actor = { id: "admin-1", role: "ADMIN" };
+
+async function acceptedQuoteId(
+  quotes: QuoteService,
+  input: { email: string; id: string; name: string; serviceId: string },
+): Promise<string> {
+  const created = await quotes.createPublic({
+    approximateSize: "1,000-2,000 sq ft",
+    bathrooms: 1,
+    bedrooms: 1,
+    email: input.email,
+    frequency: "ONE_TIME",
+    fullName: input.name,
+    phone: "5551234567",
+    preferredDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    preferredTime: "Morning (8am-12pm)",
+    propertyType: "HOUSE",
+    serviceAddress: "12 Harbour Street",
+    serviceId: input.serviceId,
+    serviceType: "RESIDENTIAL",
+  });
+  await quotes.updateForAdmin(admin, created.id, { quotedAmount: 150 });
+  await quotes.acceptForCustomer(
+    { email: input.email, id: input.id, name: input.name },
+    created.id,
+  );
+  return created.id;
+}
 
 async function seedBookingGraph() {
   const harness = createDomainHarness();
@@ -155,31 +183,33 @@ describe("BookingService", (): void => {
   });
 
   it("creates a pending customer booking from the session identity", async (): Promise<void> => {
-    const { bookings, catalog, customers } = await seedBookingGraph();
+    const { bookings, catalog, customers, quotes } = await seedBookingGraph();
     const offering = await catalog.create(admin, {
       fullDescription: "Move-out",
       name: "Move Out",
       shortDescription: "Empty home",
     });
     const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
-    const created = await bookings.createForCustomer(
-      actor,
-      {
-        email: "ada@neatly.example",
-        id: "customer-a",
-        name: "Ada",
-      },
-      {
-        notes: "Gate code",
-        scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        serviceAddress: "12 Harbour Street",
-        serviceId: offering.id,
-      },
-    );
+    const identity = {
+      email: "ada@neatly.example",
+      id: "customer-a",
+      name: "Ada",
+    };
+    const quoteRequestId = await acceptedQuoteId(quotes, {
+      ...identity,
+      serviceId: offering.id,
+    });
+    const created = await bookings.createForCustomer(actor, identity, {
+      notes: "Gate code",
+      quoteRequestId,
+      scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      serviceAddress: "12 Harbour Street",
+      serviceId: offering.id,
+    });
 
     expect(created.status).toBe("PENDING");
     expect(created.serviceAddress).toBe("12 Harbour Street");
-    expect(created.linkedToQuote).toBe(false);
+    expect(created.linkedToQuote).toBe(true);
     expect(JSON.stringify(created)).not.toContain("cleaner");
 
     const fetched = await bookings.getCustomerBooking(
@@ -213,7 +243,8 @@ describe("BookingService", (): void => {
   });
 
   it("lists and summarizes only the session customer's bookings", async (): Promise<void> => {
-    const { bookings, catalog, customers, offering } = await seedBookingGraph();
+    const { bookings, catalog, customers, offering, quotes } =
+      await seedBookingGraph();
     const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
     const identity = {
       email: "ada@neatly.example",
@@ -226,6 +257,10 @@ describe("BookingService", (): void => {
       shortDescription: "Desks",
     });
     const own = await bookings.createForCustomer(actor, identity, {
+      quoteRequestId: await acceptedQuoteId(quotes, {
+        ...identity,
+        serviceId: offering.id,
+      }),
       scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
       serviceAddress: "12 Harbour Street",
       serviceId: offering.id,
@@ -244,6 +279,12 @@ describe("BookingService", (): void => {
         name: "Other",
       },
       {
+        quoteRequestId: await acceptedQuoteId(quotes, {
+          email: "other@neatly.example",
+          id: "customer-b",
+          name: "Other",
+          serviceId: otherOffering.id,
+        }),
         scheduledAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
         serviceAddress: "99 Other Lane",
         serviceId: otherOffering.id,
@@ -278,7 +319,7 @@ describe("BookingService", (): void => {
   });
 
   it("lets the owner cancel or update an eligible booking and rejects IDOR", async (): Promise<void> => {
-    const { bookings, customers, offering } = await seedBookingGraph();
+    const { bookings, customers, offering, quotes } = await seedBookingGraph();
     const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
     const identity = {
       email: "ada@neatly.example",
@@ -286,6 +327,10 @@ describe("BookingService", (): void => {
       name: "Ada",
     };
     const created = await bookings.createForCustomer(actor, identity, {
+      quoteRequestId: await acceptedQuoteId(quotes, {
+        ...identity,
+        serviceId: offering.id,
+      }),
       scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       serviceAddress: "12 Harbour Street",
       serviceId: offering.id,
@@ -494,5 +539,36 @@ describe("BookingService", (): void => {
     expect(schedule.nextJob?.id).toBe(own.id);
     expect(schedule.week).toHaveLength(7);
     expect(selected?.jobCount).toBe(1);
+  });
+
+  it("converts an accepted quote once and rejects duplicate bookings", async (): Promise<void> => {
+    const { bookings, offering, quotes } = await seedBookingGraph();
+    const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
+    const identity = {
+      email: "ada@neatly.example",
+      id: "customer-a",
+      name: "Ada",
+    };
+    const quoteRequestId = await acceptedQuoteId(quotes, {
+      ...identity,
+      serviceId: offering.id,
+    });
+    const created = await bookings.createForCustomer(actor, identity, {
+      quoteRequestId,
+      scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      serviceAddress: "12 Harbour Street",
+      serviceId: offering.id,
+    });
+    expect(created.linkedToQuote).toBe(true);
+    expect((await quotes.getById(quoteRequestId)).status).toBe("CONVERTED");
+
+    await expect(
+      bookings.createForCustomer(actor, identity, {
+        quoteRequestId,
+        scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+        serviceAddress: "12 Harbour Street",
+        serviceId: offering.id,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
   });
 });

@@ -36,6 +36,18 @@ export function invalidBookingTransition(): ConflictError {
   return new ConflictError("This booking status change is not allowed.");
 }
 
+export function invalidQuoteTransition(): ConflictError {
+  return new ConflictError("This quote status change is not allowed.");
+}
+
+export function quoteAlreadyConverted(): ConflictError {
+  return new ConflictError("This quote has already been converted.");
+}
+
+export function quoteNotAccepted(): ConflictError {
+  return new ConflictError("Accept this quote before creating a booking.");
+}
+
 export function cleanerNotAvailable(): ConflictError {
   return new ConflictError("This cleaner is not available for assignment.");
 }

@@ -28,7 +28,9 @@ import {
   updateCustomerProfileController,
 } from "../../controllers/customer/profile.controller.ts";
 import {
+  acceptCustomerQuoteController,
   createPublicQuoteController,
+  declineCustomerQuoteController,
   getCustomerQuoteController,
   listCustomerQuotesController,
 } from "../../controllers/customer/quotes.controller.ts";
@@ -116,6 +118,26 @@ export const customerRoutes: readonly RouteDefinition[] = [
     method: "GET",
     middleware: [requireAuth, validateParams(idParamSchema)],
     path: API_PATHS.customerQuote,
+  },
+  {
+    handler: acceptCustomerQuoteController,
+    method: "POST",
+    middleware: [
+      requireAuth,
+      limitCustomerMutations,
+      validateParams(idParamSchema),
+    ],
+    path: API_PATHS.customerQuoteAccept,
+  },
+  {
+    handler: declineCustomerQuoteController,
+    method: "POST",
+    middleware: [
+      requireAuth,
+      limitCustomerMutations,
+      validateParams(idParamSchema),
+    ],
+    path: API_PATHS.customerQuoteDecline,
   },
   {
     handler: getCustomerOverviewController,

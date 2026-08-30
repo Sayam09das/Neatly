@@ -9,6 +9,7 @@ import { QuoteRowActions } from "@/components/admin/quotes/quote-row-actions";
 import { QuoteStatusBadge } from "@/components/admin/quotes/quote-status-badge";
 import { adminQuoteCopy } from "@/config/admin-quotes";
 import {
+  formatQuoteAmount,
   formatQuoteInstant,
   formatQuoteRequestedAt,
   getQuoteCustomerName,
@@ -45,6 +46,9 @@ export function QuotesDesktopTable({
             </th>
             <th className="px-4 py-3 font-medium" scope="col">
               {adminQuoteCopy.tableRequested}
+            </th>
+            <th className="px-4 py-3 font-medium" scope="col">
+              {adminQuoteCopy.amountLabel}
             </th>
             <th className="px-4 py-3 font-medium" scope="col">
               {adminQuoteCopy.tableStatus}
@@ -102,6 +106,9 @@ function QuoteTableRow({ quote }: QuoteTableRowProps): ReactElement {
       </td>
       <td className="px-4 py-3 text-body-small text-foreground">
         {formatQuoteRequestedAt(quote.preferredDate, quote.preferredTime)}
+      </td>
+      <td className="px-4 py-3 text-body-small text-foreground">
+        {formatQuoteAmount(quote.quotedAmount)}
       </td>
       <td className="px-4 py-3">
         <QuoteStatusBadge status={quote.status} />

@@ -21,6 +21,7 @@ export const CUSTOMER_ACTIVE_QUOTE_STATUSES = [
   "REVIEWING",
   "CONTACTED",
   "QUOTED",
+  "ACCEPTED",
 ] as const satisfies readonly CustomerQuoteStatus[];
 
 export type CustomerDashboardSection<T> =

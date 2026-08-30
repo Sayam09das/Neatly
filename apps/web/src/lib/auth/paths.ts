@@ -9,6 +9,7 @@ import {
   CLEANER_LOGIN_PATH,
 } from "@/config/cleaner";
 import {
+  CUSTOMER_BOOKING_QUOTE_PARAM,
   CUSTOMER_HOME_PATH,
   CUSTOMER_LOGIN_PATH,
   CUSTOMER_PATHS,
@@ -128,6 +129,10 @@ export function isSafeCustomerNextPath(candidate: string): boolean {
     return isSafeQuoteNextSearch(search);
   }
 
+  if (pathname === CUSTOMER_PATHS.booking) {
+    return isSafeBookingNextSearch(search);
+  }
+
   if (search !== "") {
     return false;
   }
@@ -137,10 +142,6 @@ export function isSafeCustomerNextPath(candidate: string): boolean {
   }
 
   if (pathname.startsWith(`${CUSTOMER_HOME_PATH}/`)) {
-    return true;
-  }
-
-  if (pathname === CUSTOMER_PATHS.booking) {
     return true;
   }
 
@@ -209,6 +210,37 @@ export function customerApplyLoginNextPath(pathname: string): string {
   const slug = remainder.split("/")[0] ?? "";
 
   return customerDashboardServiceApplyPath(slug);
+}
+
+function isSafeBookingNextSearch(search: string): boolean {
+  if (search === "") {
+    return true;
+  }
+
+  const params = new URLSearchParams(search);
+  const keys = [...params.keys()];
+  const allowed = new Set([
+    CUSTOMER_BOOKING_QUOTE_PARAM,
+    CUSTOMER_QUOTE_SERVICE_PARAM,
+  ]);
+
+  if (keys.length === 0 || keys.some((key) => !allowed.has(key))) {
+    return false;
+  }
+
+  const quoteId = params.get(CUSTOMER_BOOKING_QUOTE_PARAM) ?? "";
+
+  if (!/^[a-z0-9]{8,64}$/i.test(quoteId)) {
+    return false;
+  }
+
+  const slug = params.get(CUSTOMER_QUOTE_SERVICE_PARAM);
+
+  if (slug === null || slug === "") {
+    return true;
+  }
+
+  return isSafeServiceSlug(slug);
 }
 
 function isSafeQuoteNextSearch(search: string): boolean {

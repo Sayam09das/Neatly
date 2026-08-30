@@ -22,7 +22,13 @@ import { adminQuoteStatuses } from "@/types/admin-quote";
 
 vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin/quotes",
-  useRouter: (): { replace: () => void } => ({
+  useRouter: (): {
+    push: () => void;
+    refresh: () => void;
+    replace: () => void;
+  } => ({
+    push: (): void => undefined,
+    refresh: (): void => undefined,
     replace: (): void => undefined,
   }),
   useSearchParams: (): URLSearchParams => new URLSearchParams(),
@@ -46,11 +52,31 @@ vi.mock("@/lib/admin/use-admin-list-state", () => ({
   }),
 }));
 
+vi.mock("@/lib/admin/use-admin-query", () => ({
+  useAdminQuery: (): {
+    data: null;
+    error: null;
+    retry: () => void;
+    status: "success";
+  } => ({
+    data: null,
+    error: null,
+    retry: (): void => undefined,
+    status: "success",
+  }),
+}));
+
+vi.mock("@/lib/admin/use-admin-refresh", () => ({
+  useAdminRefresh: (): void => undefined,
+}));
+
 const TEST_QUOTE: AdminQuote = {
   additionalNotes: "Please use unscented products.",
+  adminNotes: null,
   approximateSize: "1,000-2,000 sq ft",
   bathrooms: 2,
   bedrooms: 3,
+  bookingId: null,
   createdAt: "2026-08-30T09:00:00.000Z",
   email: "ada@neatly.test",
   frequency: "ONE_TIME",
@@ -60,6 +86,8 @@ const TEST_QUOTE: AdminQuote = {
   preferredDate: "2026-09-02",
   preferredTime: "Morning (8am-12pm)",
   propertyType: "APARTMENT",
+  quotedAmount: null,
+  service: null,
   serviceAddress: "123 Test Street",
   serviceId: null,
   serviceType: "RESIDENTIAL",
@@ -208,11 +236,6 @@ describe("Admin quotes page", (): void => {
         name: adminQuoteCopy.viewAction,
       }),
     ).toHaveAttribute("href", getAdminQuoteDetailsPath(TEST_QUOTE.id));
-    expect(
-      screen.getByRole("menuitem", {
-        name: adminQuoteCopy.createBookingAction,
-      }),
-    ).toHaveAttribute("data-disabled");
   });
 
   it("opens the filter sheet without inventing quote records", async (): Promise<void> => {
@@ -402,10 +425,10 @@ describe("Quote details", (): void => {
       screen.getByText(TEST_QUOTE.additionalNotes ?? ""),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: adminQuoteCopy.createBookingAction }),
-    ).toBeDisabled();
+      screen.getByRole("button", { name: adminQuoteCopy.reviewAction }),
+    ).toBeInTheDocument();
     expect(
-      screen.getByText(adminQuoteCopy.createBookingUnavailable),
+      screen.getByRole("button", { name: adminQuoteCopy.quoteAction }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(adminQuoteCopy.timelineCreated),

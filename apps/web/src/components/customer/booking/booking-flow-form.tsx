@@ -29,7 +29,10 @@ import {
   emptyCustomerBookingValues,
   toCustomerBookingPayload,
 } from "@/lib/validations/customer-booking.schema";
-import type { CustomerServiceDetail } from "@/types/customer";
+import type {
+  CustomerQuoteView,
+  CustomerServiceDetail,
+} from "@/types/customer";
 
 const STEPS = [
   { id: "service", label: customerBookingCopy.stepService },
@@ -38,11 +41,13 @@ const STEPS = [
 ] as const;
 
 interface BookingFlowFormProps {
+  quote: CustomerQuoteView;
   service: CustomerServiceDetail | null;
   serviceUnavailable: boolean;
 }
 
 export function BookingFlowForm({
+  quote,
   service,
   serviceUnavailable,
 }: BookingFlowFormProps): ReactElement {
@@ -51,7 +56,9 @@ export function BookingFlowForm({
   const [step, setStep] = useState(0);
   const [fields, setFields] = useState<CustomerBookingFormValues>(() => ({
     ...emptyCustomerBookingValues,
-    serviceId: service?.id ?? "",
+    quoteRequestId: quote.id,
+    serviceAddress: quote.serviceAddress,
+    serviceId: service?.id ?? quote.serviceId ?? "",
   }));
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<keyof CustomerBookingFormValues, string>>

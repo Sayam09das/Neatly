@@ -13,9 +13,11 @@ import type { AdminQuote } from "@/types/admin-quote";
 
 const QUOTE: AdminQuote = {
   additionalNotes: null,
+  adminNotes: null,
   approximateSize: "Under 1,000 sq ft",
   bathrooms: 1,
   bedrooms: 2,
+  bookingId: null,
   createdAt: "2026-08-30T09:00:00.000Z",
   email: "ada@neatly.test",
   frequency: "WEEKLY",
@@ -25,6 +27,8 @@ const QUOTE: AdminQuote = {
   preferredDate: "2026-09-02T10:00:00.000Z",
   preferredTime: "Morning (8am-12pm)",
   propertyType: "HOUSE",
+  quotedAmount: null,
+  service: null,
   serviceAddress: "123 Test Street",
   serviceId: null,
   serviceType: "RESIDENTIAL",

@@ -8,16 +8,25 @@ import {
 import { QuotesMetrics } from "@/components/admin/quotes/quotes-metrics";
 import { QuotesTable } from "@/components/admin/quotes/quotes-table";
 import { QuotesToolbar } from "@/components/admin/quotes/quotes-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminQuoteCopy,
   defaultAdminQuoteFilters,
 } from "@/config/admin-quotes";
+import type { AdminQuoteList } from "@/lib/admin/quotes";
 import {
   filterQuotes,
   hasActiveQuoteFilters,
+  listAdminQuotes,
   paginateQuotes,
 } from "@/lib/admin/quotes";
 import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminQuote,
   AdminQuoteFilters,
@@ -41,6 +50,33 @@ function AdminQuotesLive(): ReactElement {
   const { filters, page, setFilters, setPage } = useAdminListState({
     defaults: defaultAdminQuoteFilters,
   });
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    dateRange: filters.dateRange,
+    page,
+    query: debouncedQuery,
+    requestedFrom: filters.requestedFrom,
+    requestedTo: filters.requestedTo,
+    serviceType: filters.serviceType,
+    status: filters.status,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminQuotes(
+        {
+          ...filters,
+          page,
+          query: debouncedQuery,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+  useAdminRefresh("quotes", query.retry);
   const hasActiveFilters = hasActiveQuoteFilters(filters);
 
   return (
@@ -49,11 +85,38 @@ function AdminQuotesLive(): ReactElement {
       onFiltersChange={setFilters}
       onPageChange={setPage}
       page={page}
-      presentation={
-        hasActiveFilters ? { quotes: [], status: "ready" } : { status: "empty" }
-      }
+      presentation={toLiveQuotePresentation(query, hasActiveFilters)}
     />
   );
+}
+
+function toLiveQuotePresentation(
+  query: AdminQueryState<AdminQuoteList>,
+  hasActiveFilters: boolean,
+): AdminQuotePresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.quotes.length === 0) {
+    return hasActiveFilters
+      ? {
+          pagination: query.data?.pagination,
+          quotes: [],
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    pagination: query.data.pagination,
+    quotes: query.data.quotes,
+    status: "ready",
+  };
 }
 
 interface AdminQuotesViewProps {

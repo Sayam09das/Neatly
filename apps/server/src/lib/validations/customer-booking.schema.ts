@@ -27,7 +27,7 @@ export const createCustomerBookingBodySchema = z.strictObject({
     )
     .optional()
     .nullable(),
-  quoteRequestId: idSchema.optional().nullable(),
+  quoteRequestId: idSchema,
   scheduledAt: dateTimeSchema,
   serviceAddress: z
     .string()

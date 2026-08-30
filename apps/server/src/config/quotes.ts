@@ -32,5 +32,9 @@ export const QUOTE_RESIDENTIAL_PROPERTY_TYPES = [
   "CONDO",
 ] as const;
 
+export const QUOTE_AMOUNT_MIN = 0.01;
+export const QUOTE_AMOUNT_MAX = 1_000_000;
+export const QUOTE_AMOUNT_DECIMALS = 2;
+
 export type QuoteApproximateSize = (typeof QUOTE_APPROXIMATE_SIZES)[number];
 export type QuotePreferredTime = (typeof QUOTE_PREFERRED_TIMES)[number];

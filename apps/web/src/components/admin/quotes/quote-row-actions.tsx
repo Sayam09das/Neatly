@@ -35,15 +35,12 @@ export function QuoteRowActions({ quote }: QuoteRowActionsProps): ReactElement {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{adminQuoteCopy.comingSoonHint}</DropdownMenuLabel>
+        <DropdownMenuLabel>{adminQuoteCopy.viewAction}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href={getAdminQuoteDetailsPath(quote.id)}>
             {adminQuoteCopy.viewAction}
           </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled>
-          {adminQuoteCopy.createBookingAction}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

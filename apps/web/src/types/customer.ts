@@ -110,15 +110,23 @@ export type CustomerQuoteStatus =
   | "REVIEWING"
   | "CONTACTED"
   | "QUOTED"
+  | "ACCEPTED"
   | "CONVERTED"
   | "DECLINED"
   | "CLOSED";
+
+export interface CustomerQuoteServiceSummary {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 export interface CustomerQuoteView {
   additionalNotes: string | null;
   approximateSize: string;
   bathrooms: number | null;
   bedrooms: number | null;
+  bookingId: string | null;
   createdAt: string;
   email: string;
   frequency: CustomerQuoteFrequency;
@@ -128,6 +136,8 @@ export interface CustomerQuoteView {
   preferredDate: string;
   preferredTime: string;
   propertyType: CustomerQuotePropertyType;
+  quotedAmount: number | null;
+  service: CustomerQuoteServiceSummary | null;
   serviceAddress: string;
   serviceId: string | null;
   serviceType: CustomerQuoteServiceType;

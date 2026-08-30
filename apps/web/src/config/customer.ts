@@ -43,6 +43,9 @@ export const CUSTOMER_API_PATHS = {
   notificationsStream: `${CUSTOMER_API_PREFIX}/notifications/stream`,
   notificationsUnreadCount: `${CUSTOMER_API_PREFIX}/notifications/unread-count`,
   profile: `${CUSTOMER_API_PREFIX}/me`,
+  quote: `${CUSTOMER_API_PREFIX}/quotes/:id`,
+  quoteAccept: `${CUSTOMER_API_PREFIX}/quotes/:id/accept`,
+  quoteDecline: `${CUSTOMER_API_PREFIX}/quotes/:id/decline`,
   quotes: `${CUSTOMER_API_PREFIX}/quotes`,
   review: `${CUSTOMER_API_PREFIX}/reviews/:id`,
   reviewDelete: `${CUSTOMER_API_PREFIX}/reviews/:id/delete`,
@@ -65,6 +68,7 @@ export const CUSTOMER_NOTIFICATIONS_REQUEST_TIMEOUT_MS = 8_000;
 export const CUSTOMER_SERVICES_SEARCH_PARAM = "q";
 export const CUSTOMER_SERVICES_PAGE_PARAM = "page";
 export const CUSTOMER_QUOTE_SERVICE_PARAM = "service";
+export const CUSTOMER_BOOKING_QUOTE_PARAM = "quoteId";
 export const CUSTOMER_SERVICES_SEARCH_MAX_LENGTH = 120;
 export const CUSTOMER_SERVICES_SEARCH_INPUT_ID = "customer-services-search";
 export const CUSTOMER_CATALOG_REQUEST_TIMEOUT_MS = 8_000;
@@ -349,23 +353,42 @@ export const customerQuoteFrequencyLabels = {
 } as const;
 
 export const customerQuoteStatusLabels = {
+  ACCEPTED: "Accepted",
   CLOSED: "Closed",
   CONTACTED: "Contacted",
-  CONVERTED: "Converted",
+  CONVERTED: "Converted to booking",
   DECLINED: "Declined",
-  NEW: "New",
+  NEW: "Waiting for quote",
   QUOTED: "Quoted",
   REVIEWING: "In review",
 } as const;
 
 export const customerQuotesCopy = {
+  acceptAction: "Accept Quote",
+  acceptError: "We could not accept this quote. Please try again.",
+  acceptedHint: "Quote accepted",
+  amountLabel: "Quoted amount",
+  backToQuotes: "Back to quotes",
+  bookAction: "Book Service",
+  convertedHint: "Converted to booking",
+  declineAction: "Decline quote",
+  declineError: "We could not decline this quote. Please try again.",
   description: "Quote requests you have submitted. This is not a booking list.",
+  detailsDescription: "Review the quote status and continue the booking flow.",
+  detailsHeading: "Quote",
+  detailsNotFound: "This quote is not available. Return to your quotes list.",
   heading: "My Quotes",
   loadError: "We could not load your quotes. Please try again.",
   preferredDate: "Preferred date",
+  quotedHint: "Review the quoted amount, then accept to book.",
   referenceLabel: "Quote reference",
   requestAction: "Request a quote",
+  serviceLabel: "Service",
+  statusLabel: "Status",
   tableCaption: "Your quote requests",
+  viewAction: "View quote",
+  viewBookingAction: "View Booking",
+  waitingHint: "Waiting for quote",
 } as const;
 
 export const QUOTE_APPROXIMATE_SIZES = [
@@ -400,6 +423,8 @@ export const customerBookingCopy = {
   stepService: "Service",
   submit: "Create booking",
   submitting: "Creating booking",
+  quoteNotAccepted: "Accept a quoted request before creating a booking.",
+  quoteRequired: "Book from an accepted quote. Open My Quotes to continue.",
   unavailableService:
     "That service is no longer available. Choose another published service.",
 } as const;
@@ -730,6 +755,24 @@ export function customerServiceApplyPath(slug: string): string {
 
 export function customerDashboardServiceApplyPath(slug: string): string {
   return `${CUSTOMER_PATHS.dashboardServices}/${encodeURIComponent(slug)}/apply`;
+}
+
+export function customerQuoteDetailPath(id: string): string {
+  return `${CUSTOMER_PATHS.quotes}/${encodeURIComponent(id)}`;
+}
+
+export function customerBookingFromQuotePath(
+  quoteId: string,
+  serviceSlug?: string,
+): string {
+  const params = new URLSearchParams();
+  params.set(CUSTOMER_BOOKING_QUOTE_PARAM, quoteId);
+
+  if (serviceSlug !== undefined && serviceSlug.trim() !== "") {
+    params.set(CUSTOMER_QUOTE_SERVICE_PARAM, serviceSlug);
+  }
+
+  return `${CUSTOMER_PATHS.booking}?${params.toString()}`;
 }
 
 export function customerQuotePath(slug?: string): string {

@@ -17,6 +17,7 @@ export const customerBookingFormSchema = z.object({
     .min(BOOKING_ADDRESS_MIN_LENGTH, "Enter the service address.")
     .max(BOOKING_ADDRESS_MAX_LENGTH, "Use a shorter address."),
   serviceId: z.string().min(1, "Choose a published service."),
+  quoteRequestId: z.string().min(1, "Accept a quote before booking."),
 });
 
 export type CustomerBookingFormValues = z.infer<
@@ -25,6 +26,7 @@ export type CustomerBookingFormValues = z.infer<
 
 export const emptyCustomerBookingValues: CustomerBookingFormValues = {
   notes: "",
+  quoteRequestId: "",
   scheduledDate: "",
   scheduledTime: "",
   serviceAddress: "",
@@ -36,6 +38,7 @@ export function toCustomerBookingPayload(
 ): Record<string, unknown> {
   return {
     notes: values.notes.trim() === "" ? null : values.notes.trim(),
+    quoteRequestId: values.quoteRequestId,
     scheduledAt: `${values.scheduledDate}T${values.scheduledTime}:00.000Z`,
     serviceAddress: values.serviceAddress.trim(),
     serviceId: values.serviceId,
@@ -43,6 +46,7 @@ export function toCustomerBookingPayload(
 }
 
 export const customerBookingUpdateSchema = customerBookingFormSchema.omit({
+  quoteRequestId: true,
   serviceId: true,
 });
 

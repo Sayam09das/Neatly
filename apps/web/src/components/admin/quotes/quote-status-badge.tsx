@@ -7,6 +7,7 @@ import { adminQuoteStatusLabels } from "@/config/admin-quotes";
 import type { AdminQuoteStatus } from "@/types/admin-quote";
 
 const statusBadgeClassName: Record<AdminQuoteStatus, string> = {
+  ACCEPTED: "border-transparent bg-secondary text-secondary-foreground",
   CLOSED: "border-border bg-background text-muted-foreground",
   CONTACTED: "border-transparent bg-secondary text-secondary-foreground",
   CONVERTED: "border-transparent bg-secondary text-secondary-foreground",

@@ -202,6 +202,7 @@ Captures interactive quote submissions submitted by visitors on `/quote`.
 | `additionalNotes` | Text | NULLABLE | Custom customer notes / special requests |
 | `serviceId` | String | NULLABLE, FK (`Service`) | Optional direct reference to selected Service entity |
 | `status` | Enum (`QuoteStatus`) | NOT NULL, Default: `NEW` | Lead pipeline lifecycle status |
+| `quotedAmount` | Decimal(10,2) | NULLABLE | Admin-set quoted price. Required before `QUOTED`. |
 | `adminNotes` | Text | NULLABLE | Internal staff notes on estimate/outreach |
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Submission timestamp (UTC) |
 | `updatedAt` | DateTime | NOT NULL, UpdatedAt | Status update timestamp (UTC) |
@@ -585,6 +586,7 @@ erDiagram
 * `REVIEWING`: Admin currently evaluating scope/pricing.
 * `CONTACTED`: Customer reached via phone or email.
 * `QUOTED`: Price estimate delivered to prospect.
+* `ACCEPTED`: Customer accepted the quoted amount; booking is now allowed.
 * `CONVERTED`: Lead won; service scheduled.
 * `DECLINED`: Quote rejected by prospect.
 * `CLOSED`: Stale lead archived.

@@ -3,6 +3,7 @@ import {
   BookingStatus,
   CleanerStatus,
   CustomerStatus,
+  QuoteServiceType,
   QuoteStatus,
   ServiceCategory,
   UserRole,
@@ -93,6 +94,10 @@ export const bookingStatusSchema = z.nativeEnum(BookingStatus, {
 });
 
 export const quoteStatusSchema = z.nativeEnum(QuoteStatus, {
+  error: "This value is not allowed.",
+});
+
+export const quoteServiceTypeSchema = z.nativeEnum(QuoteServiceType, {
   error: "This value is not allowed.",
 });
 

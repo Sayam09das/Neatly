@@ -33,6 +33,9 @@ describe("customer route protection", (): void => {
     expect(isProtectedCustomerPath("/booking/confirmation/abc")).toBe(true);
     expect(isSafeCustomerNextPath("/dashboard/profile")).toBe(true);
     expect(isSafeCustomerNextPath("/booking")).toBe(true);
+    expect(
+      isSafeCustomerNextPath("/booking?quoteId=cmtfonlc8000srpwvi60xgw1r"),
+    ).toBe(true);
     expect(isSafeCustomerNextPath("/booking/confirmation/abc")).toBe(true);
     expect(isSafeCustomerNextPath("/services/deep-cleaning/apply")).toBe(true);
     expect(

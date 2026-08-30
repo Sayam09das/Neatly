@@ -13,6 +13,9 @@ import {
   cleanerNotAvailable,
   cleanerNotFound,
   customerNotFound,
+  quoteAlreadyConverted,
+  quoteNotAccepted,
+  quoteRequestNotFound,
 } from "../../lib/domain/errors.ts";
 import {
   type ListResult,
@@ -110,20 +113,23 @@ export class BookingService {
     }
 
     if (input.quoteRequestId !== undefined && input.quoteRequestId !== null) {
-      const existing = await this.bookings.findByQuoteRequestId(
-        input.quoteRequestId,
-      );
-
-      if (existing !== null) {
-        throw new ConflictError("A booking already exists for this quote.");
-      }
+      return this.createLinkedBooking({
+        cleanerId,
+        customerId: customer.id,
+        notes: input.notes ?? null,
+        quoteRequestId: input.quoteRequestId,
+        scheduledAt: input.scheduledAt ?? null,
+        serviceAddress: input.serviceAddress ?? null,
+        serviceId: offering.id,
+        status: cleanerId === null ? "PENDING" : "ASSIGNED",
+      });
     }
 
     return this.bookings.create({
       cleanerId,
       customerId: customer.id,
       notes: input.notes ?? null,
-      quoteRequestId: input.quoteRequestId ?? null,
+      quoteRequestId: null,
       scheduledAt: input.scheduledAt ?? null,
       serviceAddress: input.serviceAddress ?? null,
       serviceId: offering.id,
@@ -140,12 +146,12 @@ export class BookingService {
     const customer = await this.requireSessionCustomer(identity);
     const offering = await this.requireActiveOffering(input.serviceId);
     this.assertFutureSchedule(input.scheduledAt);
-    const quoteRequestId = await this.resolveOwnedQuoteRequestId(
+    const quoteRequestId = await this.requireOwnedAcceptedQuoteId(
       customer.email,
       input.quoteRequestId,
+      offering.id,
     );
-
-    const created = await this.bookings.create({
+    const created = await this.createLinkedBooking({
       cleanerId: null,
       customerId: customer.id,
       notes: emptyToNull(input.notes),
@@ -897,30 +903,61 @@ export class BookingService {
     }
   }
 
-  private async resolveOwnedQuoteRequestId(
+  private async requireOwnedAcceptedQuoteId(
     customerEmail: string,
-    quoteRequestId: string | null | undefined,
-  ): Promise<string | null> {
-    if (quoteRequestId === undefined || quoteRequestId === null) {
-      return null;
-    }
-
+    quoteRequestId: string,
+    serviceId: string,
+  ): Promise<string> {
     const quote = await this.quotes.findById(quoteRequestId);
 
     if (
       quote === null ||
       quote.email.toLowerCase() !== customerEmail.toLowerCase()
     ) {
-      throw bookingNotFound();
+      throw quoteRequestNotFound();
     }
 
-    const existing = await this.bookings.findByQuoteRequestId(quote.id);
+    if (quote.status === "CONVERTED") {
+      throw quoteAlreadyConverted();
+    }
 
-    if (existing !== null) {
-      throw new ConflictError("A booking already exists for this quote.");
+    if (quote.status !== "ACCEPTED") {
+      throw quoteNotAccepted();
+    }
+
+    if (quote.serviceId !== null && quote.serviceId !== serviceId) {
+      throw new ValidationError("Validation failed.", [
+        {
+          field: "serviceId",
+          issue: "Choose the service from this quote.",
+        },
+      ]);
     }
 
     return quote.id;
+  }
+
+  private async createLinkedBooking(
+    input: CreateBookingInput & {
+      quoteRequestId: string;
+      status?: BookingRecord["status"];
+    },
+  ): Promise<BookingRecord> {
+    const result = await this.bookings.createFromAcceptedQuote(input);
+
+    if (result.ok) {
+      return result.booking;
+    }
+
+    if (result.reason === "DUPLICATE") {
+      throw quoteAlreadyConverted();
+    }
+
+    if (result.reason === "NOT_FOUND") {
+      throw quoteRequestNotFound();
+    }
+
+    throw quoteNotAccepted();
   }
 }
 

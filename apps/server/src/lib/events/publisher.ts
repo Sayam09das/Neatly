@@ -138,3 +138,33 @@ export async function notifyBookingOwner(
     logError("Customer booking notice failed", { type: input.type });
   }
 }
+
+export async function notifyQuoteOwner(
+  quote: { email: string; id: string },
+  input: {
+    message: string;
+    relatedLabel: string;
+    title: string;
+    type: CustomerRealtimeEventType;
+  },
+): Promise<void> {
+  try {
+    const recipientUserId =
+      await getDomainServices().customers.findUserIdByEmail(quote.email);
+
+    if (recipientUserId === null) {
+      return;
+    }
+
+    await recordCustomerInboxNotification(recipientUserId, {
+      entityId: quote.id,
+      message: input.message,
+      relatedHref: CUSTOMER_APP_HREFS.quote(quote.id),
+      relatedLabel: input.relatedLabel,
+      title: input.title,
+      type: input.type,
+    });
+  } catch {
+    logError("Customer quote notice failed", { type: input.type });
+  }
+}

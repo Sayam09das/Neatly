@@ -143,4 +143,50 @@ describe("QuoteService", (): void => {
       quotes.getForCustomer(identity, other.id),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  it("lets admin quote a request and the owner accept it", async (): Promise<void> => {
+    const { quotes } = createDomainHarness();
+    const created = await quotes.createPublic({
+      approximateSize: "1,000-2,000 sq ft",
+      bathrooms: 1,
+      bedrooms: 1,
+      email: "ada@neatly.example",
+      frequency: "ONE_TIME",
+      fullName: "Ada Customer",
+      phone: "5551234567",
+      preferredDate: futureDate(),
+      preferredTime: "Morning (8am-12pm)",
+      propertyType: "HOUSE",
+      serviceAddress: "12 Harbour Street",
+      serviceType: "RESIDENTIAL",
+    });
+    const identity = {
+      email: "ada@neatly.example",
+      id: "user-ada",
+      name: "Ada",
+    };
+
+    await expect(
+      quotes.acceptForCustomer(identity, created.id),
+    ).rejects.toBeInstanceOf(ConflictError);
+
+    const quoted = await quotes.updateForAdmin(admin, created.id, {
+      quotedAmount: 180.5,
+    });
+    expect(quoted.status).toBe("QUOTED");
+    expect(quoted.quotedAmount).toBe(180.5);
+
+    await expect(
+      quotes.updateForAdmin(admin, created.id, { quotedAmount: -12 }),
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    const accepted = await quotes.acceptForCustomer(identity, created.id);
+    expect(accepted.status).toBe("ACCEPTED");
+    const again = await quotes.acceptForCustomer(identity, created.id);
+    expect(again.status).toBe("ACCEPTED");
+
+    const listed = await quotes.listForAdmin(admin, {});
+    expect(listed.items[0]?.status).toBe("ACCEPTED");
+    expect(listed.items[0]?.adminNotes).toBeNull();
+  });
 });

@@ -7,7 +7,10 @@ import type {
   PaginationQuery,
   SortQuery,
 } from "../../../apps/server/src/lib/query.ts";
-import type { BookingRepository } from "../../../apps/server/src/repositories/booking.repository.ts";
+import type {
+  BookingRepository,
+  CreateBookingFromQuoteResult,
+} from "../../../apps/server/src/repositories/booking.repository.ts";
 import type { CatalogRepository } from "../../../apps/server/src/repositories/catalog.repository.ts";
 import type { CleanerRepository } from "../../../apps/server/src/repositories/cleaner.repository.ts";
 import type { CustomerRepository } from "../../../apps/server/src/repositories/customer.repository.ts";
@@ -67,8 +70,10 @@ import type {
 } from "../../../apps/server/src/services/notifications/notification.types.ts";
 import { QuoteService } from "../../../apps/server/src/services/quotes/quote.service.ts";
 import type {
+  AdminQuoteListQuery,
   CreateQuoteRequestInput,
   QuoteRequestRecord,
+  UpdateAdminQuoteInput,
 } from "../../../apps/server/src/services/quotes/quote.types.ts";
 import { ReviewService } from "../../../apps/server/src/services/reviews/review.service.ts";
 import type {
@@ -786,9 +791,11 @@ export class InMemoryQuoteRepository implements QuoteRepository {
     const now = new Date();
     const row: QuoteRequestRecord = {
       additionalNotes: input.additionalNotes ?? null,
+      adminNotes: null,
       approximateSize: input.approximateSize,
       bathrooms: input.bathrooms ?? null,
       bedrooms: input.bedrooms ?? null,
+      bookingId: null,
       createdAt: now,
       email: input.email.trim().toLowerCase(),
       frequency: input.frequency,
@@ -798,6 +805,8 @@ export class InMemoryQuoteRepository implements QuoteRepository {
       preferredDate: input.preferredDate,
       preferredTime: input.preferredTime,
       propertyType: input.propertyType,
+      quotedAmount: null,
+      service: quoteServiceFromStore(this.store, input.serviceId ?? null),
       serviceAddress: input.serviceAddress,
       serviceId: input.serviceId ?? null,
       serviceType: input.serviceType,
@@ -806,6 +815,109 @@ export class InMemoryQuoteRepository implements QuoteRepository {
     };
     this.store.quotes.set(row.id, row);
     return row;
+  }
+
+  public async list(
+    query: AdminQuoteListQuery & { pagination: PaginationQuery },
+  ): Promise<{ items: QuoteRequestRecord[]; total: number }> {
+    const search = query.search?.trim().toLowerCase();
+    const matches = [...this.store.quotes.values()]
+      .filter((row) =>
+        query.status === undefined ? true : row.status === query.status,
+      )
+      .filter((row) =>
+        query.serviceType === undefined
+          ? true
+          : row.serviceType === query.serviceType,
+      )
+      .filter((row) => {
+        if (
+          query.createdFrom !== undefined &&
+          row.createdAt.getTime() < query.createdFrom.getTime()
+        ) {
+          return false;
+        }
+
+        if (
+          query.createdTo !== undefined &&
+          row.createdAt.getTime() > query.createdTo.getTime()
+        ) {
+          return false;
+        }
+
+        if (search === undefined || search === "") {
+          return true;
+        }
+
+        return [row.id, row.fullName, row.email]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      })
+      .sort((left, right) => {
+        const field = query.sort?.field ?? "createdAt";
+        const direction = query.sort?.direction === "asc" ? 1 : -1;
+        if (field === "status") {
+          return left.status.localeCompare(right.status) * direction;
+        }
+
+        if (field === "updatedAt") {
+          return (
+            (left.updatedAt.getTime() - right.updatedAt.getTime()) * direction
+          );
+        }
+
+        return (
+          (left.createdAt.getTime() - right.createdAt.getTime()) * direction
+        );
+      });
+
+    return {
+      items: matches.slice(
+        query.pagination.skip,
+        query.pagination.skip + query.pagination.limit,
+      ),
+      total: matches.length,
+    };
+  }
+
+  public async update(
+    id: string,
+    input: UpdateAdminQuoteInput & { status?: QuoteRequestRecord["status"] },
+  ): Promise<QuoteRequestRecord | null> {
+    const current = this.store.quotes.get(id);
+
+    if (current === undefined) {
+      return null;
+    }
+
+    const row: QuoteRequestRecord = {
+      ...current,
+      adminNotes:
+        input.adminNotes === undefined ? current.adminNotes : input.adminNotes,
+      quotedAmount:
+        input.quotedAmount === undefined
+          ? current.quotedAmount
+          : input.quotedAmount,
+      status: input.status ?? current.status,
+      updatedAt: new Date(),
+    };
+    this.store.quotes.set(id, row);
+    return row;
+  }
+
+  public async compareAndUpdate(
+    id: string,
+    expectedStatus: QuoteRequestRecord["status"],
+    data: UpdateAdminQuoteInput & { status: QuoteRequestRecord["status"] },
+  ): Promise<QuoteRequestRecord | null> {
+    const current = this.store.quotes.get(id);
+
+    if (current === undefined || current.status !== expectedStatus) {
+      return null;
+    }
+
+    return this.update(id, data);
   }
 }
 
@@ -852,6 +964,40 @@ export class InMemoryBookingRepository implements BookingRepository {
     };
     this.store.bookings.set(row.id, row);
     return row;
+  }
+
+  public async createFromAcceptedQuote(
+    input: CreateBookingInput & {
+      quoteRequestId: string;
+      status?: BookingRecord["status"];
+    },
+  ): Promise<CreateBookingFromQuoteResult> {
+    const quote = this.store.quotes.get(input.quoteRequestId);
+
+    if (quote === undefined) {
+      return { ok: false, reason: "NOT_FOUND" };
+    }
+
+    if (quote.status !== "ACCEPTED") {
+      return { ok: false, reason: "NOT_ACCEPTED" };
+    }
+
+    const existing = [...this.store.bookings.values()].find(
+      (row) => row.quoteRequestId === input.quoteRequestId,
+    );
+
+    if (existing !== undefined) {
+      return { ok: false, reason: "DUPLICATE" };
+    }
+
+    const booking = await this.create(input);
+    this.store.quotes.set(quote.id, {
+      ...quote,
+      bookingId: booking.id,
+      status: "CONVERTED",
+      updatedAt: new Date(),
+    });
+    return { booking, ok: true };
   }
 
   public async update(
@@ -1434,6 +1580,23 @@ function party(
   row: { id: string; name: string } | undefined,
 ): { id: string; name: string } | null {
   return row === undefined ? null : { id: row.id, name: row.name };
+}
+
+function quoteServiceFromStore(
+  store: InMemoryDomainStore,
+  serviceId: string | null,
+): QuoteRequestRecord["service"] {
+  if (serviceId === null) {
+    return null;
+  }
+
+  const offering = store.catalog.get(serviceId);
+
+  if (offering === undefined) {
+    return null;
+  }
+
+  return { id: offering.id, name: offering.name, slug: offering.slug };
 }
 
 function withBookingParties(

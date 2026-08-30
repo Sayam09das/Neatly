@@ -34,6 +34,33 @@ interface Envelope<T> {
   success: boolean;
 }
 
+async function acceptedQuoteId(
+  harness: ReturnType<typeof createDomainHarness>,
+  serviceId: string,
+  email = sessionUser.email,
+  id = sessionUser.id,
+  name = sessionUser.name,
+): Promise<string> {
+  const created = await harness.quotes.createPublic({
+    approximateSize: "1,000-2,000 sq ft",
+    bathrooms: 1,
+    bedrooms: 1,
+    email,
+    frequency: "ONE_TIME",
+    fullName: name,
+    phone: "5551234567",
+    preferredDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    preferredTime: "Morning (8am-12pm)",
+    propertyType: "HOUSE",
+    serviceAddress: "12 Harbour Street",
+    serviceId,
+    serviceType: "RESIDENTIAL",
+  });
+  await harness.quotes.updateForAdmin(admin, created.id, { quotedAmount: 150 });
+  await harness.quotes.acceptForCustomer({ email, id, name }, created.id);
+  return created.id;
+}
+
 function withAuth(
   input: Parameters<typeof dispatchApi>[0] = {},
 ): Parameters<typeof dispatchApi>[0] {
@@ -104,9 +131,11 @@ describe("Customer booking read APIs", (): void => {
     );
     expect(rejected.statusCode).toBe(HTTP_STATUS.BAD_REQUEST);
 
+    const quoteRequestId = await acceptedQuoteId(harness, offering.id);
     const created = await dispatchApi(
       withAuth({
         body: JSON.stringify({
+          quoteRequestId,
           scheduledAt: new Date(
             Date.now() + 3 * 24 * 60 * 60 * 1000,
           ).toISOString(),
@@ -171,6 +200,7 @@ describe("Customer booking read APIs", (): void => {
         name: sessionUser.name,
       },
       {
+        quoteRequestId: await acceptedQuoteId(harness, offering.id),
         scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         serviceAddress: "12 Harbour Street",
         serviceId: offering.id,
@@ -229,6 +259,7 @@ describe("Customer booking read APIs", (): void => {
         name: sessionUser.name,
       },
       {
+        quoteRequestId: await acceptedQuoteId(harness, offering.id),
         scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         serviceAddress: "12 Harbour Street",
         serviceId: offering.id,

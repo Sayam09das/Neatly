@@ -159,4 +159,79 @@ describe("Customer quote read APIs", (): void => {
     expect(otherDetail.statusCode).toBe(HTTP_STATUS.NOT_FOUND);
     expect(otherDetail.body).not.toContain("9 Queen Street");
   });
+
+  it("accepts only an owned quoted request", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    mockedDomain.mockReturnValue(harness as never);
+    const admin = { id: "admin-1", role: "ADMIN" as const };
+    const own = await harness.quotes.createPublic({
+      approximateSize: "1,000-2,000 sq ft",
+      bathrooms: 1,
+      bedrooms: 2,
+      email: sessionUser.email,
+      frequency: "ONE_TIME",
+      fullName: "Ada Customer",
+      phone: "5551234567",
+      preferredDate: futureDate(),
+      preferredTime: "Morning (8am-12pm)",
+      propertyType: "HOUSE",
+      serviceAddress: "12 Harbour Street",
+      serviceType: "RESIDENTIAL",
+    });
+    const other = await harness.quotes.createPublic({
+      approximateSize: "Under 1,000 sq ft",
+      email: "other@neatly.example",
+      frequency: "ONE_TIME",
+      fullName: "Other Customer",
+      phone: "5550000000",
+      preferredDate: futureDate(),
+      preferredTime: "Afternoon (12pm-4pm)",
+      propertyType: "OFFICE",
+      serviceAddress: "9 Queen Street",
+      serviceType: "COMMERCIAL",
+    });
+
+    const tooEarly = await dispatchApi(
+      withAuth({
+        method: "POST",
+        url: `${API_PATHS.customerQuotes}/${own.id}/accept`,
+      }),
+    );
+    expect(tooEarly.statusCode).toBe(HTTP_STATUS.CONFLICT);
+
+    await harness.quotes.updateForAdmin(admin, own.id, { quotedAmount: 190 });
+    await harness.quotes.updateForAdmin(admin, other.id, { quotedAmount: 210 });
+
+    const accepted = await dispatchApi(
+      withAuth({
+        method: "POST",
+        url: `${API_PATHS.customerQuotes}/${own.id}/accept`,
+      }),
+    );
+    const acceptedBody = parseJsonBody(accepted.body) as Envelope<{
+      quoteRequest: { status: string };
+    }>;
+    expect(accepted.statusCode).toBe(HTTP_STATUS.OK);
+    expect(acceptedBody.data.quoteRequest.status).toBe("ACCEPTED");
+
+    const again = await dispatchApi(
+      withAuth({
+        method: "POST",
+        url: `${API_PATHS.customerQuotes}/${own.id}/accept`,
+      }),
+    );
+    const againBody = parseJsonBody(again.body) as Envelope<{
+      quoteRequest: { status: string };
+    }>;
+    expect(again.statusCode).toBe(HTTP_STATUS.OK);
+    expect(againBody.data.quoteRequest.status).toBe("ACCEPTED");
+
+    const foreign = await dispatchApi(
+      withAuth({
+        method: "POST",
+        url: `${API_PATHS.customerQuotes}/${other.id}/accept`,
+      }),
+    );
+    expect(foreign.statusCode).toBe(HTTP_STATUS.NOT_FOUND);
+  });
 });

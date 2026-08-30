@@ -1,5 +1,6 @@
 export const ADMIN_APP_HREFS = {
   bookings: "/admin/bookings",
+  quotes: "/admin/quotes",
   cleaners: "/admin/cleaners",
   customers: "/admin/customers",
   notifications: "/admin/notifications",
@@ -52,6 +53,16 @@ export const ADMIN_EVENT_COPY = {
     message: "A customer profile was updated.",
     relatedLabel: "View customers",
     title: "Customer updated",
+  },
+  quoteAccepted: {
+    message: "A customer accepted a quote.",
+    relatedLabel: "View quotes",
+    title: "Quote accepted",
+  },
+  quoteQuoted: {
+    message: "A quote was sent to the customer.",
+    relatedLabel: "View quotes",
+    title: "Quote sent",
   },
   notificationCreated: {
     message: "You have a new notification.",

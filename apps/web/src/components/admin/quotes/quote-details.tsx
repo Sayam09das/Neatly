@@ -2,7 +2,7 @@
 
 import { Button, Card } from "@neatly/ui";
 import Link from "next/link";
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import {
   AdminDashboardBlock,
   AdminDashboardMotion,
@@ -10,19 +10,24 @@ import {
 import { AdminEmptyState } from "@/components/admin/admin-empty-state";
 import { QuotesIcon } from "@/components/admin/admin-icons";
 import { AdminRetryState } from "@/components/admin/admin-retry-state";
+import { QuoteReviewActions } from "@/components/admin/quotes/quote-review-actions";
 import { QuoteStatusBadge } from "@/components/admin/quotes/quote-status-badge";
 import { QuotesLoading } from "@/components/admin/quotes/quotes-states";
 import { ADMIN_PATHS } from "@/config/admin-nav";
 import { adminQuoteCopy } from "@/config/admin-quotes";
 import {
+  formatQuoteAmount,
   formatQuoteInstant,
   formatQuoteRequestedAt,
+  getAdminQuote,
   getQuoteCustomerName,
   getQuoteFrequencyLabel,
   getQuoteIdLabel,
   getQuotePropertyLabel,
   getQuoteServiceLabel,
 } from "@/lib/admin/quotes";
+import { useAdminQuery } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import type {
   AdminQuote,
   AdminQuoteDetailsPresentation,
@@ -37,9 +42,45 @@ export function AdminQuoteDetails({
   presentation,
   quoteId,
 }: AdminQuoteDetailsProps): ReactElement {
+  if (presentation !== undefined) {
+    return <QuoteDetails presentation={presentation} quoteId={quoteId} />;
+  }
+
+  return <AdminQuoteDetailsLive quoteId={quoteId} />;
+}
+
+function AdminQuoteDetailsLive({ quoteId }: { quoteId: string }): ReactElement {
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) => getAdminQuote(quoteId, { signal }),
+    requestKey: `quote-${quoteId}`,
+  });
+  useAdminRefresh("quotes", query.retry);
+
+  if (query.status === "loading") {
+    return (
+      <QuoteDetails presentation={{ status: "loading" }} quoteId={quoteId} />
+    );
+  }
+
+  if (query.status === "error") {
+    return (
+      <QuoteDetails
+        presentation={{ onRetry: query.retry, status: "error" }}
+        quoteId={quoteId}
+      />
+    );
+  }
+
+  if (query.data === null) {
+    return (
+      <QuoteDetails presentation={{ status: "empty" }} quoteId={quoteId} />
+    );
+  }
+
   return (
     <QuoteDetails
-      presentation={presentation ?? { status: "empty" }}
+      presentation={{ quote: query.data, status: "ready" }}
       quoteId={quoteId}
     />
   );
@@ -134,8 +175,9 @@ interface QuoteDetailsContentProps {
 }
 
 function QuoteDetailsContent({
-  quote,
+  quote: initialQuote,
 }: QuoteDetailsContentProps): ReactElement {
+  const [quote, setQuote] = useState(initialQuote);
   const notes =
     quote.additionalNotes === null || quote.additionalNotes.trim() === ""
       ? adminQuoteCopy.notesEmpty
@@ -156,12 +198,7 @@ function QuoteDetailsContent({
           </div>
           <QuoteStatusBadge status={quote.status} />
         </div>
-        <Button className="mt-6" disabled type="button" variant="outline">
-          {adminQuoteCopy.createBookingAction}
-        </Button>
-        <p className="mt-2 text-caption text-muted-foreground">
-          {adminQuoteCopy.createBookingUnavailable}
-        </p>
+        <QuoteReviewActions onUpdated={setQuote} quote={quote} />
       </Card>
       <Card className="p-6 shadow-none">
         <h2 className="text-h3 text-foreground tracking-tight">
@@ -236,8 +273,12 @@ function QuoteDetailsContent({
         <h2 className="text-h3 text-foreground tracking-tight">
           {adminQuoteCopy.statusSection}
         </h2>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-3">
           <QuoteStatusBadge status={quote.status} />
+          <p className="text-body text-foreground">
+            {adminQuoteCopy.amountLabel}:{" "}
+            {formatQuoteAmount(quote.quotedAmount)}
+          </p>
         </div>
       </Card>
       <Card className="p-6 shadow-none">

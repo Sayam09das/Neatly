@@ -1,4 +1,4 @@
-import type { BookingStatus, Prisma } from "@prisma/client";
+import { type BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../lib/db.ts";
 import { resolvePagination } from "../lib/domain/list.ts";
 import type { SortQuery } from "../lib/query.ts";
@@ -14,6 +14,10 @@ export interface BookingStatusPatch {
   status: BookingStatus;
 }
 
+export type CreateBookingFromQuoteResult =
+  | { booking: BookingRecord; ok: true }
+  | { ok: false; reason: "DUPLICATE" | "NOT_ACCEPTED" | "NOT_FOUND" };
+
 export interface BookingRepository {
   compareAndUpdate(
     id: string,
@@ -25,6 +29,12 @@ export interface BookingRepository {
   create(
     input: CreateBookingInput & { status?: BookingStatus },
   ): Promise<BookingRecord>;
+  createFromAcceptedQuote(
+    input: CreateBookingInput & {
+      quoteRequestId: string;
+      status?: BookingStatus;
+    },
+  ): Promise<CreateBookingFromQuoteResult>;
   findById(id: string): Promise<BookingRecord | null>;
   findByQuoteRequestId(quoteRequestId: string): Promise<BookingRecord | null>;
   list(
@@ -125,6 +135,68 @@ export class PrismaBookingRepository implements BookingRepository {
       include: BOOKING_INCLUDE,
     });
     return toRecord(row);
+  }
+
+  public async createFromAcceptedQuote(
+    input: CreateBookingInput & {
+      quoteRequestId: string;
+      status?: BookingStatus;
+    },
+  ): Promise<CreateBookingFromQuoteResult> {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const quote = await tx.quoteRequest.findUnique({
+          select: { id: true, status: true },
+          where: { id: input.quoteRequestId },
+        });
+
+        if (quote === null) {
+          return { ok: false as const, reason: "NOT_FOUND" as const };
+        }
+
+        if (quote.status !== "ACCEPTED") {
+          return { ok: false as const, reason: "NOT_ACCEPTED" as const };
+        }
+
+        const existing = await tx.booking.findUnique({
+          select: { id: true },
+          where: { quoteRequestId: input.quoteRequestId },
+        });
+
+        if (existing !== null) {
+          return { ok: false as const, reason: "DUPLICATE" as const };
+        }
+
+        const row = await tx.booking.create({
+          data: {
+            cleanerId: input.cleanerId ?? null,
+            customerId: input.customerId,
+            notes: input.notes ?? null,
+            quoteRequestId: input.quoteRequestId,
+            scheduledAt: input.scheduledAt ?? null,
+            serviceAddress: input.serviceAddress ?? null,
+            serviceId: input.serviceId,
+            status: input.status ?? "PENDING",
+          },
+          include: BOOKING_INCLUDE,
+        });
+        await tx.quoteRequest.update({
+          data: { status: "CONVERTED" },
+          where: { id: quote.id },
+        });
+
+        return { booking: toRecord(row), ok: true as const };
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return { ok: false, reason: "DUPLICATE" };
+      }
+
+      throw error;
+    }
   }
 
   public async update(

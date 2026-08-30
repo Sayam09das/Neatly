@@ -3,11 +3,13 @@ import {
   ADMIN_LONG_TEXT_MAX_LENGTH,
   ADMIN_TEXT_MAX_LENGTH,
 } from "../../config/constants.ts";
+import { QUOTE_AMOUNT_MAX, QUOTE_AMOUNT_MIN } from "../../config/quotes.ts";
 import { BOOKING_SORT_FIELDS } from "../../services/bookings/booking.types.ts";
 import { CATALOG_SORT_FIELDS } from "../../services/catalog/catalog.types.ts";
 import { CLEANER_SORT_FIELDS } from "../../services/cleaners/cleaner.types.ts";
 import { CUSTOMER_SORT_FIELDS } from "../../services/customers/customer.types.ts";
 import { NOTIFICATION_SORT_FIELDS } from "../../services/notifications/notification.types.ts";
+import { QUOTE_SORT_FIELDS } from "../../services/quotes/quote.types.ts";
 import { REVIEW_SORT_FIELDS } from "../../services/reviews/review.types.ts";
 import {
   createAdminListQuerySchema,
@@ -23,6 +25,8 @@ import {
   customerStatusSchema,
   emailSchema,
   idSchema,
+  quoteServiceTypeSchema,
+  quoteStatusSchema,
   serviceCategorySchema,
 } from "./primitives.ts";
 
@@ -156,6 +160,35 @@ export const bookingListQuerySchema = createAdminListQuerySchema(
   },
 );
 
+export const quoteListQuerySchema = createAdminListQuerySchema(
+  QUOTE_SORT_FIELDS,
+  {
+    createdFrom: dateQuerySchema.optional(),
+    createdTo: dateQueryEndSchema.optional(),
+    serviceType: quoteServiceTypeSchema.optional(),
+    status: quoteStatusSchema.optional(),
+  },
+);
+
+export const updateQuoteBodySchema = z
+  .strictObject({
+    adminNotes: optionalLongText,
+    quotedAmount: z
+      .number({ error: "Enter a valid quoted amount." })
+      .finite({ error: "Enter a valid quoted amount." })
+      .min(QUOTE_AMOUNT_MIN, { error: "Enter a valid quoted amount." })
+      .max(QUOTE_AMOUNT_MAX, { error: "Use a smaller quoted amount." })
+      .optional(),
+    status: quoteStatusSchema.optional(),
+  })
+  .refine(
+    (value) =>
+      value.adminNotes !== undefined ||
+      value.quotedAmount !== undefined ||
+      value.status !== undefined,
+    { message: "Provide at least one quote field to update." },
+  );
+
 export const createBookingBodySchema = z.strictObject({
   cleanerId: idSchema.optional().nullable(),
   customerId: idSchema,
@@ -256,6 +289,8 @@ export type CustomerListQuery = z.infer<typeof customerListQuerySchema>;
 export type CleanerListQuery = z.infer<typeof cleanerListQuerySchema>;
 export type CatalogListQueryInput = z.infer<typeof catalogListQuerySchema>;
 export type BookingListQueryInput = z.infer<typeof bookingListQuerySchema>;
+export type QuoteListQueryInput = z.infer<typeof quoteListQuerySchema>;
+export type UpdateQuoteBody = z.infer<typeof updateQuoteBodySchema>;
 export type ReviewListQueryInput = z.infer<typeof reviewListQuerySchema>;
 export type NotificationListQueryInput = z.infer<
   typeof notificationListQuerySchema

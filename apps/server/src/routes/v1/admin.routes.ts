@@ -35,6 +35,11 @@ import {
 } from "../../controllers/admin/notifications.controller.ts";
 import { streamNotificationsController } from "../../controllers/admin/notifications-stream.controller.ts";
 import {
+  getQuoteController,
+  listQuotesController,
+  updateQuoteController,
+} from "../../controllers/admin/quotes.controller.ts";
+import {
   getReviewController,
   hideReviewController,
   listReviewsController,
@@ -68,11 +73,13 @@ import {
   customerListQuerySchema,
   customerStatusBodySchema,
   notificationListQuerySchema,
+  quoteListQuerySchema,
   reviewListQuerySchema,
   updateBookingBodySchema,
   updateCatalogBodySchema,
   updateCleanerBodySchema,
   updateCustomerBodySchema,
+  updateQuoteBodySchema,
   updateReviewBodySchema,
   updateSettingsBodySchema,
 } from "../../lib/validations/admin.schema.ts";
@@ -282,6 +289,28 @@ export const adminRoutes: readonly RouteDefinition[] = [
       validateBody(assignCleanerBodySchema),
     ],
     path: API_PATHS.adminBookingAssign,
+  },
+  {
+    handler: listQuotesController,
+    method: "GET",
+    middleware: [...adminAccess, validateQuery(quoteListQuerySchema)],
+    path: API_PATHS.adminQuotes,
+  },
+  {
+    handler: getQuoteController,
+    method: "GET",
+    middleware: [...adminAccess, validateParams(idParamSchema)],
+    path: API_PATHS.adminQuote,
+  },
+  {
+    handler: updateQuoteController,
+    method: "PATCH",
+    middleware: [
+      ...adminMutation,
+      validateParams(idParamSchema),
+      validateBody(updateQuoteBodySchema),
+    ],
+    path: API_PATHS.adminQuote,
   },
   {
     handler: listReviewsController,

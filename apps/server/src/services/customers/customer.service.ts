@@ -61,6 +61,13 @@ export class CustomerService {
     });
   }
 
+  public async findUserIdByEmail(email: string): Promise<string | null> {
+    const customer = await this.customers.findByEmail(
+      email.trim().toLowerCase(),
+    );
+    return customer?.userId ?? null;
+  }
+
   public async getById(actor: Actor, id: string): Promise<CustomerRecord> {
     const customer = await this.customers.findById(id);
 

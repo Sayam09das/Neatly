@@ -6,6 +6,7 @@ export const ADMIN_REFRESH_KEYS = [
   "customers",
   "dashboard",
   "notifications",
+  "quotes",
   "reviews",
   "services",
 ] as const;
@@ -71,5 +72,8 @@ export function refreshKeysForAdminEvent(
       return ["reviews", "notifications"];
     case "NOTIFICATION_CREATED":
       return ["notifications"];
+    case "QUOTE_ACCEPTED":
+    case "QUOTE_QUOTED":
+      return ["quotes", "notifications"];
   }
 }

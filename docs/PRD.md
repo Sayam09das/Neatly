@@ -359,14 +359,15 @@ Visitor enters /quote
 * **Notifications:** Synchronous trigger of admin alert email + customer confirmation receipt.
 
 ### 16.3 Quote Lifecycle Statuses
-Every quote request in the database MUST adhere strictly to one of seven standardized statuses:
+Every quote request in the database MUST adhere strictly to one of the standardized statuses:
 1. `NEW`: Request submitted by visitor; pending initial admin review.
 2. `REVIEWING`: Admin is reviewing property scope and preparing an estimate.
 3. `CONTACTED`: Admin has reached out to customer via phone or email for clarification.
 4. `QUOTED`: Formal price estimate has been delivered to customer.
-5. `CONVERTED`: Customer accepted quote and scheduled service (Lead won).
-6. `DECLINED`: Customer rejected quote or canceled request.
-7. `CLOSED`: Archive status for completed or stale leads.
+5. `ACCEPTED`: Customer accepted the quoted amount and may create a booking.
+6. `CONVERTED`: Customer created a booking from the accepted quote (Lead won).
+7. `DECLINED`: Customer rejected quote or canceled request.
+8. `CLOSED`: Archive status for completed or stale leads.
 
 ---
 
