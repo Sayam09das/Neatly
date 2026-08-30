@@ -1,3 +1,4 @@
+import { AUTH_OPERATOR_ROLES } from "../../config/auth.ts";
 import { prisma } from "../db.ts";
 import type {
   AuthEmailVerificationRecord,
@@ -96,6 +97,16 @@ export class PrismaAuthRepository implements AuthRepository {
     });
 
     return user === null ? null : toUserRecord(user);
+  }
+
+  public async countAdminOperators(): Promise<number> {
+    return prisma.user.count({
+      where: {
+        role: {
+          in: [...AUTH_OPERATOR_ROLES],
+        },
+      },
+    });
   }
 
   public async createUser(

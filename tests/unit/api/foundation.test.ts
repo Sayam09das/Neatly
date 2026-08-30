@@ -131,6 +131,47 @@ describe("API foundation", (): void => {
     expect(body.data.status).toBe("ok");
   });
 
+  it("allows the first public admin registration and rejects later ones", async (): Promise<void> => {
+    const registerUser = vi.fn().mockResolvedValue(adminUser);
+    const canRegisterAdmin = vi.fn().mockResolvedValue(true);
+    authService.mockReturnValue({
+      canRegisterAdmin,
+      registerUser,
+    } as never);
+
+    const payload = {
+      email: "admin@neatly.example",
+      name: "Neatly Admin",
+      password: "correct-horse-battery-staple",
+    };
+    const allowed = await dispatchApi({
+      body: JSON.stringify(payload),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      url: API_PATHS.authRegister,
+    });
+    const allowedBody = parseJsonBody(allowed.body) as Envelope<{
+      user: { email: string };
+    }>;
+
+    expect(allowed.statusCode).toBe(HTTP_STATUS.OK);
+    expect(allowedBody.data.user.email).toBe(adminUser.email);
+    expect(registerUser).toHaveBeenCalledWith(payload);
+
+    canRegisterAdmin.mockResolvedValue(false);
+    const blocked = await dispatchApi({
+      body: JSON.stringify(payload),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      url: API_PATHS.authRegister,
+    });
+    const blockedBody = parseJsonBody(blocked.body) as Envelope<null>;
+
+    expect(blocked.statusCode).toBe(HTTP_STATUS.FORBIDDEN);
+    expect(blockedBody.error?.code).toBe(API_ERROR_CODES.FORBIDDEN);
+    expect(registerUser).toHaveBeenCalledTimes(1);
+  });
+
   it("forbids authenticated users without an admin role", async (): Promise<void> => {
     authService.mockReturnValue({
       resolveSession: vi.fn().mockResolvedValue({

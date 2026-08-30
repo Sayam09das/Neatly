@@ -1,7 +1,11 @@
 import { type Actor, requireAdminActor } from "../../lib/domain/actor.ts";
 import { NotFoundError, ValidationError } from "../../lib/errors.ts";
 import type { SettingsRepository } from "../../repositories/settings.repository.ts";
-import type { SettingsRecord, UpdateSettingsInput } from "./settings.types.ts";
+import {
+  createEmptySiteSettings,
+  type SettingsRecord,
+  type UpdateSettingsInput,
+} from "./settings.types.ts";
 
 export class SettingsService {
   private readonly settings: SettingsRepository;
@@ -13,12 +17,7 @@ export class SettingsService {
   public async get(actor: Actor): Promise<SettingsRecord> {
     requireAdminActor(actor);
     const record = await this.settings.find();
-
-    if (record === null) {
-      throw new NotFoundError("Site settings were not found.");
-    }
-
-    return record;
+    return record ?? createEmptySiteSettings();
   }
 
   public async update(
@@ -26,7 +25,6 @@ export class SettingsService {
     input: UpdateSettingsInput,
   ): Promise<SettingsRecord> {
     requireAdminActor(actor);
-    await this.get(actor);
     const updated = await this.settings.update({
       address:
         input.address === undefined

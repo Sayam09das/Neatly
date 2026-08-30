@@ -1,8 +1,7 @@
 "use client";
 
-import { type RefObject, useState } from "react";
+import { type RefObject, useEffect, useState } from "react";
 import { useGsap } from "@/animations/hooks/use-gsap";
-import { useIsomorphicLayoutEffect } from "@/animations/hooks/use-isomorphic-layout-effect";
 import { createFooterAnimation, FOOTER_MOBILE_QUERY } from "./footer-animation";
 
 interface UseFooterAnimationOptions {
@@ -13,8 +12,13 @@ export function useFooterAnimation({
   rootRef,
 }: UseFooterAnimationOptions): void {
   const [isCompact, setIsCompact] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  useIsomorphicLayoutEffect((): (() => void) => {
+  useEffect((): void => {
+    setIsReady(true);
+  }, []);
+
+  useEffect((): (() => void) => {
     const media = window.matchMedia(FOOTER_MOBILE_QUERY);
     const sync = (): void => {
       setIsCompact(media.matches);
@@ -30,6 +34,10 @@ export function useFooterAnimation({
 
   useGsap(
     () => {
+      if (!isReady) {
+        return;
+      }
+
       const root = rootRef.current;
 
       if (root === null) {
@@ -42,7 +50,7 @@ export function useFooterAnimation({
       });
     },
     {
-      dependencies: [isCompact],
+      dependencies: [isCompact, isReady],
       revertOnUpdate: true,
       scope: rootRef,
     },

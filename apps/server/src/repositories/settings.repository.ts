@@ -1,8 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../lib/db.ts";
-import type {
-  SettingsRecord,
-  UpdateSettingsInput,
+import {
+  createEmptySiteSettings,
+  type SettingsRecord,
+  type UpdateSettingsInput,
 } from "../services/settings/settings.types.ts";
 
 export const SITE_SETTINGS_ID = 1;
@@ -53,9 +54,33 @@ export class PrismaSettingsRepository implements SettingsRepository {
   public async update(
     input: UpdateSettingsInput,
   ): Promise<SettingsRecord | null> {
+    const defaults = createEmptySiteSettings();
+
     try {
-      const row = await prisma.siteSettings.update({
-        data: {
+      const row = await prisma.siteSettings.upsert({
+        create: {
+          address: input.address ?? defaults.address,
+          businessName: input.businessName ?? defaults.businessName,
+          defaultSeoDesc: input.defaultSeoDesc ?? defaults.defaultSeoDesc,
+          defaultSeoTitle: input.defaultSeoTitle ?? defaults.defaultSeoTitle,
+          email: input.email ?? defaults.email,
+          id: SITE_SETTINGS_ID,
+          notificationEmail:
+            input.notificationEmail ?? defaults.notificationEmail,
+          phone: input.phone ?? defaults.phone,
+          serviceAreas: input.serviceAreas ?? defaults.serviceAreas,
+          ...(input.socialLinks === undefined
+            ? {}
+            : {
+                socialLinks: input.socialLinks as Prisma.InputJsonValue,
+              }),
+          tagline: input.tagline ?? defaults.tagline,
+          workingHours:
+            input.workingHours === undefined
+              ? (defaults.workingHours as Prisma.InputJsonValue)
+              : (input.workingHours as Prisma.InputJsonValue),
+        },
+        update: {
           ...input,
           socialLinks:
             input.socialLinks === undefined

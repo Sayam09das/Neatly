@@ -80,6 +80,7 @@ export interface AuthRepository {
   createPasswordResetToken(
     input: CreatePasswordResetRecordInput,
   ): Promise<AuthPasswordResetRecord>;
+  countAdminOperators(): Promise<number>;
   createSession(input: CreateSessionRecordInput): Promise<AuthSessionRecord>;
   createUser(input: CreateUserRecordInput): Promise<AuthUserRecord>;
   deleteEmailVerificationTokensForUser(userId: string): Promise<void>;

@@ -18,19 +18,20 @@ import {
   resetPasswordSchema,
   verifyEmailSchema,
 } from "../../lib/validations/auth.schema.ts";
+import { limitAuthMutations } from "../../middleware/rate-limit.ts";
 import { validateBody } from "../../middleware/validate.ts";
 
 export const authRoutes: readonly RouteDefinition[] = [
   {
     handler: registerController,
     method: "POST",
-    middleware: [validateBody(registerUserSchema)],
+    middleware: [limitAuthMutations, validateBody(registerUserSchema)],
     path: API_PATHS.authRegister,
   },
   {
     handler: loginController,
     method: "POST",
-    middleware: [validateBody(loginSchema)],
+    middleware: [limitAuthMutations, validateBody(loginSchema)],
     path: API_PATHS.authLogin,
   },
   {
@@ -46,25 +47,25 @@ export const authRoutes: readonly RouteDefinition[] = [
   {
     handler: forgotPasswordController,
     method: "POST",
-    middleware: [validateBody(forgotPasswordSchema)],
+    middleware: [limitAuthMutations, validateBody(forgotPasswordSchema)],
     path: API_PATHS.authForgotPassword,
   },
   {
     handler: resetPasswordController,
     method: "POST",
-    middleware: [validateBody(resetPasswordSchema)],
+    middleware: [limitAuthMutations, validateBody(resetPasswordSchema)],
     path: API_PATHS.authResetPassword,
   },
   {
     handler: verifyEmailController,
     method: "POST",
-    middleware: [validateBody(verifyEmailSchema)],
+    middleware: [limitAuthMutations, validateBody(verifyEmailSchema)],
     path: API_PATHS.authVerifyEmail,
   },
   {
     handler: resendVerificationController,
     method: "POST",
-    middleware: [validateBody(resendVerificationSchema)],
+    middleware: [limitAuthMutations, validateBody(resendVerificationSchema)],
     path: API_PATHS.authResendVerification,
   },
 ];

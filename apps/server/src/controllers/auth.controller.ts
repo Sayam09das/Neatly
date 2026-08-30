@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadApiEnv } from "../config/env.ts";
 import { requireAdmin } from "../lib/auth/authorization.ts";
-import { AuthError } from "../lib/auth/errors.ts";
+import { AUTH_ERROR_MESSAGES, AuthError } from "../lib/auth/errors.ts";
 import { getSessionToken } from "../lib/auth/http.ts";
 import { toAppErrorFromAuth } from "../lib/auth/http-error.ts";
 import { getAuthService } from "../lib/auth/runtime.ts";
@@ -25,8 +25,14 @@ export async function registerController(
   context: RequestContext,
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
+    const auth = getAuthService();
+
+    if (!(await auth.canRegisterAdmin())) {
+      throw new AuthError("FORBIDDEN", AUTH_ERROR_MESSAGES.FORBIDDEN);
+    }
+
     const body = getValidatedBody<RegisterUserInput>(context);
-    const user = await getAuthService().registerUser(body);
+    const user = await auth.registerUser(body);
     sendSuccess(res, { user });
   });
 }

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { AUTH_OPERATOR_ROLES } from "../../../apps/server/src/config/auth.ts";
 import type {
   AuthEmailVerificationRecord,
   AuthPasswordResetRecord,
@@ -23,6 +24,12 @@ export class InMemoryAuthRepository implements AuthRepository {
 
   public async findUserById(id: string): Promise<AuthUserRecord | null> {
     return this.users.find((user) => user.id === id) ?? null;
+  }
+
+  public async countAdminOperators(): Promise<number> {
+    return this.users.filter((user) =>
+      (AUTH_OPERATOR_ROLES as readonly string[]).includes(user.role),
+    ).length;
   }
 
   public async createUser(

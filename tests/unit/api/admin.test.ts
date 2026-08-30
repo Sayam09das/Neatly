@@ -439,11 +439,29 @@ describe("Admin APIs", (): void => {
     expect(archivedBody.data.service.isActive).toBe(false);
   });
 
-  it("returns settings when a row exists and 404 otherwise", async (): Promise<void> => {
+  it("returns empty settings when no row exists and upserts on update", async (): Promise<void> => {
     const missing = await dispatchApi(
       withAuth({ method: "GET", url: API_PATHS.adminSettings }),
     );
-    expect(missing.statusCode).toBe(HTTP_STATUS.NOT_FOUND);
+    const missingBody = parseJsonBody(missing.body) as Envelope<{
+      settings: { businessName: string; phone: string };
+    }>;
+    expect(missing.statusCode).toBe(HTTP_STATUS.OK);
+    expect(missingBody.data.settings.businessName).toBe("Neatly");
+    expect(missingBody.data.settings.phone).toBe("");
+
+    const created = await dispatchApi(
+      withAuth({
+        body: JSON.stringify({ tagline: "Trusted home cleaning" }),
+        method: "PATCH",
+        url: API_PATHS.adminSettings,
+      }),
+    );
+    const createdBody = parseJsonBody(created.body) as Envelope<{
+      settings: { tagline: string };
+    }>;
+    expect(created.statusCode).toBe(HTTP_STATUS.OK);
+    expect(createdBody.data.settings.tagline).toBe("Trusted home cleaning");
 
     const harness = createDomainHarness();
     harness.store.settings = {

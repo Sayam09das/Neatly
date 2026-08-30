@@ -1,5 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
+  AUTH_RATE_LIMIT_MAX_ATTEMPTS,
+  AUTH_RATE_LIMIT_WINDOW_MS,
+} from "../config/auth.ts";
+import {
   CUSTOMER_MUTATION_RATE_LIMIT_MAX,
   CUSTOMER_MUTATION_RATE_LIMIT_WINDOW_MS,
 } from "../config/bookings.ts";
@@ -36,6 +40,11 @@ const customerMutationLimiter = new MemoryRateLimiter(
 const quoteLimiter = new MemoryRateLimiter(
   QUOTE_RATE_LIMIT_MAX,
   QUOTE_RATE_LIMIT_WINDOW_MS,
+);
+
+const authLimiter = new MemoryRateLimiter(
+  AUTH_RATE_LIMIT_MAX_ATTEMPTS,
+  AUTH_RATE_LIMIT_WINDOW_MS,
 );
 
 export function limitCustomerStreams(
@@ -114,6 +123,22 @@ export function limitPublicQuoteMutations(
   const key = `quote:${context.ip}`;
 
   if (!quoteLimiter.consume(key)) {
+    throw new RateLimitError();
+  }
+}
+
+export function limitAuthMutations(
+  _req: IncomingMessage,
+  _res: ServerResponse,
+  context: RequestContext,
+): void {
+  if (loadApiEnv().nodeEnv === "test") {
+    return;
+  }
+
+  const key = `auth:${context.path}:${context.ip}`;
+
+  if (!authLimiter.consume(key)) {
     throw new RateLimitError();
   }
 }

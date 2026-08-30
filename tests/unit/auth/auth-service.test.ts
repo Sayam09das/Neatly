@@ -122,6 +122,24 @@ describe("AuthService", (): void => {
     expect(repository.verificationTokens[0]?.tokenHash).not.toBe(
       tokenFromUrl(emails.verifications[0]?.verifyUrl ?? ""),
     );
+    expect(await service.canRegisterAdmin()).toBe(false);
+  });
+
+  it("allows public admin registration only before an operator exists", async (): Promise<void> => {
+    const { service } = createAuthHarness();
+
+    expect(await service.canRegisterAdmin()).toBe(true);
+
+    await service.registerUser(
+      {
+        email: "staff@neatly.example",
+        name: "Neatly Staff",
+        password: ADMIN_PASSWORD,
+      },
+      { role: "STAFF" },
+    );
+
+    expect(await service.canRegisterAdmin()).toBe(true);
   });
 
   it("registers a verified staff user without sending verification email", async (): Promise<void> => {

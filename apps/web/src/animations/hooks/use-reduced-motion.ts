@@ -12,9 +12,7 @@ export function getPrefersReducedMotion(): boolean {
 }
 
 export function useReducedMotion(): boolean {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
-    getPrefersReducedMotion,
-  );
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect((): (() => void) => {
     const media = window.matchMedia(REDUCED_MOTION_QUERY);

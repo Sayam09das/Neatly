@@ -118,6 +118,10 @@ export class AuthService {
     this.verifyLimiter = options.verifyLimiter ?? new MemoryRateLimiter();
   }
 
+  public async canRegisterAdmin(): Promise<boolean> {
+    return (await this.repository.countAdminOperators()) === 0;
+  }
+
   public async registerUser(
     input: unknown,
     options: { role?: AuthUserRole; verifyEmail?: boolean } = {},

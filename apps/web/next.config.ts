@@ -26,6 +26,13 @@ const securityHeaders: Array<{ key: string; value: string }> = [
   },
 ];
 
+if (process.env.NODE_ENV === "production") {
+  securityHeaders.push({
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000; includeSubDomains",
+  });
+}
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [

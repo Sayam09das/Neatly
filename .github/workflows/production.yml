@@ -1,17 +1,16 @@
-name: CI
+name: Production
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
-  quality:
+  build:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,32 +29,13 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Biome format
-        run: pnpm format:check
+      - name: Quality gates
+        run: pnpm typecheck && pnpm lint && pnpm test
 
-      - name: Biome lint
-        run: pnpm lint
-
-      - name: TypeScript
-        run: pnpm typecheck
-
-      - name: Vitest
-        run: pnpm test
-
-      - name: Next.js production build
-        run: pnpm --filter @neatly/web build
+      - name: Production builds
+        run: pnpm build && pnpm build:api
         env:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
-
-      - name: API production build
-        run: pnpm build:api
-
-  docker:
-    needs: quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -81,3 +61,10 @@ jobs:
           tags: |
             neatly-api:${{ github.sha }}
             neatly-api:latest
+
+      - name: Deployment
+        run: |
+          echo "Images built as neatly-web:${GITHUB_SHA} and neatly-api:${GITHUB_SHA}."
+          echo "Registry push, migrate deploy, and host rollout are not configured."
+          echo "Run pnpm db:migrate:deploy only as a controlled API release step."
+          echo "Do not run prisma migrate reset or pnpm db:seed in production."

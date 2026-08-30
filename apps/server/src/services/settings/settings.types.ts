@@ -13,6 +13,27 @@ export interface SettingsRecord {
   workingHours: unknown;
 }
 
+export const EMPTY_SITE_SETTINGS_UPDATED_AT = new Date(0);
+
+export function createEmptySiteSettings(
+  updatedAt: Date = EMPTY_SITE_SETTINGS_UPDATED_AT,
+): SettingsRecord {
+  return {
+    address: "",
+    businessName: "Neatly",
+    defaultSeoDesc: "",
+    defaultSeoTitle: "",
+    email: "",
+    notificationEmail: "",
+    phone: "",
+    serviceAreas: [],
+    socialLinks: null,
+    tagline: "Clean, minimal, high-trust",
+    updatedAt,
+    workingHours: {},
+  };
+}
+
 export interface UpdateSettingsInput {
   address?: string;
   businessName?: string;

@@ -1,0 +1,48 @@
+# Dependencies and caches
+node_modules
+**/.pnpm-store
+**/.turbo
+**/.cache
+**/*.tsbuildinfo
+
+# Build outputs
+**/.next
+**/dist
+**/out
+**/build
+coverage
+test-results
+playwright-report
+
+# Git and editor
+.git
+.gitignore
+.gitattributes
+.cursor
+.agents
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Secrets — never bake into images
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Local and CI artifacts
+logs
+*.log
+uploads
+agent-transcripts
+
+# Not required to build images
+tests
+docs
+.github
+.husky
+*.md
+!package.json

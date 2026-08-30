@@ -83,9 +83,10 @@ import type {
   UpdateReviewInput,
 } from "../../../apps/server/src/services/reviews/review.types.ts";
 import { SettingsService } from "../../../apps/server/src/services/settings/settings.service.ts";
-import type {
-  SettingsRecord,
-  UpdateSettingsInput,
+import {
+  createEmptySiteSettings,
+  type SettingsRecord,
+  type UpdateSettingsInput,
 } from "../../../apps/server/src/services/settings/settings.types.ts";
 import { UserService } from "../../../apps/server/src/services/users/user.service.ts";
 import type {
@@ -1449,12 +1450,9 @@ export class InMemorySettingsRepository implements SettingsRepository {
   public async update(
     input: UpdateSettingsInput,
   ): Promise<SettingsRecord | null> {
-    if (this.store.settings === null) {
-      return null;
-    }
-
+    const current = this.store.settings ?? createEmptySiteSettings(new Date());
     const row: SettingsRecord = {
-      ...this.store.settings,
+      ...current,
       ...omitUndefined(input),
       updatedAt: new Date(),
     };
