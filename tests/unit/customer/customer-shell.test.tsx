@@ -20,8 +20,16 @@ import {
   customerShellCopy,
 } from "@/config/customer";
 
+const { useActivePathname } = vi.hoisted(() => ({
+  useActivePathname: vi.fn((): string => "/dashboard"),
+}));
+
 vi.mock("next/navigation", () => ({
-  usePathname: (): string => "/dashboard",
+  usePathname: (): string => useActivePathname(),
+}));
+
+vi.mock("@/components/layout/navbar/use-active-pathname", () => ({
+  useActivePathname,
 }));
 
 const shellIdentity = {
@@ -50,10 +58,10 @@ describe("CustomerShell", (): void => {
       screen.getByRole("link", { name: customerShellCopy.skipToContent }),
     ).toHaveAttribute("href", `#${CUSTOMER_MAIN_CONTENT_ID}`);
     expect(
-      screen.getAllByRole("link", { name: "Overview" })[0],
+      screen.getAllByRole("link", { name: "Dashboard" })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
     expect(
-      screen.getAllByRole("link", { name: "Bookings" })[0],
+      screen.getAllByRole("link", { name: "My Bookings" })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.bookings);
     expect(
       screen.getAllByRole("link", { name: "Services" })[0],

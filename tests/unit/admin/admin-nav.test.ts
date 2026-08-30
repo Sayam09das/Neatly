@@ -10,6 +10,24 @@ import {
 describe("getAdminPageTitle", (): void => {
   it("uses Dashboard on home and nested titles on operations routes", (): void => {
     expect(getAdminPageTitle(ADMIN_PATHS.home)).toBe("Dashboard");
+    expect(getAdminPageTitle(ADMIN_PATHS.quotes)).toBe("Quotes");
+    expect(getAdminPageTitle(ADMIN_PATHS.contacts)).toBe("Contacts");
+    expect(getAdminPageTitle(ADMIN_PATHS.portfolio)).toBe("Portfolio");
+    expect(getAdminPageTitle(ADMIN_PATHS.blog)).toBe("Blog");
+    expect(getAdminPageTitle(ADMIN_PATHS.newsletter)).toBe("Newsletter");
+    expect(getAdminPageTitle(`${ADMIN_PATHS.contacts}/contact_test`)).toBe(
+      "Contacts",
+    );
+    expect(getAdminPageTitle(`${ADMIN_PATHS.portfolio}/project_test`)).toBe(
+      "Portfolio",
+    );
+    expect(getAdminPageTitle(`${ADMIN_PATHS.blog}/post_test`)).toBe("Blog");
+    expect(getAdminPageTitle(`${ADMIN_PATHS.newsletter}/subscriber_test`)).toBe(
+      "Newsletter",
+    );
+    expect(getAdminPageTitle(`${ADMIN_PATHS.quotes}/quote_test`)).toBe(
+      "Quotes",
+    );
     expect(getAdminPageTitle(ADMIN_PATHS.bookings)).toBe("Bookings");
     expect(getAdminPageTitle(`${ADMIN_PATHS.bookings}/booking_test`)).toBe(
       "Bookings",
@@ -54,6 +72,28 @@ describe("isAdminNavItemActive", (): void => {
     expect(isAdminNavItemActive("/admin/contacts", ADMIN_PATHS.quotes)).toBe(
       false,
     );
+    expect(isAdminNavItemActive("/admin/contacts", ADMIN_PATHS.contacts)).toBe(
+      true,
+    );
+    expect(
+      isAdminNavItemActive("/admin/contacts/123", ADMIN_PATHS.contacts),
+    ).toBe(true);
+    expect(
+      isAdminNavItemActive("/admin/portfolio", ADMIN_PATHS.portfolio),
+    ).toBe(true);
+    expect(
+      isAdminNavItemActive("/admin/portfolio/123", ADMIN_PATHS.portfolio),
+    ).toBe(true);
+    expect(isAdminNavItemActive("/admin/blog", ADMIN_PATHS.blog)).toBe(true);
+    expect(isAdminNavItemActive("/admin/blog/123", ADMIN_PATHS.blog)).toBe(
+      true,
+    );
+    expect(
+      isAdminNavItemActive("/admin/newsletter", ADMIN_PATHS.newsletter),
+    ).toBe(true);
+    expect(
+      isAdminNavItemActive("/admin/newsletter/123", ADMIN_PATHS.newsletter),
+    ).toBe(true);
     expect(isAdminNavItemActive("/admin/bookings", ADMIN_PATHS.bookings)).toBe(
       true,
     );

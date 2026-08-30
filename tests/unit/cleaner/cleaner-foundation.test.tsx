@@ -6,20 +6,38 @@ import { CleanerShell } from "@/components/cleaner/cleaner-shell";
 import { CleanerErrorState } from "@/components/cleaner/cleaner-states";
 import {
   CLEANER_MAIN_CONTENT_ID,
-  CLEANER_PATHS,
   cleanerErrorCopy,
   cleanerNavbarCopy,
   cleanerShellCopy,
 } from "@/config/cleaner";
+import { getCleanerNavItems } from "@/config/cleaner-nav";
+
+const { useActivePathname } = vi.hoisted(() => ({
+  useActivePathname: vi.fn((): string => "/cleaner/dashboard"),
+}));
 
 vi.mock("next/navigation", () => ({
-  usePathname: (): string => "/cleaner",
+  usePathname: (): string => useActivePathname(),
+}));
+
+vi.mock("@/components/layout/navbar/use-active-pathname", () => ({
+  useActivePathname,
 }));
 
 const shellIdentity = {
   email: "mia@neatly.example",
   name: "Mia Cleaner",
 };
+
+const forbiddenNavLabels = [
+  "Earnings",
+  "Reviews",
+  "Services",
+  "Apply for Service",
+  "Customers",
+  "Cleaners",
+  "Quotes",
+];
 
 describe("cleaner shell chrome", (): void => {
   it("renders header, sidebar, and landmarks without invented job data", (): void => {
@@ -41,22 +59,37 @@ describe("cleaner shell chrome", (): void => {
     expect(
       screen.getByRole("main", { name: cleanerShellCopy.mainLabel }),
     ).toHaveAttribute("id", CLEANER_MAIN_CONTENT_ID);
+
+    for (const item of getCleanerNavItems()) {
+      const links = screen.getAllByRole("link", { name: item.label });
+      expect(links.length).toBeGreaterThan(0);
+
+      const firstLink = links[0];
+
+      if (firstLink === undefined) {
+        throw new Error(`Expected a ${item.label} navigation link.`);
+      }
+
+      expect(firstLink).toHaveAttribute("href", item.href);
+    }
+
+    const dashboardLinks = screen.getAllByRole("link", { name: "Dashboard" });
     expect(
-      screen.getAllByRole("link", { name: "Overview" })[0],
-    ).toHaveAttribute("href", CLEANER_PATHS.home);
-    expect(screen.getAllByRole("link", { name: "Jobs" })[0]).toHaveAttribute(
-      "href",
-      CLEANER_PATHS.jobs,
-    );
+      dashboardLinks.some(
+        (link) => link.getAttribute("aria-current") === "page",
+      ),
+    ).toBe(true);
     expect(
-      screen.getAllByRole("link", { name: "Schedule" })[0],
-    ).toHaveAttribute("href", CLEANER_PATHS.schedule);
-    expect(
-      screen.getAllByRole("link", { name: "Availability" })[0],
-    ).toHaveAttribute("href", CLEANER_PATHS.availability);
-    expect(
-      screen.queryByRole("link", { name: "Earnings" }),
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("button", { name: cleanerShellCopy.logoutLabel })
+        .length,
+    ).toBeGreaterThan(0);
+
+    for (const label of forbiddenNavLabels) {
+      expect(
+        screen.queryByRole("link", { name: label }),
+      ).not.toBeInTheDocument();
+    }
+
     expect(
       screen.getByRole("button", { name: cleanerNavbarCopy.menuOpenLabel }),
     ).toBeInTheDocument();

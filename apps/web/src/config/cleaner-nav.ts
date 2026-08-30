@@ -1,94 +1,115 @@
 import { CLEANER_HOME_PATH, CLEANER_PATHS } from "@/config/cleaner";
 
-export type CleanerNavGroup = "workspace" | "activity" | "account";
+export type CleanerNavGroupId = "overview" | "work" | "account" | "support";
+
+export type CleanerNavIconName =
+  | "availability"
+  | "dashboard"
+  | "help"
+  | "jobs"
+  | "notifications"
+  | "profile"
+  | "schedule"
+  | "settings";
 
 export interface CleanerNavItem {
-  available: boolean;
-  group: CleanerNavGroup;
   href: string;
+  icon: CleanerNavIconName;
   label: string;
 }
 
-export const CLEANER_NAV_GROUP_LABELS: Record<CleanerNavGroup, string> = {
+export interface CleanerNavGroup {
+  id: CleanerNavGroupId;
+  items: readonly CleanerNavItem[];
+  label: string;
+}
+
+export const CLEANER_NAV_GROUP_LABELS: Record<CleanerNavGroupId, string> = {
   account: "Account",
-  activity: "Activity",
-  workspace: "Workspace",
+  overview: "Overview",
+  support: "Support",
+  work: "Work",
 };
 
-export const cleanerAppNavigation: readonly CleanerNavItem[] = [
+export const cleanerNavigation: readonly CleanerNavGroup[] = [
   {
-    available: true,
-    group: "workspace",
-    href: CLEANER_PATHS.home,
-    label: "Overview",
+    id: "overview",
+    items: [
+      {
+        href: CLEANER_PATHS.dashboard,
+        icon: "dashboard",
+        label: "Dashboard",
+      },
+    ],
+    label: CLEANER_NAV_GROUP_LABELS.overview,
   },
   {
-    available: true,
-    group: "workspace",
-    href: CLEANER_PATHS.jobs,
-    label: "Jobs",
+    id: "work",
+    items: [
+      {
+        href: CLEANER_PATHS.jobs,
+        icon: "jobs",
+        label: "Jobs",
+      },
+      {
+        href: CLEANER_PATHS.schedule,
+        icon: "schedule",
+        label: "Schedule",
+      },
+      {
+        href: CLEANER_PATHS.availability,
+        icon: "availability",
+        label: "Availability",
+      },
+    ],
+    label: CLEANER_NAV_GROUP_LABELS.work,
   },
   {
-    available: true,
-    group: "workspace",
-    href: CLEANER_PATHS.schedule,
-    label: "Schedule",
+    id: "account",
+    items: [
+      {
+        href: CLEANER_PATHS.notifications,
+        icon: "notifications",
+        label: "Notifications",
+      },
+      {
+        href: CLEANER_PATHS.profile,
+        icon: "profile",
+        label: "Profile",
+      },
+      {
+        href: CLEANER_PATHS.settings,
+        icon: "settings",
+        label: "Settings",
+      },
+    ],
+    label: CLEANER_NAV_GROUP_LABELS.account,
   },
   {
-    available: true,
-    group: "workspace",
-    href: CLEANER_PATHS.availability,
-    label: "Availability",
-  },
-  {
-    available: false,
-    group: "workspace",
-    href: CLEANER_PATHS.earnings,
-    label: "Earnings",
-  },
-  {
-    available: false,
-    group: "activity",
-    href: CLEANER_PATHS.reviews,
-    label: "Reviews",
-  },
-  {
-    available: false,
-    group: "activity",
-    href: CLEANER_PATHS.notifications,
-    label: "Notifications",
-  },
-  {
-    available: false,
-    group: "account",
-    href: CLEANER_PATHS.profile,
-    label: "Profile",
-  },
-  {
-    available: false,
-    group: "account",
-    href: CLEANER_PATHS.settings,
-    label: "Settings",
-  },
-  {
-    available: false,
-    group: "account",
-    href: CLEANER_PATHS.help,
-    label: "Help",
+    id: "support",
+    items: [
+      {
+        href: CLEANER_PATHS.help,
+        icon: "help",
+        label: "Help & Support",
+      },
+    ],
+    label: CLEANER_NAV_GROUP_LABELS.support,
   },
 ] as const;
 
+export const cleanerAppNavigation: readonly CleanerNavItem[] =
+  cleanerNavigation.flatMap((group) => group.items);
+
 export const cleanerAccountMenuItems: readonly CleanerNavItem[] = [
   {
-    available: false,
-    group: "account",
     href: CLEANER_PATHS.profile,
+    icon: "profile",
     label: "Profile",
   },
   {
-    available: false,
-    group: "account",
     href: CLEANER_PATHS.settings,
+    icon: "settings",
     label: "Settings",
   },
 ] as const;
@@ -98,27 +119,15 @@ export function getCleanerNavItems(): readonly CleanerNavItem[] {
 }
 
 export function getVisibleCleanerNavItems(): readonly CleanerNavItem[] {
-  return cleanerAppNavigation.filter((item) => item.available);
+  return cleanerAppNavigation;
 }
 
-export function getVisibleCleanerNavGroups(): readonly {
-  id: CleanerNavGroup;
-  items: readonly CleanerNavItem[];
-  label: string;
-}[] {
-  const order: readonly CleanerNavGroup[] = [
-    "workspace",
-    "activity",
-    "account",
-  ];
+export function getVisibleCleanerNavGroups(): readonly CleanerNavGroup[] {
+  return cleanerNavigation;
+}
 
-  return order
-    .map((id) => ({
-      id,
-      items: getVisibleCleanerNavItems().filter((item) => item.group === id),
-      label: CLEANER_NAV_GROUP_LABELS[id],
-    }))
-    .filter((group) => group.items.length > 0);
+export function isCleanerDashboardPath(pathname: string): boolean {
+  return pathname === CLEANER_HOME_PATH || pathname === CLEANER_PATHS.dashboard;
 }
 
 export function isCleanerNavItemActive(
@@ -129,8 +138,8 @@ export function isCleanerNavItemActive(
     return false;
   }
 
-  if (href === CLEANER_HOME_PATH) {
-    return pathname === CLEANER_HOME_PATH;
+  if (href === CLEANER_PATHS.dashboard || href === CLEANER_HOME_PATH) {
+    return isCleanerDashboardPath(pathname);
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);

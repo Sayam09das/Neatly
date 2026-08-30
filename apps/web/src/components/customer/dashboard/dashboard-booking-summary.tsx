@@ -31,6 +31,12 @@ export function DashboardBookingSummary({
       {schedule === null ? null : (
         <p className="mt-2 text-body-small text-muted-foreground">{schedule}</p>
       )}
+      {booking.serviceAddress === null ||
+      booking.serviceAddress === "" ? null : (
+        <p className="mt-2 text-body-small text-muted-foreground">
+          {booking.serviceAddress}
+        </p>
+      )}
       <p className="mt-3">
         <Link
           className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

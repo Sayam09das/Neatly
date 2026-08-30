@@ -17,7 +17,12 @@ import { cn } from "@neatly/utils";
 import Link from "next/link";
 import { type ReactElement, useEffect, useState } from "react";
 import { getLenis } from "@/animations/lenis/smooth-scroll";
-import { CustomerMenuIcon } from "@/components/customer/customer-icons";
+import { CustomerBrandLink } from "@/components/customer/customer-brand-link";
+import {
+  CustomerLogoutIcon,
+  CustomerMenuIcon,
+} from "@/components/customer/customer-icons";
+import { CustomerSidebarNavLink } from "@/components/customer/customer-sidebar-nav-link";
 import { BrandLink } from "@/components/layout/navbar/brand-link";
 import { AUTH_ADMIN_HOME_PATH } from "@/config/auth";
 import {
@@ -28,6 +33,7 @@ import {
 } from "@/config/customer";
 import {
   customerAccountMenuItems,
+  getVisibleCustomerNavGroups,
   isCustomerNavItemActive,
 } from "@/config/customer-nav";
 import { navbarCta } from "@/config/landing";
@@ -55,6 +61,7 @@ export function CustomerMobileNav({
 }: CustomerMobileNavProps): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const isPublic = tone === "public";
+  const groups = getVisibleCustomerNavGroups();
 
   useEffect((): (() => void) => {
     return (): void => {
@@ -101,7 +108,7 @@ export function CustomerMobileNav({
           closeLabel={customerNavbarCopy.menuCloseLabel}
           data-lenis-prevent=""
           id={CUSTOMER_MOBILE_NAV_ID}
-          side="right"
+          side={isPublic ? "right" : "left"}
         >
           <SheetHeader>
             <SheetTitle className="sr-only">
@@ -111,46 +118,78 @@ export function CustomerMobileNav({
               {customerNavbarCopy.menuDescription}
             </SheetDescription>
             <SheetClose asChild>
-              <BrandLink
-                className={cn(
-                  !isPublic &&
-                    "text-foreground focus-visible:ring-offset-background",
-                )}
-              />
+              {isPublic ? (
+                <BrandLink
+                  className={cn(
+                    !isPublic &&
+                      "text-foreground focus-visible:ring-offset-background",
+                  )}
+                />
+              ) : (
+                <CustomerBrandLink />
+              )}
             </SheetClose>
+            {isPublic ? null : (
+              <p className="text-caption text-muted-foreground">
+                {customerShellCopy.workspaceLabel}
+              </p>
+            )}
           </SheetHeader>
-          <nav aria-label={customerNavbarCopy.primaryNavigationLabel}>
-            <ul className="flex flex-col gap-1">
-              {presentation.primaryLinks.map((item) => {
-                const isActive = isCustomerNavItemActive(pathname, item.href);
+          {isPublic ? (
+            <nav aria-label={customerNavbarCopy.primaryNavigationLabel}>
+              <ul className="flex flex-col gap-1">
+                {presentation.primaryLinks.map((item) => {
+                  const isActive = isCustomerNavItemActive(pathname, item.href);
 
-                return (
-                  <li key={item.href}>
-                    <SheetClose asChild>
-                      <Link
-                        aria-current={isActive ? "page" : undefined}
-                        className={cn(
-                          "flex min-h-touch items-center rounded-md px-3 text-body font-medium",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          "motion-safe:transition-colors motion-safe:duration-fast",
-                          isPublic
-                            ? isActive
+                  return (
+                    <li key={item.href}>
+                      <SheetClose asChild>
+                        <Link
+                          aria-current={isActive ? "page" : undefined}
+                          className={cn(
+                            "flex min-h-touch items-center rounded-md px-3 text-body font-medium",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            "motion-safe:transition-colors motion-safe:duration-fast",
+                            isActive
                               ? "bg-secondary-foreground/10 text-primary"
-                              : "text-secondary-foreground/90 hover:bg-secondary-foreground/10"
-                            : isActive
-                              ? "bg-muted text-foreground"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        )}
-                        href={item.href}
-                      >
-                        {item.label}
-                      </Link>
-                    </SheetClose>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+                              : "text-secondary-foreground/90 hover:bg-secondary-foreground/10",
+                          )}
+                          href={item.href}
+                        >
+                          {item.label}
+                        </Link>
+                      </SheetClose>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          ) : (
+            <nav aria-label={customerNavbarCopy.primaryNavigationLabel}>
+              {groups.map((group) => (
+                <div className="mt-4 first:mt-0" key={group.id}>
+                  <p className="px-3 text-caption font-medium text-muted-foreground uppercase tracking-wide">
+                    {group.label}
+                  </p>
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {group.items.map((item) => (
+                      <li key={item.href}>
+                        <SheetClose asChild>
+                          <CustomerSidebarNavLink
+                            isActive={isCustomerNavItemActive(
+                              pathname,
+                              item.href,
+                            )}
+                            item={item}
+                          />
+                        </SheetClose>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </nav>
+          )}
           {identity === null ? null : (
             <>
               <Separator
@@ -168,11 +207,13 @@ export function CustomerMobileNav({
                       : "text-muted-foreground",
                   )}
                 >
-                  {identity.email}
+                  {isPublic ? identity.email : customerNavbarCopy.roleLabel}
                 </p>
               </div>
               {presentation.showAdmin ||
-              (presentation.mode === "customer" && showAccountLinks) ? (
+              (presentation.mode === "customer" &&
+                showAccountLinks &&
+                isPublic) ? (
                 <ul className="flex flex-col gap-1">
                   {presentation.showAdmin ? (
                     <li>
@@ -186,7 +227,9 @@ export function CustomerMobileNav({
                       </SheetClose>
                     </li>
                   ) : null}
-                  {presentation.mode === "customer" && showAccountLinks
+                  {presentation.mode === "customer" &&
+                  showAccountLinks &&
+                  isPublic
                     ? customerAccountMenuItems.map((item) => (
                         <li key={item.href}>
                           <SheetClose asChild>
@@ -246,6 +289,7 @@ export function CustomerMobileNav({
                 type="button"
                 variant="ghost"
               >
+                {isPublic ? null : <CustomerLogoutIcon />}
                 {customerShellCopy.logoutLabel}
               </Button>
             )}

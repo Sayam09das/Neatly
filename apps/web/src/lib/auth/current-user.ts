@@ -7,7 +7,7 @@ import {
   AUTH_CUSTOMER_HOME_PATH,
   AUTH_SESSION_COOKIE_NAME,
 } from "@/config/auth";
-import { CLEANER_LOGIN_PATH } from "@/config/cleaner";
+import { CLEANER_HOME_PATH, CLEANER_LOGIN_PATH } from "@/config/cleaner";
 import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import { isAdminOperatorRole, requireRole } from "@/lib/auth/authorization";
 import { createClearedSessionCookie } from "@/lib/auth/cookies";
@@ -79,6 +79,12 @@ export async function requireCustomerPage(): Promise<AuthUser> {
 
   if (isAdminOperatorRole(user.role)) {
     redirect(AUTH_ADMIN_HOME_PATH);
+  }
+
+  const cleanerSession = await loadCleanerSession(await readSessionToken());
+
+  if (cleanerSession.ok) {
+    redirect(CLEANER_HOME_PATH);
   }
 
   return user;

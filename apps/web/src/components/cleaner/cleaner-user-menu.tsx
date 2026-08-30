@@ -9,8 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@neatly/ui";
+import Link from "next/link";
 import type { ReactElement } from "react";
 import { cleanerNavbarCopy, cleanerShellCopy } from "@/config/cleaner";
+import { cleanerAccountMenuItems } from "@/config/cleaner-nav";
 import {
   type CleanerNavbarIdentity,
   cleanerFirstName,
@@ -59,6 +61,12 @@ export function CleanerUserMenu({
             {cleanerNavbarCopy.roleLabel}
           </span>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {cleanerAccountMenuItems.map((item) => (
+          <DropdownMenuItem asChild key={item.href}>
+            <Link href={item.href}>{item.label}</Link>
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={(): void => {

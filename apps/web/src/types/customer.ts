@@ -105,6 +105,47 @@ export interface CustomerBookingList {
 
 export type CustomerBookingWindow = "upcoming" | "past";
 
+export type CustomerQuoteStatus =
+  | "NEW"
+  | "REVIEWING"
+  | "CONTACTED"
+  | "QUOTED"
+  | "CONVERTED"
+  | "DECLINED"
+  | "CLOSED";
+
+export interface CustomerQuoteView {
+  additionalNotes: string | null;
+  approximateSize: string;
+  bathrooms: number | null;
+  bedrooms: number | null;
+  createdAt: string;
+  email: string;
+  frequency: CustomerQuoteFrequency;
+  fullName: string;
+  id: string;
+  phone: string;
+  preferredDate: string;
+  preferredTime: string;
+  propertyType: CustomerQuotePropertyType;
+  serviceAddress: string;
+  serviceId: string | null;
+  serviceType: CustomerQuoteServiceType;
+  status: CustomerQuoteStatus;
+}
+
+export interface CustomerQuotePagination {
+  limit: number;
+  page: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface CustomerQuoteList {
+  items: CustomerQuoteView[];
+  pagination: CustomerQuotePagination;
+}
+
 export interface CustomerNotification {
   createdAt: string;
   id: string;

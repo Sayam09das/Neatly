@@ -30,7 +30,7 @@ export function CleanerHeader({
     >
       <div
         className={cn(
-          "flex w-full min-w-0 items-center justify-between gap-3 px-gutter lg:pl-[calc(16rem+1.5rem)]",
+          "flex w-full min-w-0 items-center justify-between gap-3 px-gutter",
           CLEANER_HEADER_HEIGHT_CLASS,
         )}
       >

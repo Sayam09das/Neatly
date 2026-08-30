@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { CustomerAppChrome } from "@/components/customer/customer-app-chrome";
 import { CustomerNavbar } from "@/components/customer/customer-navbar";
+import { CustomerNavigationProvider } from "@/components/customer/customer-navigation-provider";
 import {
   CUSTOMER_PATHS,
   customerNavbarCopy,
@@ -32,32 +33,44 @@ const identity = {
 describe("CustomerAppChrome", (): void => {
   it("marks the exact dashboard route and not nested bookings", (): void => {
     useActivePathname.mockReturnValue("/dashboard");
-    render(<CustomerAppChrome identity={identity} />);
+    render(
+      <CustomerNavigationProvider>
+        <CustomerAppChrome identity={identity} />
+      </CustomerNavigationProvider>,
+    );
 
     expect(
-      screen.getAllByRole("link", { name: "Overview" })[0],
+      screen.getAllByRole("link", { name: "Dashboard" })[0],
     ).toHaveAttribute("aria-current", "page");
     expect(
-      screen.getAllByRole("link", { name: "Bookings" })[0],
+      screen.getAllByRole("link", { name: "My Bookings" })[0],
     ).not.toHaveAttribute("aria-current");
   });
 
   it("marks bookings without activating overview", (): void => {
     useActivePathname.mockReturnValue("/dashboard/bookings");
-    render(<CustomerAppChrome identity={identity} />);
+    render(
+      <CustomerNavigationProvider>
+        <CustomerAppChrome identity={identity} />
+      </CustomerNavigationProvider>,
+    );
 
     expect(
-      screen.getAllByRole("link", { name: "Bookings" })[0],
+      screen.getAllByRole("link", { name: "My Bookings" })[0],
     ).toHaveAttribute("aria-current", "page");
     expect(
-      screen.getAllByRole("link", { name: "Overview" })[0],
+      screen.getAllByRole("link", { name: "Dashboard" })[0],
     ).not.toHaveAttribute("aria-current");
   });
 
   it("opens the account menu with real identity and existing logout", async (): Promise<void> => {
     useActivePathname.mockReturnValue("/dashboard");
     const user = userEvent.setup();
-    render(<CustomerAppChrome identity={identity} />);
+    render(
+      <CustomerNavigationProvider>
+        <CustomerAppChrome identity={identity} />
+      </CustomerNavigationProvider>,
+    );
 
     await user.click(
       screen.getByRole("button", { name: customerNavbarCopy.accountMenuLabel }),
@@ -84,7 +97,11 @@ describe("CustomerAppChrome", (): void => {
 
   it("does not invent a notification count", (): void => {
     useActivePathname.mockReturnValue("/dashboard");
-    render(<CustomerAppChrome identity={identity} />);
+    render(
+      <CustomerNavigationProvider>
+        <CustomerAppChrome identity={identity} />
+      </CustomerNavigationProvider>,
+    );
 
     expect(screen.queryByText("3")).not.toBeInTheDocument();
     const notificationLinks = screen.getAllByRole("link", {
@@ -111,11 +128,10 @@ describe("CustomerNavbar", (): void => {
 
     await user.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
-      "href",
-      CUSTOMER_PATHS.dashboard,
-    );
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole("link", { name: "Dashboard" }),
+    ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
 
     await user.keyboard("{Escape}");
     await waitFor((): void => {

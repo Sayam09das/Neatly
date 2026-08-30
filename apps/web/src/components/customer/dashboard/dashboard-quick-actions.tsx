@@ -12,22 +12,22 @@ export function DashboardQuickActions(): ReactElement {
       <ul className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <li>
           <Button asChild>
-            <Link href={CUSTOMER_PATHS.booking}>
-              {customerDashboardCopy.bookAction}
+            <Link href={CUSTOMER_PATHS.dashboardServices}>
+              {customerDashboardCopy.servicesAction}
             </Link>
           </Button>
         </li>
         <li>
           <Button asChild variant="outline">
-            <Link href={CUSTOMER_PATHS.quote}>
+            <Link href={CUSTOMER_PATHS.quotes}>
               {customerDashboardCopy.quoteAction}
             </Link>
           </Button>
         </li>
         <li>
-          <Button asChild variant="ghost">
-            <Link href={CUSTOMER_PATHS.dashboardServices}>
-              {customerDashboardCopy.servicesAction}
+          <Button asChild variant="outline">
+            <Link href={CUSTOMER_PATHS.bookings}>
+              {customerDashboardCopy.bookAction}
             </Link>
           </Button>
         </li>

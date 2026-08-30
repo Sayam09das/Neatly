@@ -18,6 +18,7 @@ export const CLEANER_JOBS_WINDOW_INPUT_ID = "cleaner-jobs-window";
 
 export const CLEANER_PATHS = {
   availability: `${CLEANER_HOME_PATH}/availability`,
+  dashboard: `${CLEANER_HOME_PATH}/dashboard`,
   earnings: `${CLEANER_HOME_PATH}/earnings`,
   help: `${CLEANER_HOME_PATH}/help`,
   home: CLEANER_HOME_PATH,
@@ -28,6 +29,9 @@ export const CLEANER_PATHS = {
   schedule: `${CLEANER_HOME_PATH}/schedule`,
   settings: `${CLEANER_HOME_PATH}/settings`,
 } as const;
+
+export const CLEANER_SIDEBAR_EXPANDED_WIDTH = "16rem";
+export const CLEANER_SIDEBAR_COLLAPSED_WIDTH = "4rem";
 
 export const CLEANER_API_PREFIX = "/api/v1/cleaner";
 
@@ -97,6 +101,28 @@ export const cleanerSurfaceCopy = {
     heading: "Schedule",
     title: "Schedule",
   },
+  notifications: {
+    description:
+      "Job assignments, schedule changes, and updates will appear here.",
+    heading: "Notifications",
+    title: "Notifications",
+  },
+  profile: {
+    description: "Your cleaner account details will appear here.",
+    heading: "Profile",
+    title: "Profile",
+  },
+  settings: {
+    description: "Account and workspace preferences will appear here.",
+    heading: "Settings",
+    title: "Settings",
+  },
+  help: {
+    description:
+      "Find answers about jobs, availability, and your cleaner account.",
+    heading: "Help & Support",
+    title: "Help & Support",
+  },
 } as const;
 
 export const cleanerShellCopy = {
@@ -118,7 +144,14 @@ export const cleanerNavbarCopy = {
   notificationsEmpty: "You have no notifications yet.",
   notificationsLabel: "Notifications",
   primaryNavigationLabel: "Primary",
+  profileItem: "Profile",
   roleLabel: "Cleaner",
+  settingsItem: "Settings",
+} as const;
+
+export const cleanerSidebarCopy = {
+  collapseLabel: "Collapse sidebar",
+  expandLabel: "Expand sidebar",
 } as const;
 
 export const cleanerDashboardCopy = {

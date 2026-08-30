@@ -15,7 +15,10 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 import { getLenis } from "@/animations/lenis/smooth-scroll";
 import { CleanerBrandLink } from "@/components/cleaner/cleaner-brand-link";
-import { CleanerMenuIcon } from "@/components/cleaner/cleaner-icons";
+import {
+  CleanerLogoutIcon,
+  CleanerMenuIcon,
+} from "@/components/cleaner/cleaner-icons";
 import { CleanerNavLink } from "@/components/cleaner/cleaner-nav-link";
 import {
   CLEANER_MOBILE_NAV_ID,
@@ -108,9 +111,8 @@ export function CleanerMobileNav({
                     <li key={item.href}>
                       <SheetClose asChild>
                         <CleanerNavLink
-                          href={item.href}
                           isActive={isCleanerNavItemActive(pathname, item.href)}
-                          label={item.label}
+                          item={item}
                         />
                       </SheetClose>
                     </li>
@@ -138,6 +140,7 @@ export function CleanerMobileNav({
               type="button"
               variant="ghost"
             >
+              <CleanerLogoutIcon />
               {cleanerShellCopy.logoutLabel}
             </Button>
           </SheetFooter>

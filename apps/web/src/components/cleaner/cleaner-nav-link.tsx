@@ -1,36 +1,98 @@
+"use client";
+
+import { Tooltip, TooltipContent, TooltipTrigger } from "@neatly/ui";
 import { cn } from "@neatly/utils";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import type { ReactElement } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  forwardRef,
+  type ReactElement,
+  type Ref,
+} from "react";
+import { getMotionTransition } from "@/animations/config/motion";
+import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
+import { cleanerNavIcons } from "@/components/cleaner/cleaner-icons";
+import type { CleanerNavItem } from "@/config/cleaner-nav";
 
-interface CleanerNavLinkProps {
-  href: string;
+type CleanerNavLinkProps = Omit<
+  ComponentPropsWithoutRef<typeof Link>,
+  "href"
+> & {
+  collapsed?: boolean;
   isActive: boolean;
-  label: string;
+  item: CleanerNavItem;
   onNavigate?: () => void;
-}
+};
 
-export function CleanerNavLink({
-  href,
-  isActive,
-  label,
-  onNavigate,
-}: CleanerNavLinkProps): ReactElement {
-  return (
+export const CleanerNavLink = forwardRef<
+  HTMLAnchorElement,
+  CleanerNavLinkProps
+>(function CleanerNavLink(
+  {
+    collapsed = false,
+    isActive,
+    item,
+    onClick,
+    onNavigate,
+    ...props
+  }: CleanerNavLinkProps,
+  ref: Ref<HTMLAnchorElement>,
+): ReactElement {
+  const Icon = cleanerNavIcons[item.icon];
+  const prefersReducedMotion = useReducedMotion();
+  const transition = getMotionTransition(prefersReducedMotion);
+  const link = (
     <Link
+      {...props}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "inline-flex min-h-touch w-full items-center justify-start rounded-sm px-3 text-body-small font-medium",
+        "flex min-h-touch items-center gap-3 rounded-md px-3 text-body-small font-medium",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "motion-safe:transition-colors motion-safe:duration-fast",
+        collapsed && "justify-center px-0",
         isActive
-          ? "bg-muted text-foreground"
-          : "text-muted-foreground hover:text-foreground",
+          ? cn(
+              "bg-accent text-accent-foreground",
+              collapsed ? undefined : "border-l-2 border-primary",
+            )
+          : cn(
+              "text-muted-foreground hover:bg-muted hover:text-foreground",
+              collapsed ? undefined : "border-l-2 border-transparent",
+            ),
+        props.className,
       )}
-      href={href}
-      onClick={onNavigate}
+      href={item.href}
+      onClick={(event): void => {
+        onNavigate?.();
+        onClick?.(event);
+      }}
+      ref={ref}
     >
-      {label}
+      <Icon className="size-5 shrink-0" />
+      <motion.span
+        animate={{
+          opacity: collapsed ? 0 : 1,
+          x: collapsed ? -8 : 0,
+        }}
+        className={cn("truncate", collapsed && "sr-only")}
+        initial={false}
+        transition={transition}
+      >
+        {item.label}
+      </motion.span>
     </Link>
   );
-}
+
+  if (!collapsed) {
+    return link;
+  }
+
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right">{item.label}</TooltipContent>
+    </Tooltip>
+  );
+});

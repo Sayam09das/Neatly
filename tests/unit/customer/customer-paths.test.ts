@@ -24,6 +24,7 @@ describe("customer paths", (): void => {
     expect(customerPaths).toEqual(CUSTOMER_PATHS);
     expect(CUSTOMER_PATHS.dashboard).toBe("/dashboard");
     expect(CUSTOMER_PATHS.bookings).toBe("/dashboard/bookings");
+    expect(CUSTOMER_PATHS.quotes).toBe("/dashboard/quotes");
     expect(CUSTOMER_PATHS.profile).toBe("/dashboard/profile");
     expect(CUSTOMER_PATHS.settings).toBe("/dashboard/settings");
     expect(CUSTOMER_PATHS.notifications).toBe("/dashboard/notifications");
@@ -58,12 +59,19 @@ describe("customer navigation", (): void => {
     expect(getCustomerNavItems().map((item) => item.href)).toEqual([
       CUSTOMER_PATHS.dashboard,
       CUSTOMER_PATHS.dashboardServices,
+      CUSTOMER_PATHS.quotes,
       CUSTOMER_PATHS.bookings,
-      CUSTOMER_PATHS.reviews,
       CUSTOMER_PATHS.notifications,
+      CUSTOMER_PATHS.profile,
+      CUSTOMER_PATHS.settings,
       CUSTOMER_PATHS.help,
     ]);
-    expect(customerNavigation.some((item) => /\d/.test(item.label))).toBe(
+    expect(
+      customerNavigation
+        .flatMap((group) => group.items)
+        .some((item) => /\d/.test(item.label)),
+    ).toBe(false);
+    expect(getCustomerNavItems().some((item) => item.label === "Reviews")).toBe(
       false,
     );
     expect(customerHeaderNavigation.map((item) => item.href)).toEqual([
@@ -94,12 +102,15 @@ describe("customer navigation", (): void => {
         CUSTOMER_PATHS.bookings,
       ),
     ).toBe(true);
-    expect(getCustomerPageTitle("/dashboard")).toBe("Overview");
+    expect(getCustomerPageTitle("/dashboard")).toBe("Dashboard");
     expect(getCustomerPageTitle("/dashboard/services")).toBe("Services");
     expect(
       getCustomerPageTitle("/dashboard/services/deep-cleaning/apply"),
     ).toBe("Services");
-    expect(getCustomerPageTitle("/dashboard/bookings/123")).toBe("Bookings");
+    expect(getCustomerPageTitle("/dashboard/bookings/123")).toBe("My Bookings");
+    expect(getCustomerPageTitle("/dashboard/quotes")).toBe("My Quotes");
+    expect(getCustomerPageTitle("/dashboard/reviews")).toBe("Reviews");
+    expect(getCustomerPageTitle("/dashboard/help")).toBe("Help & Support");
     expect(isCustomerNavItemActive(null, CUSTOMER_PATHS.dashboard)).toBe(false);
   });
 });

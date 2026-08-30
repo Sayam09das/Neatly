@@ -1,6 +1,7 @@
+import Link from "next/link";
 import type { ReactElement } from "react";
 import { DashboardBookingSummary } from "@/components/customer/dashboard/dashboard-booking-summary";
-import { customerDashboardCopy } from "@/config/customer";
+import { CUSTOMER_PATHS, customerDashboardCopy } from "@/config/customer";
 import type { CustomerBookingView } from "@/types/customer";
 
 interface DashboardRecentActivityProps {
@@ -11,10 +12,18 @@ export function DashboardRecentActivity({
   bookings,
 }: DashboardRecentActivityProps): ReactElement {
   return (
-    <section className="max-w-2xl">
-      <h2 className="text-h2 text-foreground tracking-tight">
-        {customerDashboardCopy.recentHeading}
-      </h2>
+    <section className="min-w-0">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 className="text-h2 text-foreground tracking-tight">
+          {customerDashboardCopy.recentHeading}
+        </h2>
+        <Link
+          className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          href={CUSTOMER_PATHS.bookings}
+        >
+          {customerDashboardCopy.recentViewAll}
+        </Link>
+      </div>
       {bookings.length === 0 ? (
         <p className="mt-3 text-body text-muted-foreground">
           {customerDashboardCopy.recentEmpty}

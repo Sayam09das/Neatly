@@ -20,6 +20,7 @@ import { assertCleanerRequestPath } from "@/lib/cleaner/request";
 describe("cleaner paths", (): void => {
   it("centralizes cleaner routes without identity query params", (): void => {
     expect(CLEANER_PATHS.home).toBe(CLEANER_HOME_PATH);
+    expect(CLEANER_PATHS.dashboard).toBe("/cleaner/dashboard");
     expect(CLEANER_PATHS.jobs).toBe("/cleaner/jobs");
     expect(CLEANER_PATHS.schedule).toBe("/cleaner/schedule");
     expect(CLEANER_PATHS.availability).toBe("/cleaner/availability");
@@ -54,14 +55,12 @@ describe("cleaner paths", (): void => {
 });
 
 describe("cleaner navigation config", (): void => {
-  it("covers reserved sections without dummy labels", (): void => {
+  it("covers cleaner workspace sections without dummy labels or reserved modules", (): void => {
     expect(getCleanerNavItems().map((item) => item.href)).toEqual([
-      CLEANER_PATHS.home,
+      CLEANER_PATHS.dashboard,
       CLEANER_PATHS.jobs,
       CLEANER_PATHS.schedule,
       CLEANER_PATHS.availability,
-      CLEANER_PATHS.earnings,
-      CLEANER_PATHS.reviews,
       CLEANER_PATHS.notifications,
       CLEANER_PATHS.profile,
       CLEANER_PATHS.settings,
@@ -70,20 +69,39 @@ describe("cleaner navigation config", (): void => {
     expect(cleanerAppNavigation.some((item) => /\d/.test(item.label))).toBe(
       false,
     );
+    expect(cleanerAppNavigation.map((item) => item.label)).not.toContain(
+      "Earnings",
+    );
+    expect(cleanerAppNavigation.map((item) => item.label)).not.toContain(
+      "Reviews",
+    );
     expect(cleanerAccountMenuItems.map((item) => item.href)).toEqual([
       CLEANER_PATHS.profile,
       CLEANER_PATHS.settings,
     ]);
-    expect(isCleanerNavItemActive("/cleaner", CLEANER_PATHS.home)).toBe(true);
-    expect(isCleanerNavItemActive("/cleaner/jobs", CLEANER_PATHS.home)).toBe(
-      false,
+    expect(isCleanerNavItemActive("/cleaner", CLEANER_PATHS.dashboard)).toBe(
+      true,
     );
+    expect(
+      isCleanerNavItemActive("/cleaner/dashboard", CLEANER_PATHS.dashboard),
+    ).toBe(true);
+    expect(
+      isCleanerNavItemActive("/cleaner/jobs", CLEANER_PATHS.dashboard),
+    ).toBe(false);
+    expect(
+      isCleanerNavItemActive("/cleaner/jobs/job_1", CLEANER_PATHS.jobs),
+    ).toBe(true);
     expect(getCleanerPageTitle("/cleaner/jobs")).toBe("Jobs");
+    expect(getCleanerPageTitle("/cleaner/dashboard")).toBe("Dashboard");
     expect(getVisibleCleanerNavItems().map((item) => item.href)).toEqual([
-      CLEANER_PATHS.home,
+      CLEANER_PATHS.dashboard,
       CLEANER_PATHS.jobs,
       CLEANER_PATHS.schedule,
       CLEANER_PATHS.availability,
+      CLEANER_PATHS.notifications,
+      CLEANER_PATHS.profile,
+      CLEANER_PATHS.settings,
+      CLEANER_PATHS.help,
     ]);
   });
 });

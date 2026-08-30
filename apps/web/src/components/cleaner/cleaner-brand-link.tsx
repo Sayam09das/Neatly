@@ -8,18 +8,20 @@ import {
   type Ref,
 } from "react";
 import { BrandMark } from "@/components/layout/navbar/brand-link";
-import { CLEANER_HOME_PATH, cleanerShellCopy } from "@/config/cleaner";
+import { CLEANER_PATHS, cleanerShellCopy } from "@/config/cleaner";
 
 type CleanerBrandLinkProps = Omit<
   ComponentPropsWithoutRef<typeof Link>,
   "href"
->;
+> & {
+  compact?: boolean;
+};
 
 export const CleanerBrandLink = forwardRef<
   HTMLAnchorElement,
   CleanerBrandLinkProps
 >(function CleanerBrandLink(
-  { className, ...props }: CleanerBrandLinkProps,
+  { className, compact = false, ...props }: CleanerBrandLinkProps,
   ref: Ref<HTMLAnchorElement>,
 ): ReactElement {
   return (
@@ -30,13 +32,14 @@ export const CleanerBrandLink = forwardRef<
         "inline-flex shrink-0 items-center gap-2 rounded-sm text-h4 text-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        compact && "justify-center",
         className,
       )}
-      href={CLEANER_HOME_PATH}
+      href={CLEANER_PATHS.dashboard}
       ref={ref}
     >
       <BrandMark />
-      <span>{APP_NAME}</span>
+      {compact ? null : <span>{APP_NAME}</span>}
     </Link>
   );
 });

@@ -15,7 +15,7 @@ import {
   customerShellCopy,
 } from "@/config/customer";
 import { requireCustomerPage } from "@/lib/auth/current-user";
-import { loadCustomerOverview } from "@/lib/customer/booking";
+import { loadCustomerDashboardWorkspace } from "@/lib/customer/dashboard";
 import { readCustomerSessionToken } from "@/lib/customer/session-token";
 import type { AuthUser } from "@/types/auth";
 import type { CustomerOverview } from "@/types/customer";
@@ -24,18 +24,31 @@ vi.mock("@/lib/auth/current-user", () => ({
   requireCustomerPage: vi.fn(),
 }));
 
-vi.mock("@/lib/customer/booking", () => ({
-  loadCustomerOverview: vi.fn(),
-}));
+vi.mock("@/lib/customer/dashboard", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/customer/dashboard")>();
+  return {
+    ...actual,
+    loadCustomerDashboardWorkspace: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/customer/session-token", () => ({
   readCustomerSessionToken: vi.fn(),
 }));
 
+const { useActivePathname } = vi.hoisted(() => ({
+  useActivePathname: vi.fn((): string => "/dashboard"),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
-  usePathname: (): string => "/dashboard",
+  usePathname: (): string => useActivePathname(),
   useRouter: (): { refresh: () => void } => ({ refresh: vi.fn() }),
+}));
+
+vi.mock("@/components/layout/navbar/use-active-pathname", () => ({
+  useActivePathname,
 }));
 
 vi.mock("@/components/customer/customer-realtime-provider", () => ({
@@ -87,19 +100,29 @@ describe("Customer application routes", (): void => {
   it("renders the overview from real session data without mock bookings", async (): Promise<void> => {
     vi.mocked(requireCustomerPage).mockResolvedValue(layoutUser);
     vi.mocked(readCustomerSessionToken).mockResolvedValue("session-token");
-    vi.mocked(loadCustomerOverview).mockResolvedValue({
-      ok: true,
+    vi.mocked(loadCustomerDashboardWorkspace).mockResolvedValue({
+      accountVerified: true,
+      notifications: {
+        data: { items: [], unreadCount: 0 },
+        status: "ready",
+      },
       overview: emptyOverview,
+      quotes: {
+        data: {
+          items: [],
+          pagination: { limit: 20, page: 1, total: 0, totalPages: 0 },
+        },
+        status: "ready",
+      },
+      unauthorized: false,
     });
 
     const view = await CustomerDashboardPage();
     render(view);
 
+    expect(screen.getByRole("heading", { name: /Ada/ })).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Welcome, Ada" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(customerDashboardCopy.nextBookingEmptyTitle),
+      screen.getByText(customerDashboardCopy.emptyHeading),
     ).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();

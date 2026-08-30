@@ -131,6 +131,15 @@ export function CustomerNotificationsEmptyState(): ReactElement {
   );
 }
 
+export function CustomerQuotesEmptyState(): ReactElement {
+  return (
+    <CustomerEmptyState
+      description={customerEmptyCopy.quotes.description}
+      title={customerEmptyCopy.quotes.title}
+    />
+  );
+}
+
 export function CustomerReviewsEmptyState(): ReactElement {
   return (
     <CustomerEmptyState

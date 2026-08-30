@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
-import { CustomerLoadingState } from "@/components/customer/customer-states";
+import { DashboardLoading } from "@/components/customer/dashboard/dashboard-loading";
 
 export default function CustomerLoading(): ReactElement {
-  return <CustomerLoadingState variant="page" />;
+  return <DashboardLoading />;
 }

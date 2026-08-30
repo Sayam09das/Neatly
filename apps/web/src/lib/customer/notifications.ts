@@ -187,6 +187,31 @@ export async function markAllCustomerNotificationsRead(): Promise<
   };
 }
 
+export type CustomerUnreadCountLoadResult =
+  | { count: number; ok: true }
+  | { ok: false; unauthorized: boolean };
+
+export async function loadCustomerUnreadCount(
+  sessionToken: string | undefined,
+): Promise<CustomerUnreadCountLoadResult> {
+  const result = await requestCustomerJson(
+    CUSTOMER_API_PATHS.notificationsUnreadCount,
+    sessionToken,
+  );
+
+  if (!result.ok) {
+    return { ok: false, unauthorized: result.unauthorized };
+  }
+
+  const parsed = unreadCountPayloadSchema.safeParse(result.data);
+
+  if (!parsed.success) {
+    return { ok: false, unauthorized: false };
+  }
+
+  return { count: parsed.data.count, ok: true };
+}
+
 export async function countUnreadCustomerNotifications(): Promise<
   JsonApiResult<{ count: number }>
 > {

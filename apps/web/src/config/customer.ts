@@ -15,6 +15,7 @@ export const CUSTOMER_PATHS = {
   notifications: "/dashboard/notifications",
   profile: "/dashboard/profile",
   quote: "/quote",
+  quotes: "/dashboard/quotes",
   reviews: "/dashboard/reviews",
   services: "/services",
   settings: "/dashboard/settings",
@@ -75,8 +76,12 @@ export const FORBIDDEN_CUSTOMER_AUTH_QUERY_KEYS = [
 
 export const CUSTOMER_HEADER_HEIGHT_CLASS = "min-h-16";
 export const CUSTOMER_MOBILE_NAV_ID = "customer-mobile-navigation";
+export const CUSTOMER_SIDEBAR_EXPANDED_WIDTH = "16rem";
+export const CUSTOMER_SIDEBAR_COLLAPSED_WIDTH = "4rem";
+export const CUSTOMER_QUOTE_REQUEST_TIMEOUT_MS = 8_000;
 
 export const customerShellCopy = {
+  brandHomeLabel: `${APP_NAME} account home`,
   brandLabel: `${APP_NAME} home`,
   brandName: APP_NAME,
   loadingLabel: "Loading",
@@ -84,6 +89,7 @@ export const customerShellCopy = {
   mainLabel: "Account content",
   navigationLabel: "Account navigation",
   skipToContent: "Skip to content",
+  workspaceLabel: "Customer",
 } as const;
 
 export const customerNavbarCopy = {
@@ -96,6 +102,12 @@ export const customerNavbarCopy = {
   menuTitle: "Menu",
   notificationsLabel: "Notifications",
   primaryNavigationLabel: "Primary",
+  roleLabel: "Customer",
+} as const;
+
+export const customerSidebarCopy = {
+  collapseLabel: "Collapse sidebar",
+  expandLabel: "Expand sidebar",
 } as const;
 
 export const customerErrorCopy = {
@@ -130,6 +142,10 @@ export const customerEmptyCopy = {
   notifications: {
     description: "Updates about your bookings will appear here.",
     title: "No notifications yet",
+  },
+  quotes: {
+    description: "Quote requests you submit will appear here.",
+    title: "No quotes yet",
   },
   reviews: {
     description:
@@ -170,13 +186,13 @@ export const customerSurfaceCopy = {
   },
   dashboard: {
     description: "A concise view of your bookings and what needs attention.",
-    heading: "Overview",
-    title: "Overview",
+    heading: "Dashboard",
+    title: "Dashboard",
   },
   help: {
     description: "Answers from published services and links for your account.",
-    heading: "Help",
-    title: "Help",
+    heading: "Help & Support",
+    title: "Help & Support",
   },
   notifications: {
     description: "Updates about your bookings will appear here.",
@@ -193,6 +209,12 @@ export const customerSurfaceCopy = {
       "Share your property details so we can prepare a quote. This is a request, not a booking.",
     heading: "Request a quote",
     title: "Request a quote",
+  },
+  quotes: {
+    description:
+      "Quote requests you have submitted. This is not a booking list.",
+    heading: "My Quotes",
+    title: "My Quotes",
   },
   reviews: {
     description: "Reviews for completed bookings will appear here.",
@@ -326,6 +348,26 @@ export const customerQuoteFrequencyLabels = {
   WEEKLY: "Weekly",
 } as const;
 
+export const customerQuoteStatusLabels = {
+  CLOSED: "Closed",
+  CONTACTED: "Contacted",
+  CONVERTED: "Converted",
+  DECLINED: "Declined",
+  NEW: "New",
+  QUOTED: "Quoted",
+  REVIEWING: "In review",
+} as const;
+
+export const customerQuotesCopy = {
+  description: "Quote requests you have submitted. This is not a booking list.",
+  heading: "My Quotes",
+  loadError: "We could not load your quotes. Please try again.",
+  preferredDate: "Preferred date",
+  referenceLabel: "Quote reference",
+  requestAction: "Request a quote",
+  tableCaption: "Your quote requests",
+} as const;
+
 export const QUOTE_APPROXIMATE_SIZES = [
   "Under 1,000 sq ft",
   "1,000-2,000 sq ft",
@@ -396,25 +438,59 @@ export const customerDashboardCopy = {
     "These bookings are waiting for Neatly to review. Nothing is confirmed until the status changes.",
   attentionHeading: "Needs attention",
   attentionPending: "awaiting review",
-  bookAction: "Book a cleaning",
-  greetingFallback: "Welcome",
+  bookAction: "View bookings",
+  emptyAction: "Explore Services",
+  emptyDescription: "Explore our services and request your first quote.",
+  emptyHeading: "Welcome to Neatly",
+  emptyTitle: "Your cleaning journey starts here.",
+  exploreServices: "Explore Services",
+  greetingAfternoon: "Good afternoon, {name}",
+  greetingEvening: "Good evening, {name}",
+  greetingFallback: "Welcome back",
+  greetingMorning: "Good morning, {name}",
   greetingNamed: "Welcome, {name}",
-  helpAction: "Help",
-  nextBookingEmptyAction: "Browse services",
+  helpAction: "Contact support",
+  intro: "Here's what's happening with your cleaning services.",
+  loadErrorAction: "Try again",
+  loadErrorDescription: "Please try again.",
+  loadErrorHeading: "We couldn't load your dashboard.",
+  nextBookingEmptyAction: "Explore Services",
   nextBookingEmptyDescription:
-    "When you have an upcoming visit, it will appear here.",
+    "When you book a cleaning service, your upcoming booking will appear here.",
   nextBookingEmptyTitle: "No upcoming bookings",
-  nextBookingHeading: "Upcoming booking",
-  quickActionsHeading: "Continue",
-  quoteAction: "Request a quote",
+  nextBookingHeading: "Next booking",
+  nextBookingHint: "Next: {when}",
+  notificationsEmpty: "Updates about your bookings will appear here.",
+  notificationsError: "Notifications could not be loaded.",
+  notificationsHeading: "Recent notifications",
+  notificationsUnreadHint: "Unread",
+  notificationsViewAll: "View notifications",
+  quotesEmpty: "Quote requests you submit will appear here.",
+  quotesEmptyTitle: "No active quotes",
+  quotesError: "Quotes could not be loaded.",
+  quotesHeading: "Recent quotes",
+  quotesPendingHint: "Awaiting response",
+  quotesViewAll: "View all quotes",
+  quickActionsHeading: "Quick actions",
+  quoteAction: "View quotes",
   recentEmpty: "Recent bookings will appear here after you submit a request.",
   recentHeading: "Recent bookings",
-  servicesAction: "Browse services",
-  summaryCompleted: "Completed",
-  summaryHeading: "Your bookings",
-  summaryPending: "Pending",
+  recentViewAll: "View all bookings",
+  servicesAction: "Explore Services",
+  servicesCtaAction: "Explore Services",
+  servicesCtaBody: "Choose a service and request a quote in a few steps.",
+  servicesCtaHeading: "Need a cleaning?",
+  summaryCompleted: "Completed bookings",
+  summaryCompletedHint: "Cleaning services",
+  summaryHeading: "Overview",
+  summaryNotifications: "Notifications",
+  summaryPending: "Pending quotes",
   summaryTotal: "Total",
-  summaryUpcoming: "Upcoming",
+  summaryUpcoming: "Upcoming bookings",
+  verificationAction: "Open settings",
+  verificationBody:
+    "Verify your email to keep your account secure and receive booking updates.",
+  verificationHeading: "Email verification required",
   viewBooking: "View booking",
 } as const;
 
