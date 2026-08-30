@@ -1,5 +1,6 @@
 import { logError } from "../../lib/logger.ts";
 import type {
+  CleanerInvitationEmailInput,
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
@@ -38,6 +39,22 @@ export class BrevoEmailProvider implements EmailProvider {
       htmlContent: `<p>Verify your Neatly email using this link:</p><p><a href="${escapeHtml(input.verifyUrl)}">${escapeHtml(input.verifyUrl)}</a></p>`,
       subject: "Verify your Neatly email",
       textContent: `Verify your Neatly email: ${input.verifyUrl}`,
+      to: input.to,
+    });
+  }
+
+  public async sendCleanerInvitationEmail(
+    input: CleanerInvitationEmailInput,
+  ): Promise<void> {
+    const name = escapeHtml(input.name);
+    const email = escapeHtml(input.to);
+    const activateUrl = escapeHtml(input.activateUrl);
+    const days = String(input.expiresInDays);
+
+    await this.send({
+      htmlContent: `<p>Welcome to Neatly, ${name}.</p><p>Your Cleaner account has been created by the Neatly team.</p><p>Email: ${email}</p><p><a href="${activateUrl}">Activate Account</a></p><p>This invitation expires after ${days} days.</p>`,
+      subject: "Welcome to Neatly — activate your cleaner account",
+      textContent: `Welcome to Neatly, ${input.name}. Your Cleaner account has been created by the Neatly team. Email: ${input.to}. Activate your account: ${input.activateUrl}. This invitation expires after ${days} days.`,
       to: input.to,
     });
   }

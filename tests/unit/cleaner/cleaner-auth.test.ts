@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { AUTH_ADMIN_LOGIN_PATH } from "@/config/auth";
-import { CLEANER_HOME_PATH, CLEANER_LOGIN_PATH } from "@/config/cleaner";
+import {
+  CLEANER_ACTIVATE_PATH,
+  CLEANER_HOME_PATH,
+  CLEANER_LOGIN_PATH,
+} from "@/config/cleaner";
 import { CUSTOMER_LOGIN_PATH } from "@/config/customer";
 import {
   getCleanerNavigationDecision,
@@ -27,6 +31,8 @@ describe("cleaner route protection", (): void => {
   it("protects the cleaner area without overlapping customer or admin routes", (): void => {
     expect(isProtectedCleanerPath("/cleaner")).toBe(true);
     expect(isProtectedCleanerPath("/cleaner/jobs")).toBe(true);
+    expect(isProtectedCleanerPath(CLEANER_ACTIVATE_PATH)).toBe(false);
+    expect(isSafeCleanerNextPath(CLEANER_ACTIVATE_PATH)).toBe(false);
     expect(isProtectedCustomerPath("/cleaner")).toBe(false);
     expect(isProtectedCleanerPath("/dashboard")).toBe(false);
     expect(isProtectedCleanerPath("/admin")).toBe(false);
@@ -47,6 +53,12 @@ describe("cleaner route protection", (): void => {
       pathname: CLEANER_LOGIN_PATH,
       type: "redirect",
     });
+    expect(
+      getEdgeAuthDecision({
+        hasSession: false,
+        pathname: CLEANER_ACTIVATE_PATH,
+      }),
+    ).toEqual({ type: "next" });
     expect(
       getEdgeAuthDecision({
         hasSession: true,

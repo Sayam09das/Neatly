@@ -3,11 +3,13 @@ import { prisma } from "../lib/db.ts";
 import { resolvePagination } from "../lib/domain/list.ts";
 import type { SortQuery } from "../lib/query.ts";
 import type {
+  CleanerAccountState,
   CleanerListQuery,
   CleanerRecord,
   CreateCleanerInput,
   UpdateCleanerInput,
 } from "../services/cleaners/cleaner.types.ts";
+import { toCleanerRecord } from "../services/cleaners/cleaner.types.ts";
 
 export interface CleanerRepository {
   countByStatus(status: CleanerStatus): Promise<number>;
@@ -25,6 +27,23 @@ export interface CleanerRepository {
   ): Promise<CleanerRecord | null>;
 }
 
+const cleanerUserSelect = {
+  availability: true,
+  createdAt: true,
+  email: true,
+  id: true,
+  name: true,
+  phone: true,
+  status: true,
+  updatedAt: true,
+  user: {
+    select: {
+      emailVerifiedAt: true,
+    },
+  },
+  userId: true,
+} as const;
+
 function toRecord(row: {
   availability: Prisma.JsonValue | null;
   createdAt: Date;
@@ -34,18 +53,41 @@ function toRecord(row: {
   phone: string | null;
   status: CleanerStatus;
   updatedAt: Date;
+  user?: { emailVerifiedAt: Date | null } | null;
   userId: string | null;
 }): CleanerRecord {
-  return {
+  return toCleanerRecord({
     availability: row.availability,
     createdAt: row.createdAt,
     email: row.email,
+    emailVerifiedAt: row.user?.emailVerifiedAt ?? null,
     id: row.id,
     name: row.name,
     phone: row.phone,
     status: row.status,
     updatedAt: row.updatedAt,
     userId: row.userId,
+  });
+}
+
+function accountStateWhere(
+  accountState: CleanerAccountState,
+): Prisma.CleanerWhereInput {
+  if (accountState === "INVITED") {
+    return {
+      status: "INACTIVE",
+      user: { emailVerifiedAt: null },
+      userId: { not: null },
+    };
+  }
+
+  if (accountState === "ACTIVE") {
+    return { status: "ACTIVE" };
+  }
+
+  return {
+    status: "INACTIVE",
+    OR: [{ userId: null }, { user: { emailVerifiedAt: { not: null } } }],
   };
 }
 
@@ -68,17 +110,26 @@ function orderBy(
 
 export class PrismaCleanerRepository implements CleanerRepository {
   public async findById(id: string): Promise<CleanerRecord | null> {
-    const row = await prisma.cleaner.findUnique({ where: { id } });
+    const row = await prisma.cleaner.findUnique({
+      select: cleanerUserSelect,
+      where: { id },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async findByEmail(email: string): Promise<CleanerRecord | null> {
-    const row = await prisma.cleaner.findUnique({ where: { email } });
+    const row = await prisma.cleaner.findUnique({
+      select: cleanerUserSelect,
+      where: { email },
+    });
     return row === null ? null : toRecord(row);
   }
 
   public async findByUserId(userId: string): Promise<CleanerRecord | null> {
-    const row = await prisma.cleaner.findUnique({ where: { userId } });
+    const row = await prisma.cleaner.findUnique({
+      select: cleanerUserSelect,
+      where: { userId },
+    });
     return row === null ? null : toRecord(row);
   }
 
@@ -88,8 +139,10 @@ export class PrismaCleanerRepository implements CleanerRepository {
         email: input.email ?? null,
         name: input.name,
         phone: input.phone ?? null,
+        status: input.status,
         userId: input.userId ?? null,
       },
+      select: cleanerUserSelect,
     });
     return toRecord(row);
   }
@@ -114,6 +167,7 @@ export class PrismaCleanerRepository implements CleanerRepository {
                     : (input.availability as Prisma.InputJsonValue),
               }),
         },
+        select: cleanerUserSelect,
         where: { id },
       });
       return toRecord(row);
@@ -128,6 +182,9 @@ export class PrismaCleanerRepository implements CleanerRepository {
     const pagination = resolvePagination(query.pagination);
     const search = query.search?.trim();
     const where: Prisma.CleanerWhereInput = {
+      ...(query.accountState === undefined
+        ? {}
+        : accountStateWhere(query.accountState)),
       ...(query.status === undefined ? {} : { status: query.status }),
       ...(search === undefined || search === ""
         ? {}
@@ -143,6 +200,7 @@ export class PrismaCleanerRepository implements CleanerRepository {
       prisma.cleaner.count({ where }),
       prisma.cleaner.findMany({
         orderBy: orderBy(query.sort),
+        select: cleanerUserSelect,
         skip: pagination.skip,
         take: pagination.limit,
         where,

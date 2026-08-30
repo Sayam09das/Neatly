@@ -7,6 +7,7 @@ import {
   isProtectedCleanerPath,
   isProtectedCustomerPath,
   isPublicAdminPath,
+  isPublicCleanerPath,
 } from "@/lib/auth/paths";
 import type { AuthUser } from "@/types/auth";
 import type { FrontendAuthStatus } from "@/types/auth-form";
@@ -62,7 +63,10 @@ export function getCleanerNavigationDecision(input: {
   pathname: string;
   user: AuthUser | null;
 }): AdminNavigationDecision {
-  if (!isProtectedCleanerPath(input.pathname)) {
+  if (
+    isPublicCleanerPath(input.pathname) ||
+    !isProtectedCleanerPath(input.pathname)
+  ) {
     return { type: "allow" };
   }
 

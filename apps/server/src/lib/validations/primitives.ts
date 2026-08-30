@@ -81,6 +81,13 @@ export const cleanerStatusSchema = z.nativeEnum(CleanerStatus, {
   error: "This value is not allowed.",
 });
 
+export const cleanerAccountStateSchema = z.enum(
+  ["ACTIVE", "INACTIVE", "INVITED"],
+  {
+    error: "This value is not allowed.",
+  },
+);
+
 export const bookingStatusSchema = z.nativeEnum(BookingStatus, {
   error: "This value is not allowed.",
 });

@@ -11,6 +11,7 @@ import {
   createCleanerController,
   getCleanerController,
   listCleanersController,
+  resendCleanerInvitationController,
   updateCleanerController,
   updateCleanerStatusController,
 } from "../../controllers/admin/cleaners.controller.ts";
@@ -186,6 +187,12 @@ export const adminRoutes: readonly RouteDefinition[] = [
       validateBody(cleanerStatusBodySchema),
     ],
     path: API_PATHS.adminCleanerStatus,
+  },
+  {
+    handler: resendCleanerInvitationController,
+    method: "POST",
+    middleware: [...adminMutation, validateParams(idParamSchema)],
+    path: API_PATHS.adminCleanerResendInvitation,
   },
   {
     handler: listServicesController,

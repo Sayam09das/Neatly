@@ -137,14 +137,14 @@ Single-use password reset tokens. Raw tokens are never stored. Tokens expire 60 
 
 ### 5.5 Email Verification Token (`EmailVerificationToken`)
 
-Single-use email verification tokens. Raw tokens are never stored. Tokens expire 24 hours after issue and are invalidated after a successful verification.
+Single-use email verification tokens. Raw tokens are never stored. Admin email verification tokens expire 24 hours after issue. Cleaner invitation tokens reuse this table with a 7-day TTL (`AUTH_CLEANER_INVITATION_TTL_MS`). Both are hashed, single-use, and invalidated after successful consumption. There is no separate invitation model.
 
 | Field Name | Data Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | String (CUID) | Primary Key, Default: Auto | Unique identifier |
-| `userId` | String | NOT NULL, FK (`User`) | Owning admin user |
-| `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the verification token |
-| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (24 hours from issue) |
+| `userId` | String | NOT NULL, FK (`User`) | Owning user (admin verification or invited cleaner staff) |
+| `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the verification or invitation token |
+| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (24 hours for admin verification; 7 days for cleaner invitations) |
 | `usedAt` | DateTime | NULLABLE | Set when the token is consumed |
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
 

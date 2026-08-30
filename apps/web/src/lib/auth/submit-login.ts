@@ -1,4 +1,5 @@
 import { AUTH_ADMIN_HOME_PATH, AUTH_CUSTOMER_HOME_PATH } from "@/config/auth";
+import { CLEANER_API_PATHS, CLEANER_HOME_PATH } from "@/config/cleaner";
 import {
   isSafeCleanerNextPath,
   isSafeCustomerNextPath,
@@ -86,6 +87,43 @@ export function customerPostLoginPath(search = ""): string {
     (isSafeCustomerNextPath(next) || isSafeCleanerNextPath(next))
   ) {
     return next;
+  }
+
+  return AUTH_CUSTOMER_HOME_PATH;
+}
+
+export async function resolveCustomerLoginDestination(
+  search = "",
+): Promise<string> {
+  const next = customerPostLoginPath(search);
+
+  if (next !== AUTH_CUSTOMER_HOME_PATH) {
+    return next;
+  }
+
+  try {
+    const response = await fetch(CLEANER_API_PATHS.me, {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      return AUTH_CUSTOMER_HOME_PATH;
+    }
+
+    const body: unknown = await response.json();
+
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "success" in body &&
+      body.success === true
+    ) {
+      return CLEANER_HOME_PATH;
+    }
+  } catch {
+    return AUTH_CUSTOMER_HOME_PATH;
   }
 
   return AUTH_CUSTOMER_HOME_PATH;

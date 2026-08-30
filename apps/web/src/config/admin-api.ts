@@ -11,6 +11,7 @@ export const ADMIN_API_PATHS = {
   bookingStatus: `${ADMIN_API_PREFIX}/bookings/:id/status`,
   cleaners: `${ADMIN_API_PREFIX}/cleaners`,
   cleaner: `${ADMIN_API_PREFIX}/cleaners/:id`,
+  cleanerResendInvitation: `${ADMIN_API_PREFIX}/cleaners/:id/resend-invitation`,
   cleanerStatus: `${ADMIN_API_PREFIX}/cleaners/:id/status`,
   customers: `${ADMIN_API_PREFIX}/customers`,
   customer: `${ADMIN_API_PREFIX}/customers/:id`,

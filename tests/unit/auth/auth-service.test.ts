@@ -8,6 +8,7 @@ import { verifyPassword } from "../../../apps/server/src/lib/auth/password.ts";
 import { MemoryRateLimiter } from "../../../apps/server/src/lib/auth/rate-limit.ts";
 import { AuthService } from "../../../apps/server/src/services/auth.service.ts";
 import type {
+  CleanerInvitationEmailInput,
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
@@ -20,6 +21,7 @@ const SITE_URL = "https://neatly.example";
 const ADMIN_PASSWORD = "correct-horse-battery-staple";
 
 class RecordingEmailProvider implements EmailProvider {
+  public readonly invitations: CleanerInvitationEmailInput[] = [];
   public readonly passwordResets: PasswordResetEmailInput[] = [];
   public readonly verifications: VerificationEmailInput[] = [];
 
@@ -33,6 +35,12 @@ class RecordingEmailProvider implements EmailProvider {
     input: VerificationEmailInput,
   ): Promise<void> {
     this.verifications.push(input);
+  }
+
+  public async sendCleanerInvitationEmail(
+    input: CleanerInvitationEmailInput,
+  ): Promise<void> {
+    this.invitations.push(input);
   }
 }
 

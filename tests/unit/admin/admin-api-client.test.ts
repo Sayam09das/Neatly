@@ -520,7 +520,7 @@ describe("Admin mutation clients", (): void => {
         body: JSON.stringify({
           email: "priya@neatly.test",
           name: "Priya",
-          phone: null,
+          phone: "",
         }),
         method: "POST",
       }),

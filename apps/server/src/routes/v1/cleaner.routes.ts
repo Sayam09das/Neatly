@@ -1,5 +1,9 @@
 import { API_PATHS } from "../../contracts/v1.ts";
 import {
+  activateCleanerInvitationController,
+  inspectCleanerInvitationController,
+} from "../../controllers/cleaner/activate.controller.ts";
+import {
   getCleanerAvailabilityController,
   updateCleanerAvailabilityController,
 } from "../../controllers/cleaner/availability.controller.ts";
@@ -13,6 +17,10 @@ import {
 } from "../../controllers/cleaner/jobs.controller.ts";
 import { getCleanerSessionController } from "../../controllers/cleaner/me.controller.ts";
 import type { RouteDefinition } from "../../lib/router.ts";
+import {
+  activateCleanerInvitationSchema,
+  inspectCleanerInvitationQuerySchema,
+} from "../../lib/validations/auth.schema.ts";
 import { updateCleanerAvailabilityBodySchema } from "../../lib/validations/cleaner-availability.schema.ts";
 import {
   cleanerJobListQuerySchema,
@@ -28,6 +36,24 @@ import {
 } from "../../middleware/index.ts";
 
 export const cleanerRoutes: readonly RouteDefinition[] = [
+  {
+    handler: inspectCleanerInvitationController,
+    method: "GET",
+    middleware: [
+      limitCustomerMutations,
+      validateQuery(inspectCleanerInvitationQuerySchema),
+    ],
+    path: API_PATHS.cleanerActivate,
+  },
+  {
+    handler: activateCleanerInvitationController,
+    method: "POST",
+    middleware: [
+      limitCustomerMutations,
+      validateBody(activateCleanerInvitationSchema),
+    ],
+    path: API_PATHS.cleanerActivate,
+  },
   {
     handler: getCleanerSessionController,
     method: "GET",

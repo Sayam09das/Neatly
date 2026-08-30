@@ -2,6 +2,8 @@ import type { z } from "@neatly/config/zod";
 import {
   AUTH_ADMIN_RESET_PASSWORD_PATH,
   AUTH_ADMIN_VERIFY_EMAIL_PATH,
+  AUTH_CLEANER_ACTIVATE_PATH,
+  AUTH_CLEANER_INVITATION_TTL_MS,
   AUTH_EMAIL_VERIFICATION_TTL_MS,
   AUTH_GENERIC_RESET_NOTICE,
   AUTH_GENERIC_VERIFY_NOTICE,
@@ -13,7 +15,7 @@ import { AUTH_ERROR_MESSAGES, AuthError } from "../lib/auth/errors.ts";
 import { logAuthEvent } from "../lib/auth/logger.ts";
 import { hashPassword, verifyPassword } from "../lib/auth/password.ts";
 import { MemoryRateLimiter } from "../lib/auth/rate-limit.ts";
-import type { AuthRepository } from "../lib/auth/repository.ts";
+import type { AuthRepository, AuthUserRecord } from "../lib/auth/repository.ts";
 import { generateAuthToken, hashAuthToken } from "../lib/auth/tokens.ts";
 import {
   type AuthSessionResult,
@@ -23,6 +25,7 @@ import {
 } from "../lib/auth/types.ts";
 import { ValidationError } from "../lib/errors.ts";
 import {
+  activateCleanerInvitationSchema,
   forgotPasswordSchema,
   loginSchema,
   registerUserSchema,
@@ -59,6 +62,16 @@ export interface CustomerAccountView {
   emailVerified: boolean;
   sessions: readonly CustomerAccountSessionView[];
   status: AuthUser["status"];
+}
+
+export type CleanerInvitationInspection =
+  | { email: string; name: string; status: "valid" }
+  | { status: "expired" }
+  | { status: "invalid" };
+
+export interface CreateInvitedStaffUserResult {
+  invitationSent: boolean;
+  userId: string;
 }
 
 function normalizeEmail(email: string): string {
@@ -486,6 +499,226 @@ export class AuthService {
     }
 
     return toAuthUser(user);
+  }
+
+  public async findUserByEmail(email: string): Promise<AuthUserRecord | null> {
+    return this.repository.findUserByEmail(normalizeEmail(email));
+  }
+
+  public async findUserById(id: string): Promise<AuthUserRecord | null> {
+    return this.repository.findUserById(id);
+  }
+
+  public async setUserStatus(
+    userId: string,
+    status: AuthUser["status"],
+  ): Promise<void> {
+    await this.repository.updateUserStatus(userId, status);
+  }
+
+  public async revokeAllSessions(userId: string): Promise<void> {
+    await this.repository.deleteSessionsForUser(userId);
+  }
+
+  public async createInvitedStaffUser(input: {
+    email: string;
+    name: string;
+  }): Promise<CreateInvitedStaffUserResult> {
+    const email = normalizeEmail(input.email);
+    const existing = await this.repository.findUserByEmail(email);
+
+    if (existing !== null) {
+      throw new AuthError(
+        "INVALID_INPUT",
+        "An account with this email already exists.",
+        [
+          {
+            field: "email",
+            issue: "An account with this email already exists.",
+          },
+        ],
+      );
+    }
+
+    const passwordHash = await hashPassword(generateAuthToken());
+    const user = await this.repository.createUser({
+      email,
+      emailVerifiedAt: null,
+      name: input.name.trim(),
+      passwordHash,
+      role: "STAFF",
+      status: "INACTIVE",
+    });
+    const invitationSent = await this.dispatchCleanerInvitationEmail(
+      user.id,
+      user.email,
+      user.name,
+    );
+
+    return { invitationSent, userId: user.id };
+  }
+
+  public async resendCleanerInvitation(
+    userId: string,
+    context: AuthServiceContext,
+  ): Promise<boolean> {
+    if (!this.verifyLimiter.consume(`cleaner-invite:${userId}:${context.ip}`)) {
+      throw new AuthError("RATE_LIMITED", AUTH_ERROR_MESSAGES.RATE_LIMITED);
+    }
+
+    const user = await this.repository.findUserById(userId);
+
+    if (user === null || user.emailVerifiedAt !== null) {
+      throw new AuthError("INVALID_INPUT", "This invitation cannot be resent.");
+    }
+
+    return this.dispatchCleanerInvitationEmail(user.id, user.email, user.name);
+  }
+
+  public async inspectCleanerInvitation(
+    token: string,
+  ): Promise<CleanerInvitationInspection> {
+    const record = await this.findInvitationRecord(token);
+
+    if (record === null) {
+      return { status: "invalid" };
+    }
+
+    if (record.expiresAt.getTime() <= this.now().getTime()) {
+      return { status: "expired" };
+    }
+
+    const user = await this.repository.findUserById(record.userId);
+
+    if (user === null || user.emailVerifiedAt !== null) {
+      return { status: "invalid" };
+    }
+
+    return { email: user.email, name: user.name, status: "valid" };
+  }
+
+  public async activateCleanerInvitation(
+    input: unknown,
+    context: AuthServiceContext,
+  ): Promise<AuthSessionResult> {
+    const values = parseSchema(activateCleanerInvitationSchema, input);
+
+    if (!this.verifyLimiter.consume(`cleaner-activate:${context.ip}`)) {
+      throw new AuthError("RATE_LIMITED", AUTH_ERROR_MESSAGES.RATE_LIMITED);
+    }
+
+    const record = await this.findInvitationRecord(values.token);
+
+    if (record === null) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+
+    if (record.expiresAt.getTime() <= this.now().getTime()) {
+      throw new AuthError("TOKEN_EXPIRED", AUTH_ERROR_MESSAGES.TOKEN_EXPIRED);
+    }
+
+    const user = await this.repository.findUserById(record.userId);
+
+    if (user === null || user.emailVerifiedAt !== null) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+
+    const usedAt = this.now();
+    const passwordHash = await hashPassword(values.password);
+    const consumed = await this.repository.consumeEmailVerificationToken(
+      record.id,
+      usedAt,
+    );
+
+    if (!consumed) {
+      throw new AuthError("TOKEN_INVALID", AUTH_ERROR_MESSAGES.TOKEN_INVALID);
+    }
+
+    await this.repository.updatePasswordHash(user.id, passwordHash);
+    await this.repository.markEmailVerified(user.id, usedAt);
+    await this.repository.updateUserStatus(user.id, "ACTIVE");
+    await this.repository.deleteEmailVerificationTokensForUser(user.id);
+
+    const sessionToken = generateAuthToken();
+    const expiresAt = new Date(
+      usedAt.getTime() + AUTH_SESSION_MAX_AGE_SECONDS * 1000,
+    );
+
+    await this.repository.createSession({
+      expiresAt,
+      tokenHash: hashAuthToken(sessionToken, this.sessionSecret),
+      userId: user.id,
+    });
+    await this.repository.markLogin(user.id, usedAt);
+
+    return {
+      expiresAt,
+      sessionToken,
+      user: toAuthUser({
+        ...user,
+        lastLoginAt: usedAt,
+        status: "ACTIVE",
+      }),
+    };
+  }
+
+  private async findInvitationRecord(
+    token: string,
+  ): Promise<Awaited<
+    ReturnType<AuthRepository["findEmailVerificationTokenByHash"]>
+  > | null> {
+    if (token.trim() === "") {
+      return null;
+    }
+
+    return this.repository.findEmailVerificationTokenByHash(
+      hashAuthToken(token, this.sessionSecret),
+    );
+  }
+
+  private async dispatchCleanerInvitationEmail(
+    userId: string,
+    email: string,
+    name: string,
+  ): Promise<boolean> {
+    const siteUrl = this.options.siteUrl;
+
+    if (siteUrl === undefined || siteUrl.trim() === "") {
+      return false;
+    }
+
+    await this.repository.deleteEmailVerificationTokensForUser(userId);
+
+    const token = generateAuthToken();
+    const createdAt = this.now();
+
+    await this.repository.createEmailVerificationToken({
+      expiresAt: new Date(createdAt.getTime() + AUTH_CLEANER_INVITATION_TTL_MS),
+      tokenHash: hashAuthToken(token, this.sessionSecret),
+      userId,
+    });
+
+    try {
+      await this.emailService.sendCleanerInvitationEmail({
+        activateUrl: this.buildCleanerInvitationUrl(token, siteUrl),
+        expiresInDays: AUTH_CLEANER_INVITATION_TTL_MS / (24 * 60 * 60 * 1000),
+        name,
+        to: email,
+      });
+      return true;
+    } catch {
+      logAuthEvent({
+        outcome: "failure",
+        type: "cleaner_invitation_email_failed",
+      });
+      return false;
+    }
+  }
+
+  private buildCleanerInvitationUrl(token: string, siteUrl: string): string {
+    const url = new URL(AUTH_CLEANER_ACTIVATE_PATH, `${siteUrl}/`);
+    url.searchParams.set("token", token);
+    return url.toString();
   }
 
   private async dispatchVerificationEmail(

@@ -15,6 +15,7 @@ describe("getAdminPageTitle", (): void => {
       "Bookings",
     );
     expect(getAdminPageTitle(ADMIN_PATHS.customers)).toBe("Customers");
+    expect(getAdminPageTitle(ADMIN_PATHS.cleaners)).toBe("Cleaners");
     expect(getAdminPageTitle(`${ADMIN_PATHS.customers}/customer_test`)).toBe(
       "Customers",
     );
@@ -101,6 +102,7 @@ describe("adminNavigation", (): void => {
       ADMIN_PATHS.home,
       ADMIN_PATHS.bookings,
       ADMIN_PATHS.customers,
+      ADMIN_PATHS.cleaners,
       ADMIN_PATHS.quotes,
       ADMIN_PATHS.contacts,
       ADMIN_PATHS.services,

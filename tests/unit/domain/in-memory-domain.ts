@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { AuthError } from "../../../apps/server/src/lib/auth/errors.ts";
+import type { AuthUserRecord } from "../../../apps/server/src/lib/auth/repository.ts";
+import type { AuthSessionResult } from "../../../apps/server/src/lib/auth/types.ts";
 import { resolvePagination } from "../../../apps/server/src/lib/domain/list.ts";
 import type {
   PaginationQuery,
@@ -14,6 +17,10 @@ import type { ReviewRepository } from "../../../apps/server/src/repositories/rev
 import type { SettingsRepository } from "../../../apps/server/src/repositories/settings.repository.ts";
 import type { UserRepository } from "../../../apps/server/src/repositories/user.repository.ts";
 import { AdminService } from "../../../apps/server/src/services/admin/admin.service.ts";
+import type {
+  CleanerInvitationInspection,
+  CreateInvitedStaffUserResult,
+} from "../../../apps/server/src/services/auth.service.ts";
 import { BookingService } from "../../../apps/server/src/services/bookings/booking.service.ts";
 import type {
   BookingListQuery,
@@ -31,11 +38,13 @@ import {
 } from "../../../apps/server/src/services/catalog/catalog.types.ts";
 import { CleanerService } from "../../../apps/server/src/services/cleaners/cleaner.service.ts";
 import type {
+  CleanerInvitationGateway,
   CleanerListQuery,
   CleanerRecord,
   CreateCleanerInput,
   UpdateCleanerInput,
 } from "../../../apps/server/src/services/cleaners/cleaner.types.ts";
+import { toCleanerRecord } from "../../../apps/server/src/services/cleaners/cleaner.types.ts";
 import { CustomerService } from "../../../apps/server/src/services/customers/customer.service.ts";
 import type {
   CreateCustomerInput,
@@ -86,6 +95,189 @@ export class InMemoryDomainStore {
   public readonly users = new Map<string, UserProfile>();
 }
 
+export class InMemoryCleanerInvitationGateway
+  implements CleanerInvitationGateway
+{
+  public invitationSent = true;
+  public readonly tokens = new Map<
+    string,
+    { expiresAt: Date; used: boolean; userId: string }
+  >();
+  public readonly users = new Map<string, AuthUserRecord>();
+
+  public async findUserByEmail(email: string): Promise<AuthUserRecord | null> {
+    return (
+      [...this.users.values()].find((user) => user.email === email) ?? null
+    );
+  }
+
+  public async findUserById(id: string): Promise<AuthUserRecord | null> {
+    return this.users.get(id) ?? null;
+  }
+
+  public async setUserStatus(
+    userId: string,
+    status: AuthUserRecord["status"],
+  ): Promise<void> {
+    const user = this.users.get(userId);
+
+    if (user !== undefined) {
+      user.status = status;
+    }
+  }
+
+  public async revokeAllSessions(_userId: string): Promise<void> {
+    return undefined;
+  }
+
+  public async createInvitedStaffUser(input: {
+    email: string;
+    name: string;
+  }): Promise<CreateInvitedStaffUserResult> {
+    const email = input.email.trim().toLowerCase();
+    const existing = await this.findUserByEmail(email);
+
+    if (existing !== null) {
+      throw new AuthError(
+        "INVALID_INPUT",
+        "An account with this email already exists.",
+        [
+          {
+            field: "email",
+            issue: "An account with this email already exists.",
+          },
+        ],
+      );
+    }
+
+    const user: AuthUserRecord = {
+      email,
+      emailVerifiedAt: null,
+      id: randomUUID(),
+      lastLoginAt: null,
+      name: input.name,
+      passwordHash: "unusable",
+      role: "STAFF",
+      status: "INACTIVE",
+    };
+    this.users.set(user.id, user);
+    this.tokens.set(randomUUID(), {
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      used: false,
+      userId: user.id,
+    });
+
+    return { invitationSent: this.invitationSent, userId: user.id };
+  }
+
+  public async resendCleanerInvitation(
+    userId: string,
+    _context: { ip: string },
+  ): Promise<boolean> {
+    const user = this.users.get(userId);
+
+    if (user === undefined || user.emailVerifiedAt !== null) {
+      throw new AuthError("INVALID_INPUT", "This invitation cannot be resent.");
+    }
+
+    for (const [token, record] of this.tokens) {
+      if (record.userId === userId) {
+        this.tokens.delete(token);
+      }
+    }
+
+    this.tokens.set(randomUUID(), {
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      used: false,
+      userId,
+    });
+
+    return this.invitationSent;
+  }
+
+  public async inspectCleanerInvitation(
+    token: string,
+  ): Promise<CleanerInvitationInspection> {
+    const record = this.tokens.get(token);
+
+    if (record === undefined || record.used) {
+      return { status: "invalid" };
+    }
+
+    if (record.expiresAt.getTime() <= Date.now()) {
+      return { status: "expired" };
+    }
+
+    const user = this.users.get(record.userId);
+
+    if (user === undefined || user.emailVerifiedAt !== null) {
+      return { status: "invalid" };
+    }
+
+    return { email: user.email, name: user.name, status: "valid" };
+  }
+
+  public async activateCleanerInvitation(
+    input: unknown,
+    _context: { ip: string },
+  ): Promise<AuthSessionResult> {
+    if (!isRecord(input) || typeof input.token !== "string") {
+      throw new AuthError(
+        "TOKEN_INVALID",
+        "This invitation is no longer valid.",
+      );
+    }
+
+    const record = this.tokens.get(input.token);
+
+    if (record === undefined || record.used) {
+      throw new AuthError(
+        "TOKEN_INVALID",
+        "This invitation is no longer valid.",
+      );
+    }
+
+    if (record.expiresAt.getTime() <= Date.now()) {
+      throw new AuthError(
+        "TOKEN_EXPIRED",
+        "This invitation is no longer valid.",
+      );
+    }
+
+    const user = this.users.get(record.userId);
+
+    if (user === undefined || user.emailVerifiedAt !== null) {
+      throw new AuthError(
+        "TOKEN_INVALID",
+        "This invitation is no longer valid.",
+      );
+    }
+
+    const usedAt = new Date();
+    record.used = true;
+    user.emailVerifiedAt = usedAt;
+    user.status = "ACTIVE";
+    user.passwordHash = "activated";
+
+    return {
+      expiresAt: new Date(usedAt.getTime() + 60_000),
+      sessionToken: randomUUID(),
+      user: {
+        email: user.email,
+        id: user.id,
+        lastLoginAt: usedAt,
+        name: user.name,
+        role: user.role,
+        status: "ACTIVE",
+      },
+    };
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 export interface DomainHarness {
   admin: AdminService;
   bookings: BookingService;
@@ -93,6 +285,7 @@ export interface DomainHarness {
   cleaners: CleanerService;
   customers: CustomerService;
   dashboard: DashboardService;
+  invitations: CleanerInvitationGateway;
   notifications: NotificationService;
   quotes: QuoteService;
   reviews: ReviewService;
@@ -101,7 +294,10 @@ export interface DomainHarness {
   users: UserService;
 }
 
-export function createDomainHarness(now?: () => Date): DomainHarness {
+export function createDomainHarness(
+  now?: () => Date,
+  invitations?: CleanerInvitationGateway,
+): DomainHarness {
   const store = new InMemoryDomainStore();
   const customerRepo = new InMemoryCustomerRepository(store);
   const cleanerRepo = new InMemoryCleanerRepository(store);
@@ -113,8 +309,14 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
   const userRepo = new InMemoryUserRepository(store);
   const settingsRepo = new InMemorySettingsRepository(store);
 
+  const invitationGateway =
+    invitations ?? new InMemoryCleanerInvitationGateway();
   const customers = new CustomerService(customerRepo);
-  const cleaners = new CleanerService(cleanerRepo, bookingRepo);
+  const cleaners = new CleanerService(
+    cleanerRepo,
+    bookingRepo,
+    invitationGateway,
+  );
   const catalog = new CatalogService(catalogRepo);
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
@@ -151,6 +353,7 @@ export function createDomainHarness(now?: () => Date): DomainHarness {
     cleaners,
     customers,
     dashboard,
+    invitations: invitationGateway,
     notifications,
     quotes,
     reviews,
@@ -308,17 +511,18 @@ export class InMemoryCleanerRepository implements CleanerRepository {
 
   public async create(input: CreateCleanerInput): Promise<CleanerRecord> {
     const now = new Date();
-    const row: CleanerRecord = {
+    const row = toCleanerRecord({
       availability: null,
       createdAt: now,
       email: input.email ?? null,
+      emailVerifiedAt: input.emailVerifiedAt ?? null,
       id: createId(),
       name: input.name,
       phone: input.phone ?? null,
-      status: "ACTIVE",
+      status: input.status ?? "ACTIVE",
       updatedAt: now,
       userId: input.userId ?? null,
-    };
+    });
     this.store.cleaners.set(row.id, row);
     return row;
   }
@@ -333,11 +537,12 @@ export class InMemoryCleanerRepository implements CleanerRepository {
       return null;
     }
 
-    const row: CleanerRecord = {
+    const merged = {
       ...current,
       ...omitUndefined(input),
       updatedAt: new Date(),
     };
+    const row = toCleanerRecord(merged);
     this.store.cleaners.set(id, row);
     return row;
   }
@@ -348,6 +553,13 @@ export class InMemoryCleanerRepository implements CleanerRepository {
     const search = query.search?.trim().toLowerCase();
     const filtered = [...this.store.cleaners.values()].filter((row) => {
       if (query.status !== undefined && row.status !== query.status) {
+        return false;
+      }
+
+      if (
+        query.accountState !== undefined &&
+        row.accountState !== query.accountState
+      ) {
         return false;
       }
 

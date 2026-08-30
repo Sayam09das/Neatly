@@ -18,6 +18,7 @@ import { QuoteService } from "../../services/quotes/quote.service.ts";
 import { ReviewService } from "../../services/reviews/review.service.ts";
 import { SettingsService } from "../../services/settings/settings.service.ts";
 import { UserService } from "../../services/users/user.service.ts";
+import { getAuthService } from "../auth/runtime.ts";
 
 export interface DomainServices {
   admin: AdminService;
@@ -55,7 +56,11 @@ export function createPrismaDomainServices(): DomainServices {
   const settingsRepo = new PrismaSettingsRepository();
 
   const customers = new CustomerService(customerRepo);
-  const cleaners = new CleanerService(cleanerRepo, bookingRepo);
+  const cleaners = new CleanerService(
+    cleanerRepo,
+    bookingRepo,
+    getAuthService(),
+  );
   const catalog = new CatalogService(catalogRepo);
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(

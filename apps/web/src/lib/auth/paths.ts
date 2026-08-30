@@ -3,7 +3,11 @@ import {
   AUTH_ENTRY_PATHS,
   AUTH_PUBLIC_ADMIN_PATHS,
 } from "@/config/auth";
-import { CLEANER_HOME_PATH, CLEANER_LOGIN_PATH } from "@/config/cleaner";
+import {
+  CLEANER_ACTIVATE_PATH,
+  CLEANER_HOME_PATH,
+  CLEANER_LOGIN_PATH,
+} from "@/config/cleaner";
 import {
   CUSTOMER_HOME_PATH,
   CUSTOMER_LOGIN_PATH,
@@ -43,7 +47,18 @@ export function isCustomerServiceApplyPath(pathname: string): boolean {
   );
 }
 
+export function isPublicCleanerPath(pathname: string): boolean {
+  return (
+    pathname === CLEANER_ACTIVATE_PATH ||
+    pathname.startsWith(`${CLEANER_ACTIVATE_PATH}/`)
+  );
+}
+
 export function isProtectedCleanerPath(pathname: string): boolean {
+  if (isPublicCleanerPath(pathname)) {
+    return false;
+  }
+
   return (
     pathname === CLEANER_HOME_PATH ||
     pathname.startsWith(`${CLEANER_HOME_PATH}/`)

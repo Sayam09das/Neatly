@@ -2,6 +2,7 @@ import type { AdminRealtimeEventType } from "@/lib/realtime/admin-event";
 
 export const ADMIN_REFRESH_KEYS = [
   "bookings",
+  "cleaners",
   "customers",
   "dashboard",
   "notifications",
@@ -61,7 +62,7 @@ export function refreshKeysForAdminEvent(
     case "CLEANER_CREATED":
     case "CLEANER_STATUS_CHANGED":
     case "CLEANER_UPDATED":
-      return ["dashboard", "notifications"];
+      return ["cleaners", "dashboard", "notifications"];
     case "SERVICE_CREATED":
     case "SERVICE_STATUS_CHANGED":
     case "SERVICE_UPDATED":

@@ -2,6 +2,7 @@ import { APP_NAME } from "@neatly/config";
 import { AUTH_LOGIN_ALIAS_PATH } from "@/config/auth";
 
 export const CLEANER_HOME_PATH = "/cleaner";
+export const CLEANER_ACTIVATE_PATH = `${CLEANER_HOME_PATH}/activate`;
 export const CLEANER_LOGIN_PATH = AUTH_LOGIN_ALIAS_PATH;
 export const CLEANER_MAIN_CONTENT_ID = "cleaner-main-content";
 export const CLEANER_HEADER_HEIGHT_CLASS = "min-h-16";
@@ -31,6 +32,7 @@ export const CLEANER_PATHS = {
 export const CLEANER_API_PREFIX = "/api/v1/cleaner";
 
 export const CLEANER_API_PATHS = {
+  activate: `${CLEANER_API_PREFIX}/activate`,
   availability: `${CLEANER_API_PREFIX}/availability`,
   dashboard: `${CLEANER_API_PREFIX}/dashboard`,
   earnings: `${CLEANER_API_PREFIX}/earnings`,
@@ -262,6 +264,26 @@ export const cleanerAvailabilityCopy = {
   validationRange: "End time must be after the start time.",
   validationRequired: "Enter a start and end time.",
   weekHeading: "Weekly availability",
+} as const;
+
+export const cleanerActivateCopy = {
+  confirmPasswordLabel: "Confirm password",
+  confirmPasswordPlaceholder: "Confirm password",
+  description: "Set up your Cleaner account.",
+  emailLabel: "Email",
+  expiredAction: "Request a new invitation",
+  expiredDescription: "This invitation is no longer valid.",
+  expiredHeading: "Invitation expired",
+  heading: "Welcome to Neatly",
+  headingId: "cleaner-activate-heading",
+  invalidDescription: "This invitation link is no longer valid.",
+  invalidHeading: "Invalid invitation",
+  loginAction: "Back to sign in",
+  passwordLabel: "Password",
+  passwordPlaceholder: "Password",
+  submit: "Activate Account",
+  submitting: "Activating...",
+  title: "Activate your cleaner account",
 } as const;
 
 export const cleanerErrorCopy = {

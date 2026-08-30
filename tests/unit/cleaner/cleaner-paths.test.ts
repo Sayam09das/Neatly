@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLEANER_ACTIVATE_PATH,
   CLEANER_API_PATHS,
   CLEANER_API_PREFIX,
   CLEANER_HOME_PATH,
@@ -42,6 +43,8 @@ describe("cleaner paths", (): void => {
       `${CLEANER_API_PREFIX}/availability`,
     );
     expect(CLEANER_API_PATHS.me).toBe(`${CLEANER_API_PREFIX}/me`);
+    expect(CLEANER_API_PATHS.activate).toBe(`${CLEANER_API_PREFIX}/activate`);
+    expect(CLEANER_ACTIVATE_PATH).toBe("/cleaner/activate");
     expect(JSON.stringify(CLEANER_API_PATHS)).not.toContain("cleanerId");
     expect(JSON.stringify(CLEANER_API_PATHS)).not.toContain("userId=");
     expect(() => {

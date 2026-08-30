@@ -3,6 +3,7 @@ import { ADMIN_HOME_PATH, adminHeaderCopy } from "@/config/admin-ui";
 export const ADMIN_PATHS = {
   blog: "/admin/blog",
   bookings: "/admin/bookings",
+  cleaners: "/admin/cleaners",
   contacts: "/admin/contacts",
   customers: "/admin/customers",
   home: ADMIN_HOME_PATH,
@@ -23,6 +24,7 @@ export const ADMIN_MOBILE_NAV_ID = "admin-mobile-navigation";
 export type AdminNavIconName =
   | "blog"
   | "bookings"
+  | "cleaners"
   | "contacts"
   | "customers"
   | "newsletter"
@@ -71,6 +73,11 @@ export const adminNavigation: readonly AdminNavGroup[] = [
         href: ADMIN_PATHS.customers,
         icon: "customers",
         label: "Customers",
+      },
+      {
+        href: ADMIN_PATHS.cleaners,
+        icon: "cleaners",
+        label: "Cleaners",
       },
       {
         href: ADMIN_PATHS.quotes,

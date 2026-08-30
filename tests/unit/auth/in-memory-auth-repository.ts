@@ -53,6 +53,17 @@ export class InMemoryAuthRepository implements AuthRepository {
     }
   }
 
+  public async updateUserStatus(
+    userId: string,
+    status: AuthUserRecord["status"],
+  ): Promise<void> {
+    const user = await this.findUserById(userId);
+
+    if (user !== null) {
+      user.status = status;
+    }
+  }
+
   public async markLogin(userId: string, at: Date): Promise<void> {
     const user = await this.findUserById(userId);
 

@@ -105,4 +105,5 @@ export interface AuthRepository {
   markEmailVerified(userId: string, at: Date): Promise<void>;
   markLogin(userId: string, at: Date): Promise<void>;
   updatePasswordHash(userId: string, passwordHash: string): Promise<void>;
+  updateUserStatus(userId: string, status: AuthUserStatus): Promise<void>;
 }

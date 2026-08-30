@@ -15,7 +15,7 @@ vi.mock("next/navigation", () => ({
   usePathname: (): string => "/admin",
 }));
 
-const DUMMY_DASHBOARD_COPY = ["revenue", "cleaners", "statistics"];
+const DUMMY_DASHBOARD_COPY = ["revenue", "statistics"];
 
 function getSlot(name: string): HTMLElement {
   const node = document.querySelector(`[data-slot="${name}"]`);

@@ -37,6 +37,15 @@ export const verifyEmailSchema = z.strictObject({
   token: tokenSchema,
 });
 
+export const inspectCleanerInvitationQuerySchema = z.strictObject({
+  token: tokenSchema,
+});
+
+export const activateCleanerInvitationSchema = z.strictObject({
+  password: passwordSchema,
+  token: tokenSchema,
+});
+
 export const resendVerificationSchema = z.strictObject({
   email: emailSchema,
 });
@@ -47,3 +56,9 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+export type InspectCleanerInvitationQuery = z.infer<
+  typeof inspectCleanerInvitationQuerySchema
+>;
+export type ActivateCleanerInvitationInput = z.infer<
+  typeof activateCleanerInvitationSchema
+>;

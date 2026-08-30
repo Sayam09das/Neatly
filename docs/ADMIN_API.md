@@ -19,9 +19,10 @@ Mutations are rate-limited outside `test` (60 / 15 minutes per user + route).
 | GET | `/api/v1/admin/customers/:id` | |
 | PATCH | `/api/v1/admin/customers/:id` | Same allowlist as create |
 | PATCH | `/api/v1/admin/customers/:id/status` | `{ status: ACTIVE \| INACTIVE }` (no hard delete) |
-| GET/POST | `/api/v1/admin/cleaners` | Create: `name`, `email?`, `phone?` |
-| GET/PATCH | `/api/v1/admin/cleaners/:id` | |
-| PATCH | `/api/v1/admin/cleaners/:id/status` | `{ status: ACTIVE \| INACTIVE }` |
+| GET/POST | `/api/v1/admin/cleaners` | Create: `name`, `email`, `phone`. Server assigns Prisma role `STAFF` and sends a hashed invitation. Response includes `invitationSent`. Query: `accountState` (`ACTIVE` \| `INVITED` \| `INACTIVE`) |
+| GET/PATCH | `/api/v1/admin/cleaners/:id` | PATCH does not accept `role` or invitation tokens |
+| PATCH | `/api/v1/admin/cleaners/:id/status` | `{ status: ACTIVE \| INACTIVE }`. Activate is rejected while invitation is pending. Deactivate revokes sessions |
+| POST | `/api/v1/admin/cleaners/:id/resend-invitation` | Invited cleaners only. Invalidates the prior token and sends a new invitation |
 | GET/POST | `/api/v1/admin/services` | Catalog offerings. Create does not accept `isActive` |
 | GET/PATCH | `/api/v1/admin/services/:id` | |
 | POST | `/api/v1/admin/services/:id/archive` | Sets `isActive: false` |
@@ -61,7 +62,7 @@ Connected UI:
 
 Known gaps (do not invent UI or data for these):
 
-* There is no Admin Cleaners page. Cleaner create/update/status clients exist in `src/lib/admin/cleaners.ts` for later UI.
+* Admin Cleaners (`/admin/cleaners`) creates invited cleaners, resends invitations, and activates/deactivates accounts. Job assignment remains on Bookings.
 * There is no customer or service detail route. View actions stay disabled.
 * There is no service activate or service media upload API. Do not add a second storage system.
 * Customer and review hard delete are not supported. Use deactivate / hide.

@@ -1,4 +1,5 @@
 import type {
+  CleanerInvitationEmailInput,
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
@@ -21,5 +22,11 @@ export class EmailService {
     input: VerificationEmailInput,
   ): Promise<void> {
     await this.provider.sendVerificationEmail(input);
+  }
+
+  public async sendCleanerInvitationEmail(
+    input: CleanerInvitationEmailInput,
+  ): Promise<void> {
+    await this.provider.sendCleanerInvitationEmail(input);
   }
 }

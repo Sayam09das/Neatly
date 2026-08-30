@@ -6,7 +6,10 @@ import {
 import { API_PATHS } from "../../../apps/server/src/contracts/v1.ts";
 import { getAuthService } from "../../../apps/server/src/lib/auth/runtime.ts";
 import { getDomainServices } from "../../../apps/server/src/lib/domain/runtime.ts";
-import { createDomainHarness } from "../domain/in-memory-domain.ts";
+import {
+  createDomainHarness,
+  InMemoryCleanerInvitationGateway,
+} from "../domain/in-memory-domain.ts";
 import { dispatchApi, parseJsonBody } from "./http-harness";
 
 vi.mock("../../../apps/server/src/lib/auth/runtime.ts", () => ({
@@ -247,6 +250,11 @@ describe("Admin APIs", (): void => {
   });
 
   it("manages cleaners, catalog offerings, bookings, reviews, and notifications", async (): Promise<void> => {
+    const invitations = new InMemoryCleanerInvitationGateway();
+    mockedDomain.mockReturnValue(
+      createDomainHarness(undefined, invitations) as never,
+    );
+
     const customer = await dispatchApi(
       withAuth({
         body: JSON.stringify({
@@ -263,7 +271,11 @@ describe("Admin APIs", (): void => {
 
     const cleaner = await dispatchApi(
       withAuth({
-        body: JSON.stringify({ name: "Mia Cleaner" }),
+        body: JSON.stringify({
+          email: "mia@neatly.example",
+          name: "Mia Cleaner",
+          phone: "555-0100",
+        }),
         method: "POST",
         url: API_PATHS.adminCleaners,
       }),
@@ -271,6 +283,17 @@ describe("Admin APIs", (): void => {
     const cleanerId = (
       parseJsonBody(cleaner.body) as Envelope<{ cleaner: { id: string } }>
     ).data.cleaner.id;
+    const invitationToken = [...invitations.tokens.keys()][0] ?? "";
+    const activated = await dispatchApi({
+      body: JSON.stringify({
+        password: "correct-horse-battery-staple",
+        token: invitationToken,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+      url: API_PATHS.cleanerActivate,
+    });
+    expect(activated.statusCode).toBe(HTTP_STATUS.OK);
 
     const service = await dispatchApi(
       withAuth({

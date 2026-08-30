@@ -1,3 +1,4 @@
+import { AuthError } from "../../lib/auth/errors.ts";
 import {
   type Actor,
   assertOwnerOrAdmin,
@@ -13,34 +14,48 @@ import {
 import {
   AuthorizationError,
   ConflictError,
+  RateLimitError,
   ValidationError,
 } from "../../lib/errors.ts";
 import { parseWithSchema } from "../../lib/validations/parse.ts";
 import { emailSchema } from "../../lib/validations/primitives.ts";
 import type { BookingRepository } from "../../repositories/booking.repository.ts";
 import type { CleanerRepository } from "../../repositories/cleaner.repository.ts";
+import type { CleanerInvitationInspection } from "../auth.service.ts";
 import { CLEANER_UPCOMING_EXCLUDED_STATUSES } from "../bookings/booking.types.ts";
 import {
+  type ActivateCleanerInvitationResult,
   CLEANER_SORT_FIELDS,
   CLEANER_WEEKDAYS,
   type CleanerAvailabilityView,
+  type CleanerInvitationGateway,
   type CleanerListQuery,
   type CleanerRecord,
   type CleanerSessionView,
   type CleanerStats,
   type CleanerWeekDayAvailability,
   type CreateCleanerInput,
+  type InviteCleanerInput,
+  type InviteCleanerResult,
   toCleanerSessionView,
   type UpdateCleanerInput,
 } from "./cleaner.types.ts";
 
+const EXISTING_ACCOUNT_MESSAGE = "An account with this email already exists.";
+
 export class CleanerService {
   private readonly bookings: BookingRepository;
   private readonly cleaners: CleanerRepository;
+  private readonly invitations: CleanerInvitationGateway | undefined;
 
-  public constructor(cleaners: CleanerRepository, bookings: BookingRepository) {
+  public constructor(
+    cleaners: CleanerRepository,
+    bookings: BookingRepository,
+    invitations?: CleanerInvitationGateway,
+  ) {
     this.bookings = bookings;
     this.cleaners = cleaners;
+    this.invitations = invitations;
   }
 
   public async create(
@@ -67,8 +82,142 @@ export class CleanerService {
       email,
       name: requireName(input.name),
       phone: emptyToNull(input.phone),
+      status: input.status,
       userId: input.userId ?? null,
     });
+  }
+
+  public async invite(
+    actor: Actor,
+    input: InviteCleanerInput,
+    context: { ip: string },
+  ): Promise<InviteCleanerResult> {
+    requireAdminActor(actor);
+    const invitations = this.requireInvitations();
+    const name = requireName(input.name);
+    const email = parseWithSchema(emailSchema, input.email);
+    const phone = requirePhone(input.phone);
+    const existingCleaner = await this.cleaners.findByEmail(email);
+
+    if (existingCleaner !== null) {
+      throw existingAccountError();
+    }
+
+    const existingUser = await invitations.findUserByEmail(email);
+
+    if (existingUser === null) {
+      try {
+        const invited = await invitations.createInvitedStaffUser({
+          email,
+          name,
+        });
+        const cleaner = await this.cleaners.create({
+          email,
+          name,
+          phone,
+          status: "INACTIVE",
+          userId: invited.userId,
+        });
+        return { cleaner, invitationSent: invited.invitationSent };
+      } catch (error: unknown) {
+        rethrowInvitationError(error);
+      }
+    }
+
+    const linked = await this.cleaners.findByUserId(existingUser.id);
+
+    if (
+      linked !== null ||
+      existingUser.emailVerifiedAt !== null ||
+      existingUser.role !== "STAFF"
+    ) {
+      throw existingAccountError();
+    }
+
+    try {
+      const invitationSent = await invitations.resendCleanerInvitation(
+        existingUser.id,
+        context,
+      );
+      const cleaner = await this.cleaners.create({
+        email,
+        name,
+        phone,
+        status: "INACTIVE",
+        userId: existingUser.id,
+      });
+      return { cleaner, invitationSent };
+    } catch (error: unknown) {
+      rethrowInvitationError(error);
+    }
+  }
+
+  public async resendInvitation(
+    actor: Actor,
+    id: string,
+    context: { ip: string },
+  ): Promise<InviteCleanerResult> {
+    requireAdminActor(actor);
+    const invitations = this.requireInvitations();
+    const cleaner = await this.requireCleaner(id);
+
+    if (cleaner.accountState !== "INVITED" || cleaner.userId === null) {
+      throw new ValidationError("This invitation cannot be resent.");
+    }
+
+    let invitationSent = false;
+
+    try {
+      invitationSent = await invitations.resendCleanerInvitation(
+        cleaner.userId,
+        context,
+      );
+    } catch (error: unknown) {
+      rethrowInvitationError(error);
+    }
+
+    return { cleaner, invitationSent };
+  }
+
+  public async inspectInvitation(
+    token: string,
+  ): Promise<CleanerInvitationInspection> {
+    return this.requireInvitations().inspectCleanerInvitation(token);
+  }
+
+  public async activateInvitation(
+    input: unknown,
+    context: { ip: string },
+  ): Promise<ActivateCleanerInvitationResult> {
+    const invitations = this.requireInvitations();
+    let session: ActivateCleanerInvitationResult;
+
+    try {
+      session = await invitations.activateCleanerInvitation(input, context);
+    } catch (error: unknown) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+
+      throw error;
+    }
+
+    const cleaner = await this.cleaners.findByUserId(session.user.id);
+
+    if (cleaner === null) {
+      throw new ValidationError("This invitation is no longer valid.");
+    }
+
+    const updated = await this.cleaners.update(cleaner.id, {
+      emailVerifiedAt: new Date(),
+      status: "ACTIVE",
+    });
+
+    if (updated === null) {
+      throw cleanerNotFound();
+    }
+
+    return session;
   }
 
   public async getForSession(actor: Actor): Promise<CleanerSessionView> {
@@ -176,27 +325,25 @@ export class CleanerService {
 
   public async deactivate(actor: Actor, id: string): Promise<CleanerRecord> {
     requireAdminActor(actor);
-    const cleaner = await this.cleaners.findById(id);
-
-    if (cleaner === null) {
-      throw cleanerNotFound();
-    }
-
+    const cleaner = await this.requireCleaner(id);
     const updated = await this.cleaners.update(id, { status: "INACTIVE" });
 
     if (updated === null) {
       throw cleanerNotFound();
     }
 
+    await this.syncLinkedUser(cleaner.userId, "INACTIVE");
     return updated;
   }
 
   public async activate(actor: Actor, id: string): Promise<CleanerRecord> {
     requireAdminActor(actor);
-    const cleaner = await this.cleaners.findById(id);
+    const cleaner = await this.requireCleaner(id);
 
-    if (cleaner === null) {
-      throw cleanerNotFound();
+    if (cleaner.accountState === "INVITED") {
+      throw new ValidationError(
+        "This cleaner has not activated their account yet.",
+      );
     }
 
     const updated = await this.cleaners.update(id, { status: "ACTIVE" });
@@ -205,6 +352,7 @@ export class CleanerService {
       throw cleanerNotFound();
     }
 
+    await this.syncLinkedUser(cleaner.userId, "ACTIVE");
     return updated;
   }
 
@@ -220,6 +368,45 @@ export class CleanerService {
       inactive: total - active,
       total,
     };
+  }
+
+  private requireInvitations(): CleanerInvitationGateway {
+    if (this.invitations === undefined) {
+      throw new ValidationError("Cleaner invitations are unavailable.");
+    }
+
+    return this.invitations;
+  }
+
+  private async requireCleaner(id: string): Promise<CleanerRecord> {
+    const cleaner = await this.cleaners.findById(id);
+
+    if (cleaner === null) {
+      throw cleanerNotFound();
+    }
+
+    return cleaner;
+  }
+
+  private async syncLinkedUser(
+    userId: string | null,
+    status: "ACTIVE" | "INACTIVE",
+  ): Promise<void> {
+    if (userId === null || this.invitations === undefined) {
+      return;
+    }
+
+    const user = await this.invitations.findUserById(userId);
+
+    if (user === null) {
+      return;
+    }
+
+    await this.invitations.setUserStatus(userId, status);
+
+    if (status === "INACTIVE") {
+      await this.invitations.revokeAllSessions(userId);
+    }
   }
 
   private async requireSessionCleaner(actor: Actor): Promise<CleanerRecord> {
@@ -288,6 +475,38 @@ function requireName(name: string): string {
   }
 
   return trimmed;
+}
+
+function requirePhone(phone: string): string {
+  const trimmed = phone.trim();
+
+  if (trimmed === "") {
+    throw new ValidationError("Validation failed.", [
+      { field: "phone", issue: "Enter a phone number." },
+    ]);
+  }
+
+  return trimmed;
+}
+
+function existingAccountError(): ValidationError {
+  return new ValidationError("Validation failed.", [
+    { field: "email", issue: EXISTING_ACCOUNT_MESSAGE },
+  ]);
+}
+
+function rethrowInvitationError(error: unknown): never {
+  if (error instanceof AuthError) {
+    if (error.code === "RATE_LIMITED") {
+      throw new RateLimitError();
+    }
+
+    if (error.code === "INVALID_INPUT") {
+      throw new ValidationError(error.message, error.details);
+    }
+  }
+
+  throw error;
 }
 
 function emptyWeek(): CleanerWeekDayAvailability[] {

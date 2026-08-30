@@ -1,5 +1,6 @@
 import { logAuthEvent } from "../../lib/auth/logger.ts";
 import type {
+  CleanerInvitationEmailInput,
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
@@ -21,6 +22,15 @@ export class ConsoleEmailProvider implements EmailProvider {
     logAuthEvent({
       outcome: "success",
       type: "verification_email_queued",
+    });
+  }
+
+  public async sendCleanerInvitationEmail(
+    _input: CleanerInvitationEmailInput,
+  ): Promise<void> {
+    logAuthEvent({
+      outcome: "success",
+      type: "cleaner_invitation_email_queued",
     });
   }
 }

@@ -18,6 +18,7 @@ import {
 import {
   bookingStatusSchema,
   booleanQuerySchema,
+  cleanerAccountStateSchema,
   cleanerStatusSchema,
   customerStatusSchema,
   emailSchema,
@@ -81,21 +82,16 @@ export const customerStatusBodySchema = z.strictObject({
 export const cleanerListQuerySchema = createAdminListQuerySchema(
   CLEANER_SORT_FIELDS,
   {
+    accountState: cleanerAccountStateSchema.optional(),
     status: cleanerStatusSchema.optional(),
   },
 );
 
-export const createCleanerBodySchema = z
-  .strictObject({
-    email: emailSchema.optional().nullable(),
-    name: shortText,
-    phone: optionalShortText,
-  })
-  .transform((value) => ({
-    email: value.email ?? null,
-    name: value.name,
-    phone: value.phone ?? null,
-  }));
+export const createCleanerBodySchema = z.strictObject({
+  email: emailSchema,
+  name: shortText,
+  phone: shortText,
+});
 
 export const updateCleanerBodySchema = z.strictObject({
   email: emailSchema.optional().nullable(),

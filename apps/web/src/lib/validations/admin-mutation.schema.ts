@@ -14,6 +14,14 @@ export const createCustomerFormSchema = z.object({
 
 export const updateCustomerFormSchema = createCustomerFormSchema;
 
+export const createCleanerFormSchema = z.object({
+  email: z.email("Enter a valid email address."),
+  name: z.string().trim().min(1, "Enter a name.").max(SHORT_TEXT_MAX),
+  phone: z.string().trim().min(1, "Enter a phone number.").max(SHORT_TEXT_MAX),
+});
+
+export const updateCleanerFormSchema = createCleanerFormSchema;
+
 export const createServiceFormSchema = z.object({
   fullDescription: z
     .string()
@@ -65,6 +73,7 @@ export const updateBusinessSettingsFormSchema = z.object({
 });
 
 export type CreateCustomerFormValues = z.infer<typeof createCustomerFormSchema>;
+export type CreateCleanerFormValues = z.infer<typeof createCleanerFormSchema>;
 export type CreateServiceFormValues = z.infer<typeof createServiceFormSchema>;
 export type CreateBookingFormValues = z.infer<typeof createBookingFormSchema>;
 export type UpdateBookingFormValues = z.infer<typeof updateBookingFormSchema>;

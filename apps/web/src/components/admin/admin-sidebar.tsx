@@ -58,6 +58,7 @@ type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 const adminNavIcons: Record<AdminNavIconName, IconComponent> = {
   blog: BlogIcon,
   bookings: BookingsIcon,
+  cleaners: UserIcon,
   contacts: ContactsIcon,
   customers: CustomersIcon,
   newsletter: NewsletterIcon,

@@ -125,6 +125,16 @@ export class PrismaAuthRepository implements AuthRepository {
     });
   }
 
+  public async updateUserStatus(
+    userId: string,
+    status: AuthUserRecord["status"],
+  ): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { status },
+    });
+  }
+
   public async markLogin(userId: string, at: Date): Promise<void> {
     await prisma.user.update({
       where: { id: userId },

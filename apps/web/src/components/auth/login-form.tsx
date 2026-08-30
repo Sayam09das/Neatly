@@ -35,7 +35,7 @@ import {
 } from "@/lib/auth/form-errors";
 import {
   adminPostLoginPath,
-  customerPostLoginPath,
+  resolveCustomerLoginDestination,
 } from "@/lib/auth/submit-login";
 import { loginSchema } from "@/lib/validations/auth.schema";
 import { emptyLoginFormValues } from "@/lib/validations/auth-form.schema";
@@ -58,7 +58,7 @@ interface LoginFormProps {
   mode?: "admin" | "customer";
   onSocialSubmit?: AuthSocialSubmitHandler;
   onSubmit?: LoginFormSubmitHandler;
-  resolveSuccessHref?: (search: string) => string;
+  resolveSuccessHref?: (search: string) => string | Promise<string>;
 }
 
 export function LoginForm({
@@ -69,7 +69,9 @@ export function LoginForm({
 }: LoginFormProps): ReactElement {
   const successHref =
     resolveSuccessHref ??
-    (mode === "customer" ? customerPostLoginPath : adminPostLoginPath);
+    (mode === "customer"
+      ? resolveCustomerLoginDestination
+      : adminPostLoginPath);
   const instanceId = useId();
   const emailId = `${instanceId}-email`;
   const passwordId = `${instanceId}-password`;
@@ -124,7 +126,7 @@ export function LoginForm({
         return;
       }
 
-      window.location.assign(successHref(window.location.search));
+      window.location.assign(await successHref(window.location.search));
     } finally {
       setStatus("idle");
     }

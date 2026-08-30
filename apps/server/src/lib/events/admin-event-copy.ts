@@ -1,5 +1,6 @@
 export const ADMIN_APP_HREFS = {
   bookings: "/admin/bookings",
+  cleaners: "/admin/cleaners",
   customers: "/admin/customers",
   notifications: "/admin/notifications",
   reviews: "/admin/reviews",

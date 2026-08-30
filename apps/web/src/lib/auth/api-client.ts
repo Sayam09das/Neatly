@@ -137,6 +137,63 @@ export class BackendAuthClient {
     return parseAuthIdentity(data.user);
   }
 
+  public async inspectCleanerInvitation(token: string): Promise<{
+    email?: string;
+    name?: string;
+    status: "expired" | "invalid" | "valid";
+  }> {
+    const data = await this.get<{ invitation: unknown }>(
+      `/api/v1/cleaner/activate?token=${encodeURIComponent(token)}`,
+      undefined,
+    );
+
+    if (
+      !isRecord(data.invitation) ||
+      typeof data.invitation.status !== "string"
+    ) {
+      throw new AuthError("INTERNAL_ERROR", AUTH_ERROR_MESSAGES.INTERNAL_ERROR);
+    }
+
+    if (
+      data.invitation.status !== "valid" &&
+      data.invitation.status !== "expired" &&
+      data.invitation.status !== "invalid"
+    ) {
+      throw new AuthError("INTERNAL_ERROR", AUTH_ERROR_MESSAGES.INTERNAL_ERROR);
+    }
+
+    return {
+      status: data.invitation.status,
+      ...(typeof data.invitation.email === "string"
+        ? { email: data.invitation.email }
+        : {}),
+      ...(typeof data.invitation.name === "string"
+        ? { name: data.invitation.name }
+        : {}),
+    };
+  }
+
+  public async activateCleanerInvitation(
+    input: unknown,
+    context: AuthClientContext,
+  ): Promise<AuthSessionClientResult> {
+    const data = await this.post<{
+      expiresAt: unknown;
+      sessionToken: unknown;
+      user: unknown;
+    }>("/api/v1/cleaner/activate", input, { ip: context.ip });
+
+    if (typeof data.sessionToken !== "string" || data.sessionToken === "") {
+      throw new AuthError("INTERNAL_ERROR", AUTH_ERROR_MESSAGES.INTERNAL_ERROR);
+    }
+
+    return {
+      expiresAt: parseIsoDate(data.expiresAt),
+      sessionToken: data.sessionToken,
+      user: parseAuthUser(data.user),
+    };
+  }
+
   public async requestEmailVerification(
     input: unknown,
     context: AuthClientContext,

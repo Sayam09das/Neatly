@@ -52,18 +52,44 @@ export async function createCleanerController(
   context: RequestContext,
 ): Promise<void> {
   const actor = actorFromContext(context);
-  const cleaner = await getDomainServices().cleaners.create(
+  const result = await getDomainServices().cleaners.invite(
     actor,
     getValidatedBody<CreateCleanerBody>(context),
+    { ip: context.ip },
   );
-  sendSuccess(res, { cleaner }, { statusCode: HTTP_STATUS.CREATED });
+  sendSuccess(
+    res,
+    {
+      cleaner: result.cleaner,
+      invitationSent: result.invitationSent,
+    },
+    { statusCode: HTTP_STATUS.CREATED },
+  );
   await publishAdminDomainEvent(actor, {
-    entityId: cleaner.id,
+    entityId: result.cleaner.id,
     message: ADMIN_EVENT_COPY.cleanerCreated.message,
-    relatedHref: ADMIN_APP_HREFS.bookings,
+    relatedHref: ADMIN_APP_HREFS.cleaners,
     relatedLabel: ADMIN_EVENT_COPY.cleanerCreated.relatedLabel,
     title: ADMIN_EVENT_COPY.cleanerCreated.title,
     type: "CLEANER_CREATED",
+  });
+}
+
+export async function resendCleanerInvitationController(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  context: RequestContext,
+): Promise<void> {
+  const { id } = getValidatedParams<{ id: string }>(context);
+  const actor = actorFromContext(context);
+  const result = await getDomainServices().cleaners.resendInvitation(
+    actor,
+    id,
+    { ip: context.ip },
+  );
+  sendSuccess(res, {
+    cleaner: result.cleaner,
+    invitationSent: result.invitationSent,
   });
 }
 
@@ -83,7 +109,7 @@ export async function updateCleanerController(
   await publishAdminDomainEvent(actor, {
     entityId: cleaner.id,
     message: ADMIN_EVENT_COPY.cleanerUpdated.message,
-    relatedHref: ADMIN_APP_HREFS.bookings,
+    relatedHref: ADMIN_APP_HREFS.cleaners,
     relatedLabel: ADMIN_EVENT_COPY.cleanerUpdated.relatedLabel,
     title: ADMIN_EVENT_COPY.cleanerUpdated.title,
     type: "CLEANER_UPDATED",
@@ -107,7 +133,7 @@ export async function updateCleanerStatusController(
   await publishAdminDomainEvent(actor, {
     entityId: cleaner.id,
     message: ADMIN_EVENT_COPY.cleanerStatusChanged.message,
-    relatedHref: ADMIN_APP_HREFS.bookings,
+    relatedHref: ADMIN_APP_HREFS.cleaners,
     relatedLabel: ADMIN_EVENT_COPY.cleanerStatusChanged.relatedLabel,
     title: ADMIN_EVENT_COPY.cleanerStatusChanged.title,
     type: "CLEANER_STATUS_CHANGED",
