@@ -119,7 +119,9 @@ export async function verifyEmailController(
 ): Promise<void> {
   await handleAuth(res, context, async (): Promise<void> => {
     const body = getValidatedBody<VerifyEmailInput>(context);
-    const user = await getAuthService().verifyEmail(body);
+    const user = await getAuthService().verifyEmail(body, {
+      ip: context.ip,
+    });
     sendSuccess(res, {
       user: {
         email: user.email,

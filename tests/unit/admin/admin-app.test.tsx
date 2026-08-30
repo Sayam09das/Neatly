@@ -2,11 +2,11 @@
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import AdminDashboardPage from "@/app/admin/(app)/dashboard/page";
 import AdminErrorPage from "@/app/admin/(app)/error";
 import AdminAppLayout from "@/app/admin/(app)/layout";
 import AdminLoading from "@/app/admin/(app)/loading";
 import AdminNotFound from "@/app/admin/(app)/not-found";
-import AdminHomePage from "@/app/admin/(app)/page";
 import { adminDashboardCopy } from "@/config/admin-dashboard";
 import {
   ADMIN_HOME_PATH,
@@ -25,7 +25,7 @@ vi.mock("@/lib/auth/current-user", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: (): string => "/admin",
+  usePathname: (): string => "/admin/dashboard",
   useRouter: (): { replace: () => void } => ({
     replace: (): void => undefined,
   }),
@@ -100,7 +100,7 @@ describe("Admin application routes", (): void => {
   });
 
   it("renders the admin home welcome state without dummy metrics", async (): Promise<void> => {
-    render(<AdminHomePage />);
+    render(<AdminDashboardPage />);
 
     expect(
       screen.getByRole("heading", { name: adminHomeCopy.heading }),

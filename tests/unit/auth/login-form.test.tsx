@@ -9,6 +9,7 @@ import {
   authFormPaths,
   authLoginCopy,
   authSocialCopy,
+  authVerifyEmailCopy,
 } from "@/config/auth-ui";
 import type { AuthFormSubmitResult } from "@/types/auth-form";
 
@@ -142,7 +143,7 @@ describe("LoginForm", (): void => {
     resolveSubmit?.({ status: "ok" });
 
     await waitFor((): void => {
-      expect(assign).toHaveBeenCalledWith("/admin");
+      expect(assign).toHaveBeenCalledWith("/admin/dashboard");
     });
     expect(onSubmit).toHaveBeenCalledTimes(1);
     vi.unstubAllGlobals();
@@ -175,6 +176,49 @@ describe("LoginForm", (): void => {
       await screen.findByText(AUTH_FORM_BANNER_COPY.INVALID_CREDENTIALS),
     ).toBeInTheDocument();
     expect(screen.queryByText("Login successful")).not.toBeInTheDocument();
+  });
+
+  it("blocks unverified login and can resend verification", async (): Promise<void> => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn(
+      async (): Promise<AuthFormSubmitResult> => ({
+        code: "EMAIL_UNVERIFIED",
+        status: "error",
+      }),
+    );
+    const onResend = vi.fn(
+      async (): Promise<{ status: "sent" }> => ({
+        status: "sent",
+      }),
+    );
+
+    render(<LoginForm onResend={onResend} onSubmit={onSubmit} />);
+
+    await user.type(
+      screen.getByLabelText(authLoginCopy.emailLabel),
+      "ada@neatly.example",
+    );
+    await user.type(
+      screen.getByLabelText(authLoginCopy.passwordLabel),
+      "a-private-password",
+    );
+    await user.click(
+      screen.getByRole("button", { name: authLoginCopy.submit }),
+    );
+
+    expect(
+      await screen.findByText(AUTH_FORM_BANNER_COPY.EMAIL_UNVERIFIED),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Login successful")).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: authLoginCopy.resendVerification }),
+    );
+
+    expect(onResend).toHaveBeenCalledWith("ada@neatly.example");
+    expect(
+      await screen.findByText(authVerifyEmailCopy.sent),
+    ).toBeInTheDocument();
   });
 
   it("shows a frontend-only notice for social sign-in", async (): Promise<void> => {

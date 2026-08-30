@@ -1,10 +1,20 @@
 export const API_SERVICE_NAME = "neatly-api";
 export const API_DEFAULT_PORT = 4000;
 export const API_DEFAULT_HOST = "0.0.0.0";
+export const SMTP_DEFAULT_HOST = "smtp-relay.brevo.com";
+export const SMTP_DEFAULT_PORT = 587;
+export const SMTP_SECURE_PORT = 465;
 export const API_SHUTDOWN_TIMEOUT_MS = 10_000;
 export const API_VERSION = "v1";
 export const API_PREFIX = `/api/${API_VERSION}`;
 export const API_JSON_BODY_LIMIT_BYTES = 131_072;
+export const MEDIA_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+export const MEDIA_ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+export const SUPABASE_SERVICES_THUMB_BUCKET_DEFAULT = "Services_Thumb";
 export const API_REQUEST_ID_HEADER = "x-request-id";
 export const API_REQUEST_ID_MAX_LENGTH = 128;
 
@@ -25,6 +35,7 @@ export const ADMIN_LONG_TEXT_MAX_LENGTH = 8_000;
 export const API_ERROR_CODES = {
   CONFLICT: "CONFLICT",
   DATABASE_UNAVAILABLE: "DATABASE_UNAVAILABLE",
+  EMAIL_UNVERIFIED: "EMAIL_UNVERIFIED",
   FORBIDDEN: "FORBIDDEN",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",

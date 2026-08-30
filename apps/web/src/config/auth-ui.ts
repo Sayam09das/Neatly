@@ -23,6 +23,7 @@ export const authLoginCopy = {
   passwordPlaceholder: "Password",
   registerAction: "Register now",
   registerPrompt: "Not a member?",
+  resendVerification: "Resend verification email",
   submit: "Login",
   submitting: "Logging in...",
   title: "Admin Login",
@@ -111,22 +112,28 @@ export const authVerifyEmailCopy = {
     "This email address is already verified. You can sign in.",
   alreadyVerifiedHeading: "Already verified",
   backToLogin: "Back to login",
+  continueToLogin: "Continue to login",
   cooldown: (seconds: number): string =>
     `Resend available in ${String(seconds)}s`,
-  description: "We've sent a verification link to your email address.",
+  description:
+    "Please verify your email before signing in. We've sent a verification link to your email address.",
   expiredDescription:
-    "This verification link has expired. Request a new one to continue.",
-  expiredHeading: "This link has expired",
-  heading: "Check your inbox",
+    "This verification link is no longer valid. Request a new one to continue.",
+  expiredHeading: "Verification link expired",
+  heading: "Check your email",
   headingId: "verify-email-heading",
   inboxWithEmail: (email: string): string =>
-    `We've sent a verification link to ${email}.`,
+    `We've sent a verification link to ${email}. Please verify your email before signing in.`,
+  invalidDescription: "This verification link is no longer valid.",
+  invalidHeading: "This verification link is no longer valid.",
   resend: "Resend verification email",
   sending: "Sending...",
   sent: "Verification email sent.",
   title: "Verify email",
-  verifiedDescription: "Your email address is verified. You can sign in.",
-  verifiedHeading: "Email verified",
+  verifiedDescription: "Your account is now ready.",
+  verifiedHeading: "Email verified successfully.",
+  verifyingDescription: "Please wait while we confirm your email address.",
+  verifyingHeading: "Verifying your email",
 } as const;
 
 export const authRequiredCopy = {
@@ -174,6 +181,7 @@ export const AUTH_PILL_INPUT_CLASS_NAME =
 
 export const AUTH_FORM_BANNER_COPY: Record<AuthFormBannerCode, string> = {
   EMAIL_ALREADY_REGISTERED: "An account with this email already exists.",
+  EMAIL_UNVERIFIED: AUTH_ERROR_MESSAGES.EMAIL_UNVERIFIED,
   EXPIRED_LINK: AUTH_ERROR_MESSAGES.TOKEN_EXPIRED,
   EXPIRED_SESSION: AUTH_ERROR_MESSAGES.SESSION_EXPIRED,
   INVALID_CREDENTIALS: AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,

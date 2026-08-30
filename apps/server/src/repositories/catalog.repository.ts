@@ -109,7 +109,9 @@ export class PrismaCatalogRepository implements CatalogRepository {
     const row = await prisma.service.create({
       data: {
         benefits: input.benefits ?? [],
-        coverMediaId: input.coverMediaId ?? null,
+        ...(input.coverMediaId === undefined || input.coverMediaId === null
+          ? {}
+          : { coverMediaId: input.coverMediaId }),
         excludedTasks: input.excludedTasks ?? [],
         faqs:
           input.faqs === undefined
@@ -138,9 +140,10 @@ export class PrismaCatalogRepository implements CatalogRepository {
     input: UpdateCatalogInput & { isActive?: boolean },
   ): Promise<CatalogRecord | null> {
     try {
+      const { coverImageUrl: _coverImageUrl, ...data } = input;
       const row = await prisma.service.update({
         data: {
-          ...input,
+          ...data,
           faqs:
             input.faqs === undefined
               ? undefined

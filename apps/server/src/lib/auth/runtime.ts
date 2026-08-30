@@ -1,9 +1,12 @@
 import { loadAuthEnv } from "../../config/env.ts";
 import { AuthService } from "../../services/auth.service.ts";
-import { BrevoEmailProvider } from "../../services/email/brevo.provider.ts";
-import { ConsoleEmailProvider } from "../../services/email/console.provider.ts";
 import type { EmailProvider } from "../../services/email/provider.ts";
+import {
+  SmtpEmailProvider,
+  UnconfiguredEmailProvider,
+} from "../../services/email/smtp.provider.ts";
 import { EmailService } from "../../services/email.service.ts";
+import { logInfo } from "../logger.ts";
 import { PrismaAuthRepository } from "./prisma-repository.ts";
 
 let authService: AuthService | undefined;
@@ -13,7 +16,7 @@ export function getAuthService(): AuthService {
     const env = loadAuthEnv();
     authService = new AuthService(
       new PrismaAuthRepository(),
-      new EmailService(createEmailProvider(env.smtp)),
+      new EmailService(createEmailProvider(env.email)),
       env.sessionSecret,
       { siteUrl: env.siteUrl },
     );
@@ -23,15 +26,28 @@ export function getAuthService(): AuthService {
 }
 
 function createEmailProvider(
-  smtp: ReturnType<typeof loadAuthEnv>["smtp"],
+  email: ReturnType<typeof loadAuthEnv>["email"],
 ): EmailProvider {
-  if (smtp === null) {
-    return new ConsoleEmailProvider();
+  if (email === null) {
+    logInfo("Transactional email provider", {
+      authConfigured: false,
+      fromEmailConfigured: false,
+      hostConfigured: false,
+      provider: "smtp",
+      userConfigured: false,
+    });
+    return new UnconfiguredEmailProvider();
   }
 
-  return new BrevoEmailProvider({
-    apiKey: smtp.password,
-    fromEmail: smtp.fromEmail,
-    fromName: smtp.fromName,
+  logInfo("Transactional email provider", {
+    authConfigured: true,
+    fromEmail: email.fromEmail,
+    fromEmailConfigured: true,
+    host: email.host,
+    hostConfigured: true,
+    port: email.port,
+    provider: "smtp",
+    userConfigured: true,
   });
+  return new SmtpEmailProvider(email);
 }

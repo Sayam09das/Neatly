@@ -129,10 +129,12 @@ export class BackendAuthClient {
 
   public async verifyEmail(
     input: unknown,
+    context: AuthClientContext = { ip: "unknown" },
   ): Promise<Pick<AuthUser, "email" | "id">> {
     const data = await this.post<{ user: unknown }>(
       "/api/v1/auth/verify-email",
       input,
+      { ip: context.ip },
     );
     return parseAuthIdentity(data.user);
   }
@@ -413,6 +415,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isAuthErrorCode(code: string): code is AuthErrorCode {
   return (
+    code === "EMAIL_UNVERIFIED" ||
     code === "FORBIDDEN" ||
     code === "INTERNAL_ERROR" ||
     code === "INVALID_CREDENTIALS" ||

@@ -8,7 +8,10 @@ import {
   customerServiceDetailCopy,
   customerServicesCopy,
 } from "@/config/customer";
-import { isLocalCustomerServiceImage } from "@/lib/customer/catalog";
+import {
+  isLocalCustomerServiceImage,
+  isUsableCustomerServiceImage,
+} from "@/lib/customer/catalog";
 import type { CustomerServiceDetail } from "@/types/customer";
 
 interface ServiceDetailHeroProps {
@@ -59,7 +62,7 @@ export function ServiceDetailHero({
 }
 
 function ServiceCoverImage({ service }: ServiceDetailHeroProps): ReactElement {
-  if (!isLocalCustomerServiceImage(service.coverImageUrl)) {
+  if (!isUsableCustomerServiceImage(service.coverImageUrl)) {
     return (
       <div
         className="flex size-full items-center justify-center text-muted-foreground"
@@ -83,6 +86,7 @@ function ServiceCoverImage({ service }: ServiceDetailHeroProps): ReactElement {
       priority
       sizes="(min-width: 1024px) 40vw, 100vw"
       src={service.coverImageUrl}
+      unoptimized={!isLocalCustomerServiceImage(service.coverImageUrl)}
     />
   );
 }

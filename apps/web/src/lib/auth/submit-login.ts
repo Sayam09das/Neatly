@@ -1,16 +1,19 @@
 import { AUTH_ADMIN_HOME_PATH, AUTH_CUSTOMER_HOME_PATH } from "@/config/auth";
 import { CLEANER_API_PATHS, CLEANER_HOME_PATH } from "@/config/cleaner";
+import { isAdminOperatorRole } from "@/lib/auth/authorization";
 import {
   isSafeCleanerNextPath,
   isSafeCustomerNextPath,
 } from "@/lib/auth/paths";
 import type { LoginValues } from "@/lib/validations/auth.schema";
+import type { AuthUserRole } from "@/types/auth";
 import type {
   AuthFormBannerCode,
   AuthFormSubmitResult,
 } from "@/types/auth-form";
 
 const LOGIN_ERROR_CODES = new Set<AuthFormBannerCode>([
+  "EMAIL_UNVERIFIED",
   "INVALID_CREDENTIALS",
   "NETWORK_ERROR",
   "RATE_LIMITED",
@@ -44,7 +47,8 @@ export async function submitAdminLogin(
     }
 
     if (response.ok && isRecord(body) && body.success === true) {
-      return { status: "ok" };
+      const role = readLoginRole(body);
+      return role === undefined ? { status: "ok" } : { role, status: "ok" };
     }
 
     const code = readLoginErrorCode(body);
@@ -94,7 +98,12 @@ export function customerPostLoginPath(search = ""): string {
 
 export async function resolveCustomerLoginDestination(
   search = "",
+  role?: AuthUserRole,
 ): Promise<string> {
+  if (role !== undefined && isAdminOperatorRole(role)) {
+    return adminPostLoginPath(search);
+  }
+
   const next = customerPostLoginPath(search);
 
   if (next !== AUTH_CUSTOMER_HOME_PATH) {
@@ -131,6 +140,25 @@ export async function resolveCustomerLoginDestination(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function readLoginRole(body: unknown): AuthUserRole | undefined {
+  if (!isRecord(body) || !isRecord(body.data) || !isRecord(body.data.user)) {
+    return undefined;
+  }
+
+  const role = body.data.user.role;
+
+  if (
+    role === "ADMIN" ||
+    role === "CONTENT_MANAGER" ||
+    role === "STAFF" ||
+    role === "SUPER_ADMIN"
+  ) {
+    return role;
+  }
+
+  return undefined;
 }
 
 function readLoginErrorCode(body: unknown): AuthFormBannerCode {

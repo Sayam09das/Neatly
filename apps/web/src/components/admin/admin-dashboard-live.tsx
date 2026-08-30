@@ -45,8 +45,8 @@ export function AdminDashboardLive(): ReactElement {
         activity={activityError}
         metricPresentations={{
           bookings: errorPresentation,
+          cleaners: errorPresentation,
           customers: errorPresentation,
-          reviews: errorPresentation,
           services: errorPresentation,
         }}
         operations={activityError}

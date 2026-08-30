@@ -15,8 +15,18 @@ export interface CleanerInvitationEmailInput {
   to: string;
 }
 
+export interface EmailMessage {
+  activateUrl?: string;
+  html: string;
+  recipientName?: string;
+  resetUrl?: string;
+  subject: string;
+  text: string;
+  to: string;
+  verifyUrl?: string;
+}
+
 export interface EmailProvider {
-  sendCleanerInvitationEmail(input: CleanerInvitationEmailInput): Promise<void>;
-  sendPasswordResetEmail(input: PasswordResetEmailInput): Promise<void>;
-  sendVerificationEmail(input: VerificationEmailInput): Promise<void>;
+  sendEmail(message: EmailMessage): Promise<void>;
+  verifyConnection(): Promise<void>;
 }

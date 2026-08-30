@@ -22,6 +22,7 @@ export interface AuthSessionResult {
 }
 
 export type AuthErrorCode =
+  | "EMAIL_UNVERIFIED"
   | "FORBIDDEN"
   | "INTERNAL_ERROR"
   | "INVALID_CREDENTIALS"

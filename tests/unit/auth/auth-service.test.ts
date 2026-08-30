@@ -9,6 +9,7 @@ import { MemoryRateLimiter } from "../../../apps/server/src/lib/auth/rate-limit.
 import { AuthService } from "../../../apps/server/src/services/auth.service.ts";
 import type {
   CleanerInvitationEmailInput,
+  EmailMessage,
   EmailProvider,
   PasswordResetEmailInput,
   VerificationEmailInput,
@@ -25,22 +26,33 @@ class RecordingEmailProvider implements EmailProvider {
   public readonly passwordResets: PasswordResetEmailInput[] = [];
   public readonly verifications: VerificationEmailInput[] = [];
 
-  public async sendPasswordResetEmail(
-    input: PasswordResetEmailInput,
-  ): Promise<void> {
-    this.passwordResets.push(input);
+  public async sendEmail(message: EmailMessage): Promise<void> {
+    if (message.resetUrl !== undefined) {
+      this.passwordResets.push({
+        resetUrl: message.resetUrl,
+        to: message.to,
+      });
+    }
+
+    if (message.verifyUrl !== undefined) {
+      this.verifications.push({
+        to: message.to,
+        verifyUrl: message.verifyUrl,
+      });
+    }
+
+    if (message.activateUrl !== undefined) {
+      this.invitations.push({
+        activateUrl: message.activateUrl,
+        expiresInDays: 7,
+        name: message.recipientName ?? "",
+        to: message.to,
+      });
+    }
   }
 
-  public async sendVerificationEmail(
-    input: VerificationEmailInput,
-  ): Promise<void> {
-    this.verifications.push(input);
-  }
-
-  public async sendCleanerInvitationEmail(
-    input: CleanerInvitationEmailInput,
-  ): Promise<void> {
-    this.invitations.push(input);
+  public async verifyConnection(): Promise<void> {
+    return undefined;
   }
 }
 
@@ -167,6 +179,86 @@ describe("AuthService", (): void => {
     ).rejects.toMatchObject({
       code: "INVALID_INPUT",
     });
+  });
+
+  it("registers an unverified customer and emails a customer verify link", async (): Promise<void> => {
+    const { emails, repository, service } = createAuthHarness();
+    const user = await service.registerUser(
+      {
+        email: "sayam@neatly.example",
+        name: "Sayam Das",
+        password: ADMIN_PASSWORD,
+      },
+      { role: "STAFF" },
+    );
+
+    expect(user.role).toBe("STAFF");
+    expect(user).not.toHaveProperty("passwordHash");
+    expect(repository.users[0]?.email).toBe("sayam@neatly.example");
+    expect(repository.users[0]?.emailVerifiedAt).toBeNull();
+    expect(repository.users[0]?.passwordHash).not.toBe(ADMIN_PASSWORD);
+    expect(emails.verifications).toHaveLength(1);
+    expect(emails.verifications[0]?.verifyUrl).toContain("/verify-email?");
+    expect(emails.verifications[0]?.verifyUrl).not.toContain(
+      "/admin/verify-email",
+    );
+  });
+
+  it("blocks unverified customer login without creating a session", async (): Promise<void> => {
+    const { emails, repository, service } = createAuthHarness();
+    await service.registerUser(
+      {
+        email: "sayam@neatly.example",
+        name: "Sayam Das",
+        password: ADMIN_PASSWORD,
+      },
+      { role: "STAFF" },
+    );
+
+    await expect(
+      service.authenticateUser(
+        { email: "sayam@neatly.example", password: ADMIN_PASSWORD },
+        { ip: "203.0.113.40" },
+      ),
+    ).rejects.toMatchObject({
+      code: "EMAIL_UNVERIFIED",
+      message: "Please verify your email before signing in.",
+    });
+    expect(repository.sessions).toHaveLength(0);
+
+    await service.verifyEmail({
+      token: tokenFromUrl(emails.verifications[0]?.verifyUrl ?? ""),
+    });
+
+    const session = await service.authenticateUser(
+      { email: "sayam@neatly.example", password: ADMIN_PASSWORD },
+      { ip: "203.0.113.40" },
+    );
+    expect(session.user.email).toBe("sayam@neatly.example");
+    expect(repository.users[0]?.emailVerifiedAt).not.toBeNull();
+  });
+
+  it("keeps an expired customer verification token from activating the account", async (): Promise<void> => {
+    let current = new Date("2026-08-30T00:00:00.000Z");
+    const { emails, repository, service } = createAuthHarness(
+      (): Date => current,
+    );
+    await service.registerUser(
+      {
+        email: "sayam@neatly.example",
+        name: "Sayam Das",
+        password: ADMIN_PASSWORD,
+      },
+      { role: "STAFF" },
+    );
+    const token = tokenFromUrl(emails.verifications[0]?.verifyUrl ?? "");
+
+    current = new Date("2026-08-31T00:00:01.000Z");
+    await expect(service.verifyEmail({ token })).rejects.toMatchObject({
+      code: "TOKEN_EXPIRED",
+    });
+    expect(repository.users[0]?.emailVerifiedAt).toBeNull();
+    expect(repository.sessions).toHaveLength(0);
   });
 
   it("rejects login until the email is verified", async (): Promise<void> => {

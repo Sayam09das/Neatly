@@ -28,11 +28,13 @@
   "dependencies": {
     "@neatly/config": "workspace:*",
     "@prisma/client": "^6.19.0",
-    "bcrypt": "^6.0.0"
+    "bcrypt": "^6.0.0",
+    "nodemailer": "^9.0.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^26.2.0",
+    "@types/nodemailer": "^8.0.1",
     "prisma": "^6.19.0",
     "typescript": "catalog:"
   }

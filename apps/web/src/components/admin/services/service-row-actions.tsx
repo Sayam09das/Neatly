@@ -24,9 +24,14 @@ import {
   AdminFormDialog,
   AdminFormField,
 } from "@/components/admin/admin-mutation-dialogs";
+import { ServiceThumbnailFields } from "@/components/admin/services/service-thumbnail-fields";
 import { adminServiceCopy } from "@/config/admin-services";
 import { collectZodFieldErrors } from "@/lib/admin/mutation-input";
-import { archiveAdminService, updateAdminService } from "@/lib/admin/services";
+import {
+  archiveAdminService,
+  updateAdminService,
+  uploadAdminServiceThumbnail,
+} from "@/lib/admin/services";
 import { toast } from "@/lib/toast";
 import { updateServiceFormSchema } from "@/lib/validations/admin-mutation.schema";
 import type { AdminService } from "@/types/admin-service";
@@ -120,10 +125,12 @@ function ServiceEditDialog({
   const shortId = useId();
   const fullId = useId();
   const [values, setValues] = useState({
+    coverImageUrl: "",
     fullDescription: service.fullDescription ?? "",
     name: service.name ?? "",
     shortDescription: service.shortDescription ?? "",
   });
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,10 +141,12 @@ function ServiceEditDialog({
     }
 
     setValues({
+      coverImageUrl: "",
       fullDescription: service.fullDescription ?? "",
       name: service.name ?? "",
       shortDescription: service.shortDescription ?? "",
     });
+    setThumbnailFile(null);
     setFieldErrors({});
     setError(null);
     setSubmitting(false);
@@ -156,7 +165,35 @@ function ServiceEditDialog({
 
     setSubmitting(true);
     setError(null);
-    const result = await updateAdminService(service.id, parsed.data);
+    let coverMediaId: string | undefined;
+
+    if (thumbnailFile !== null) {
+      const uploaded = await uploadAdminServiceThumbnail(
+        thumbnailFile,
+        parsed.data.name,
+      );
+
+      if (!uploaded.ok) {
+        setSubmitting(false);
+        setFieldErrors({ file: uploaded.message });
+        setError(uploaded.message);
+        toast.error({ title: adminServiceCopy.editError });
+        return;
+      }
+
+      coverMediaId = uploaded.data.id;
+    }
+
+    const result = await updateAdminService(service.id, {
+      fullDescription: parsed.data.fullDescription,
+      name: parsed.data.name,
+      shortDescription: parsed.data.shortDescription,
+      ...(coverMediaId === undefined
+        ? parsed.data.coverImageUrl === ""
+          ? {}
+          : { coverImageUrl: parsed.data.coverImageUrl }
+        : { coverMediaId }),
+    });
     setSubmitting(false);
 
     if (!result.ok) {
@@ -223,6 +260,17 @@ function ServiceEditDialog({
           value={values.fullDescription}
         />
       </AdminFormField>
+      <ServiceThumbnailFields
+        coverImageUrl={values.coverImageUrl}
+        currentPreviewUrl={service.coverImageUrl}
+        file={thumbnailFile}
+        fileError={fieldErrors.file}
+        linkError={fieldErrors.coverImageUrl}
+        onCoverImageUrlChange={(coverImageUrl): void => {
+          setValues({ ...values, coverImageUrl });
+        }}
+        onFileChange={setThumbnailFile}
+      />
     </AdminFormDialog>
   );
 }

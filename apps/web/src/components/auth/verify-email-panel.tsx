@@ -14,7 +14,10 @@ import { AUTH_VERIFICATION_RESEND_COOLDOWN_SECONDS } from "@/config/auth";
 import { authFormPaths, authVerifyEmailCopy } from "@/config/auth-ui";
 import { authFormBannerMessage } from "@/lib/auth/form-errors";
 import { getRemainingCooldownSeconds, maskEmail } from "@/lib/auth/mask-email";
-import { resendVerification } from "@/services/auth-form.service";
+import {
+  resendVerification,
+  submitVerifyEmail,
+} from "@/services/auth-form.service";
 import type {
   AuthFormBannerCode,
   ResendVerificationHandler,
@@ -27,16 +30,22 @@ interface VerifyEmailPanelProps {
   email?: string;
   initialView?: VerifyEmailView;
   onResend?: ResendVerificationHandler;
+  token?: string | null;
 }
 
 export function VerifyEmailPanel({
   email,
   initialView = "idle",
   onResend = resendVerification,
+  token = null,
 }: VerifyEmailPanelProps): ReactElement {
   const instanceId = useId();
   const bannerId = `${instanceId}-banner`;
   const maskedEmail = email === undefined ? null : maskEmail(email);
+  const [tokenView, setTokenView] = useState<VerifyEmailView | null>(
+    token !== null && token.trim() !== "" ? "verifying" : null,
+  );
+  const view = tokenView ?? initialView;
   const [resendStatus, setResendStatus] = useState<
     "idle" | "sending" | "cooldown"
   >("idle");
@@ -49,6 +58,36 @@ export function VerifyEmailPanel({
     maskedEmail === null
       ? authVerifyEmailCopy.description
       : authVerifyEmailCopy.inboxWithEmail(maskedEmail);
+
+  useEffect((): (() => void) | undefined => {
+    if (token === null || token.trim() === "") {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    void submitVerifyEmail(token).then((result) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (result.status === "ok") {
+        setTokenView("verified");
+        return;
+      }
+
+      if (result.code === "EXPIRED_LINK") {
+        setTokenView("expired");
+        return;
+      }
+
+      setTokenView("invalid");
+    });
+
+    return (): void => {
+      cancelled = true;
+    };
+  }, [token]);
 
   useEffect((): (() => void) | undefined => {
     if (cooldownUntil === null) {
@@ -82,7 +121,7 @@ export function VerifyEmailPanel({
     setResendStatus("sending");
 
     try {
-      const result = await onResend();
+      const result = await onResend(email);
 
       if (result.status === "error") {
         setBanner(result.code);
@@ -99,9 +138,20 @@ export function VerifyEmailPanel({
     }
   }
 
-  if (initialView === "verified") {
+  if (view === "verifying") {
     return (
       <VerifyEmailStatus
+        message={authVerifyEmailCopy.verifyingDescription}
+        title={authVerifyEmailCopy.verifyingHeading}
+        tone="info"
+      />
+    );
+  }
+
+  if (view === "verified") {
+    return (
+      <VerifyEmailStatus
+        actionLabel={authVerifyEmailCopy.continueToLogin}
         message={authVerifyEmailCopy.verifiedDescription}
         title={authVerifyEmailCopy.verifiedHeading}
         tone="success"
@@ -109,7 +159,7 @@ export function VerifyEmailPanel({
     );
   }
 
-  if (initialView === "already-verified") {
+  if (view === "already-verified") {
     return (
       <VerifyEmailStatus
         message={authVerifyEmailCopy.alreadyVerifiedDescription}
@@ -119,18 +169,26 @@ export function VerifyEmailPanel({
     );
   }
 
+  if (view === "invalid") {
+    return (
+      <VerifyEmailStatus
+        message={authVerifyEmailCopy.invalidDescription}
+        title={authVerifyEmailCopy.invalidHeading}
+        tone="error"
+      />
+    );
+  }
+
   const heading =
-    initialView === "expired"
+    view === "expired"
       ? authVerifyEmailCopy.expiredHeading
       : authVerifyEmailCopy.heading;
   const headingId =
-    initialView === "expired"
+    view === "expired"
       ? "verify-email-expired-heading"
       : authVerifyEmailCopy.headingId;
   const intro =
-    initialView === "expired"
-      ? authVerifyEmailCopy.expiredDescription
-      : description;
+    view === "expired" ? authVerifyEmailCopy.expiredDescription : description;
 
   const resendLabel =
     cooldownUntil === null
@@ -190,12 +248,14 @@ export function VerifyEmailPanel({
 }
 
 interface VerifyEmailStatusProps {
+  actionLabel?: string;
   message: string;
   title: string;
   tone: "success" | "error" | "info";
 }
 
 function VerifyEmailStatus({
+  actionLabel = authVerifyEmailCopy.backToLogin,
   message,
   title,
   tone,
@@ -209,7 +269,7 @@ function VerifyEmailStatus({
         <AuthStatus
           action={
             <AuthTextLink href={authFormPaths.login}>
-              {authVerifyEmailCopy.backToLogin}
+              {actionLabel}
             </AuthTextLink>
           }
           live={false}

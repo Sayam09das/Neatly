@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@neatly/ui";
+import { Button, Input } from "@neatly/ui";
 import { cn } from "@neatly/utils";
 import Link from "next/link";
 import {
@@ -28,6 +28,7 @@ import {
   authFormPaths,
   authLoginCopy,
   authSocialCopy,
+  authVerifyEmailCopy,
 } from "@/config/auth-ui";
 import {
   authFormBannerMessage,
@@ -40,9 +41,11 @@ import {
 import { loginSchema } from "@/lib/validations/auth.schema";
 import { emptyLoginFormValues } from "@/lib/validations/auth-form.schema";
 import {
+  resendVerification,
   submitLoginForm,
   submitSocialAuth,
 } from "@/services/auth-form.service";
+import type { AuthUserRole } from "@/types/auth";
 import type {
   AuthFormBannerCode,
   AuthSocialProvider,
@@ -50,19 +53,25 @@ import type {
   LoginFormData,
   LoginFormState,
   LoginFormSubmitHandler,
+  ResendVerificationHandler,
 } from "@/types/auth-form";
 
 const LOGIN_FIELDS = ["email", "password"] as const;
 
 interface LoginFormProps {
   mode?: "admin" | "customer";
+  onResend?: ResendVerificationHandler;
   onSocialSubmit?: AuthSocialSubmitHandler;
   onSubmit?: LoginFormSubmitHandler;
-  resolveSuccessHref?: (search: string) => string | Promise<string>;
+  resolveSuccessHref?: (
+    search: string,
+    role?: AuthUserRole,
+  ) => string | Promise<string>;
 }
 
 export function LoginForm({
   mode = "admin",
+  onResend = resendVerification,
   onSocialSubmit = submitSocialAuth,
   onSubmit = submitLoginForm,
   resolveSuccessHref,
@@ -87,8 +96,17 @@ export function LoginForm({
   const [status, setStatus] = useState<LoginFormState>("idle");
   const [banner, setBanner] = useState<AuthFormBannerCode | null>(null);
   const [socialNotice, setSocialNotice] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">(
+    "idle",
+  );
+  const [resendError, setResendError] = useState<AuthFormBannerCode | null>(
+    null,
+  );
   const isSubmitting = status === "submitting";
+  const isResending = resendStatus === "sending";
   const bannerMessage = banner === null ? null : authFormBannerMessage(banner);
+  const resendErrorMessage =
+    resendError === null ? null : authFormBannerMessage(resendError);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>): void {
     const { name, value } = event.target;
@@ -110,12 +128,16 @@ export function LoginForm({
       setFieldErrors(collectFieldErrors(parsed.error, LOGIN_FIELDS));
       setBanner(null);
       setSocialNotice(null);
+      setResendStatus("idle");
+      setResendError(null);
       return;
     }
 
     setFieldErrors({});
     setBanner(null);
     setSocialNotice(null);
+    setResendStatus("idle");
+    setResendError(null);
     setStatus("submitting");
 
     try {
@@ -126,7 +148,9 @@ export function LoginForm({
         return;
       }
 
-      window.location.assign(await successHref(window.location.search));
+      window.location.assign(
+        await successHref(window.location.search, result.role),
+      );
     } finally {
       setStatus("idle");
     }
@@ -152,6 +176,30 @@ export function LoginForm({
     }
   }
 
+  async function handleResend(): Promise<void> {
+    if (isSubmitting || isResending || resendStatus === "sent") {
+      return;
+    }
+
+    setResendError(null);
+    setResendStatus("sending");
+
+    try {
+      const result = await onResend(fields.email);
+
+      if (result.status === "error") {
+        setResendError(result.code);
+        setResendStatus("idle");
+        return;
+      }
+
+      setResendStatus("sent");
+    } catch {
+      setResendError("UNEXPECTED_ERROR");
+      setResendStatus("idle");
+    }
+  }
+
   return (
     <AuthEntrance>
       <AuthFormHeader
@@ -171,6 +219,42 @@ export function LoginForm({
           }}
         >
           <AuthFormBanner id={bannerId} message={bannerMessage} />
+          {banner === "EMAIL_UNVERIFIED" ? (
+            <div className="flex flex-col gap-3">
+              {resendErrorMessage === null ? null : (
+                <p
+                  aria-live="polite"
+                  className="text-body-small text-destructive"
+                >
+                  {resendErrorMessage}
+                </p>
+              )}
+              {resendStatus === "sent" ? (
+                <p
+                  aria-live="polite"
+                  className="text-body-small text-foreground"
+                >
+                  {authVerifyEmailCopy.sent}
+                </p>
+              ) : null}
+              <Button
+                className="w-full"
+                disabled={
+                  isSubmitting || isResending || resendStatus === "sent"
+                }
+                isLoading={isResending}
+                onClick={(): void => {
+                  void handleResend();
+                }}
+                type="button"
+                variant="secondary"
+              >
+                {isResending
+                  ? authVerifyEmailCopy.sending
+                  : authLoginCopy.resendVerification}
+              </Button>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-4">
             <AuthField
               error={fieldErrors.email}

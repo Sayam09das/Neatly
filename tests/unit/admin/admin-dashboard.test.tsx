@@ -49,6 +49,9 @@ describe("AdminDashboard", (): void => {
 
     for (const metric of adminDashboardMetrics) {
       expect(screen.getByText(metric.label)).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: new RegExp(metric.label) }),
+      ).toHaveAttribute("href", metric.href);
     }
 
     expect(screen.getAllByText(adminDashboardCopy.emptyValueLabel).length).toBe(
@@ -63,7 +66,9 @@ describe("AdminDashboard", (): void => {
 
     for (const action of adminDashboardQuickActions) {
       expect(
-        screen.getByRole("link", { name: new RegExp(action.title) }),
+        screen.getByRole("link", {
+          name: new RegExp(`${action.title}[\\s\\S]*${action.description}`),
+        }),
       ).toHaveAttribute("href", action.href);
     }
 

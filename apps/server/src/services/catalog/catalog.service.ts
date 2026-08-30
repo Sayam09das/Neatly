@@ -14,6 +14,7 @@ import {
 import { requireSlug } from "../../lib/domain/slug.ts";
 import { ConflictError, ValidationError } from "../../lib/errors.ts";
 import type { CatalogRepository } from "../../repositories/catalog.repository.ts";
+import type { MediaService } from "../media/media.service.ts";
 import {
   CATALOG_SORT_FIELDS,
   type CatalogListQuery,
@@ -31,9 +32,14 @@ import {
 
 export class CatalogService {
   private readonly catalog: CatalogRepository;
+  private readonly media: MediaService | null;
 
-  public constructor(catalog: CatalogRepository) {
+  public constructor(
+    catalog: CatalogRepository,
+    media: MediaService | null = null,
+  ) {
     this.catalog = catalog;
+    this.media = media;
   }
 
   public async create(
@@ -49,8 +55,12 @@ export class CatalogService {
       throw new ConflictError("A service with this slug already exists.");
     }
 
+    const coverMediaId = await this.resolveCoverMediaId(input, name);
+    const { coverImageUrl: _coverImageUrl, ...catalogInput } = input;
+
     return this.catalog.create({
-      ...input,
+      ...catalogInput,
+      coverMediaId,
       fullDescription: requireText(input.fullDescription, "fullDescription"),
       name,
       shortDescription: requireText(input.shortDescription, "shortDescription"),
@@ -160,8 +170,15 @@ export class CatalogService {
       }
     }
 
+    const coverMediaId = await this.resolveCoverMediaId(
+      input,
+      input.name ?? item.name,
+      item.coverMediaId,
+    );
+    const { coverImageUrl: _coverImageUrl, ...catalogInput } = input;
     const updated = await this.catalog.update(id, {
-      ...input,
+      ...catalogInput,
+      coverMediaId,
       fullDescription:
         input.fullDescription === undefined
           ? undefined
@@ -197,6 +214,48 @@ export class CatalogService {
     }
 
     return updated;
+  }
+
+  private async resolveCoverMediaId(
+    input: Pick<CreateCatalogInput, "coverImageUrl" | "coverMediaId">,
+    altText: string,
+    fallbackId: string | null = null,
+  ): Promise<string | null> {
+    if (input.coverMediaId !== undefined) {
+      if (input.coverMediaId === null) {
+        return null;
+      }
+
+      if (this.media === null) {
+        return input.coverMediaId;
+      }
+
+      const existing = await this.media.findById(input.coverMediaId);
+
+      if (existing === null) {
+        throw new ValidationError("Validation failed.", [
+          { field: "coverMediaId", issue: "Choose a valid thumbnail." },
+        ]);
+      }
+
+      return existing.id;
+    }
+
+    const coverImageUrl = input.coverImageUrl?.trim() ?? "";
+
+    if (coverImageUrl === "") {
+      return fallbackId;
+    }
+
+    if (this.media === null) {
+      throw new ValidationError("Image storage is not configured.");
+    }
+
+    const media = await this.media.registerExternalImage({
+      altText,
+      url: coverImageUrl,
+    });
+    return media.id;
   }
 }
 

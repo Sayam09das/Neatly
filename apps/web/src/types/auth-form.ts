@@ -3,6 +3,7 @@ import type {
   LoginValues,
   RegisterUserValues,
 } from "@/lib/validations/auth.schema";
+import type { AuthUserRole } from "@/types/auth";
 
 export type LoginFormData = LoginValues;
 
@@ -27,6 +28,7 @@ export type ResetPasswordFormState = AuthFormStatus | "success";
 export type AuthFormBannerCode =
   | "INVALID_CREDENTIALS"
   | "EMAIL_ALREADY_REGISTERED"
+  | "EMAIL_UNVERIFIED"
   | "INVALID_REGISTRATION_DATA"
   | "RATE_LIMITED"
   | "NETWORK_ERROR"
@@ -36,7 +38,7 @@ export type AuthFormBannerCode =
   | "EXPIRED_LINK";
 
 export type AuthFormSubmitResult =
-  | { status: "ok" }
+  | { status: "ok"; role?: AuthUserRole }
   | { status: "error"; code: AuthFormBannerCode };
 
 export type ResetPasswordSubmitResult =
@@ -64,7 +66,9 @@ export type ResetPasswordSubmitHandler = (
   values: Pick<ResetPasswordFormData, "password">,
 ) => Promise<ResetPasswordSubmitResult>;
 
-export type ResendVerificationHandler = () => Promise<ResendVerificationResult>;
+export type ResendVerificationHandler = (
+  email?: string,
+) => Promise<ResendVerificationResult>;
 
 export type AuthSocialProvider = "google" | "apple" | "facebook";
 
@@ -89,5 +93,7 @@ export type ResetLinkView = "invalid" | "expired";
 export type VerifyEmailView =
   | "idle"
   | "expired"
+  | "invalid"
   | "already-verified"
-  | "verified";
+  | "verified"
+  | "verifying";

@@ -2,7 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VerifyEmailPanel } from "@/components/auth/verify-email-panel";
 import { AUTH_VERIFICATION_RESEND_COOLDOWN_SECONDS } from "@/config/auth";
 import {
@@ -10,9 +10,26 @@ import {
   authFormPaths,
   authVerifyEmailCopy,
 } from "@/config/auth-ui";
+import { submitVerifyEmail } from "@/services/auth-form.service";
 import type { ResendVerificationResult } from "@/types/auth-form";
 
+vi.mock("@/services/auth-form.service", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/services/auth-form.service")>();
+
+  return {
+    ...actual,
+    submitVerifyEmail: vi.fn(),
+  };
+});
+
+const mockedVerifyEmail = vi.mocked(submitVerifyEmail);
+
 describe("VerifyEmailPanel", (): void => {
+  beforeEach((): void => {
+    mockedVerifyEmail.mockReset();
+  });
+
   it("renders the inbox copy and a login link", (): void => {
     render(<VerifyEmailPanel />);
 
@@ -124,5 +141,60 @@ describe("VerifyEmailPanel", (): void => {
         name: authVerifyEmailCopy.alreadyVerifiedHeading,
       }),
     ).toBeInTheDocument();
+  });
+
+  it("verifies a token and shows success without creating a session", async (): Promise<void> => {
+    mockedVerifyEmail.mockResolvedValue({ status: "ok" });
+
+    render(<VerifyEmailPanel token="valid-token" />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: authVerifyEmailCopy.verifyingHeading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", {
+        name: authVerifyEmailCopy.verifiedHeading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: authVerifyEmailCopy.continueToLogin }),
+    ).toHaveAttribute("href", authFormPaths.login);
+    expect(mockedVerifyEmail).toHaveBeenCalledWith("valid-token");
+  });
+
+  it("shows an expired state that can request a new email", async (): Promise<void> => {
+    mockedVerifyEmail.mockResolvedValue({
+      code: "EXPIRED_LINK",
+      status: "error",
+    });
+
+    render(<VerifyEmailPanel token="expired-token" />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: authVerifyEmailCopy.expiredHeading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: authVerifyEmailCopy.resend }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a safe invalid-token state", async (): Promise<void> => {
+    mockedVerifyEmail.mockResolvedValue({
+      code: "INVALID_LINK",
+      status: "error",
+    });
+
+    render(<VerifyEmailPanel token="used-token" />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: authVerifyEmailCopy.invalidHeading,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("used-token")).not.toBeInTheDocument();
   });
 });

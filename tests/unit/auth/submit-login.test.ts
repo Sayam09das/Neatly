@@ -3,6 +3,7 @@ import { AUTH_ADMIN_HOME_PATH, AUTH_CUSTOMER_HOME_PATH } from "@/config/auth";
 import {
   adminPostLoginPath,
   customerPostLoginPath,
+  resolveCustomerLoginDestination,
   submitAdminLogin,
 } from "@/lib/auth/submit-login";
 
@@ -54,7 +55,45 @@ describe("customerPostLoginPath", (): void => {
   });
 });
 
+describe("resolveCustomerLoginDestination", (): void => {
+  it("sends admin operators to the admin dashboard", async (): Promise<void> => {
+    await expect(resolveCustomerLoginDestination("", "ADMIN")).resolves.toBe(
+      AUTH_ADMIN_HOME_PATH,
+    );
+    await expect(
+      resolveCustomerLoginDestination("?next=%2Fadmin%2Fbookings", "ADMIN"),
+    ).resolves.toBe("/admin/bookings");
+  });
+});
+
 describe("submitAdminLogin", (): void => {
+  it("returns the authenticated role on success", async (): Promise<void> => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async (): Promise<{
+          data: { user: { role: string } };
+          success: true;
+        }> => ({
+          data: { user: { role: "ADMIN" } },
+          success: true,
+        }),
+        ok: true,
+      }),
+    );
+
+    const result = await submitAdminLogin({
+      email: "neatlyadmin@test.com",
+      password: "correct-horse-battery-staple",
+    });
+
+    expect(result).toEqual({
+      role: "ADMIN",
+      status: "ok",
+    });
+    vi.unstubAllGlobals();
+  });
+
   it("maps a failed login envelope to invalid credentials", async (): Promise<void> => {
     vi.stubGlobal(
       "fetch",
@@ -77,6 +116,33 @@ describe("submitAdminLogin", (): void => {
 
     expect(result).toEqual({
       code: "INVALID_CREDENTIALS",
+      status: "error",
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it("maps an unverified customer login to EMAIL_UNVERIFIED", async (): Promise<void> => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async (): Promise<{
+          error: { code: string };
+          success: false;
+        }> => ({
+          error: { code: "EMAIL_UNVERIFIED" },
+          success: false,
+        }),
+        ok: false,
+      }),
+    );
+
+    const result = await submitAdminLogin({
+      email: "sayam@neatly.example",
+      password: "correct-horse-battery-staple",
+    });
+
+    expect(result).toEqual({
+      code: "EMAIL_UNVERIFIED",
       status: "error",
     });
     vi.unstubAllGlobals();

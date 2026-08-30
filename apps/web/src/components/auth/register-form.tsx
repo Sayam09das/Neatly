@@ -22,6 +22,7 @@ import { AuthPasswordField } from "@/components/auth/auth-password-field";
 import { AuthSocialActions } from "@/components/auth/auth-social-actions";
 import { AuthSubmitButton } from "@/components/auth/auth-submit-button";
 import { PasswordStrengthHint } from "@/components/auth/password-strength-hint";
+import { AUTH_VERIFY_EMAIL_ALIAS_PATH } from "@/config/auth";
 import {
   AUTH_PILL_INPUT_CLASS_NAME,
   authFormPaths,
@@ -59,6 +60,7 @@ interface RegisterFormProps {
   mode?: "admin" | "customer";
   onSocialSubmit?: AuthSocialSubmitHandler;
   onSubmit?: RegisterFormSubmitHandler;
+  resolveSuccessHref?: (email: string) => string;
   successHref?: string;
 }
 
@@ -66,6 +68,7 @@ export function RegisterForm({
   mode = "customer",
   onSocialSubmit = submitSocialAuth,
   onSubmit,
+  resolveSuccessHref,
   successHref,
 }: RegisterFormProps): ReactElement {
   const submitRegister =
@@ -142,9 +145,18 @@ export function RegisterForm({
         return;
       }
 
-      if (successHref !== undefined && successHref !== "") {
+      const nextHref =
+        resolveSuccessHref !== undefined
+          ? resolveSuccessHref(parsed.data.email)
+          : successHref !== undefined && successHref !== ""
+            ? successHref
+            : mode === "customer"
+              ? `${AUTH_VERIFY_EMAIL_ALIAS_PATH}?email=${encodeURIComponent(parsed.data.email)}`
+              : undefined;
+
+      if (nextHref !== undefined && nextHref !== "") {
         keepSubmitting = true;
-        window.location.assign(successHref);
+        window.location.assign(nextHref);
         return;
       }
     } finally {

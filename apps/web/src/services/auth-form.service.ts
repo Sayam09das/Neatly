@@ -38,8 +38,53 @@ export async function submitResetPasswordForm(_values: {
   return { status: "ok" };
 }
 
-export async function submitResendVerification(): Promise<ResendVerificationResult> {
-  return { status: "sent" };
+export async function submitResendVerification(
+  email?: string,
+): Promise<ResendVerificationResult> {
+  if (email === undefined || email.trim() === "") {
+    return { status: "sent" };
+  }
+
+  try {
+    const response = await fetch("/api/admin/auth/resend-verification", {
+      body: JSON.stringify({ email }),
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (response.ok) {
+      return { status: "sent" };
+    }
+
+    let body: unknown = null;
+
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "error" in body &&
+      typeof body.error === "object" &&
+      body.error !== null &&
+      "code" in body.error &&
+      body.error.code === "RATE_LIMITED"
+    ) {
+      return { code: "RATE_LIMITED", status: "error" };
+    }
+
+    return { code: "UNEXPECTED_ERROR", status: "error" };
+  } catch {
+    return { code: "NETWORK_ERROR", status: "error" };
+  }
 }
 
 export async function submitSocialAuth(
@@ -54,8 +99,55 @@ export const requestPasswordReset = submitForgotPasswordForm;
 export const resetPassword = submitResetPasswordForm;
 export const resendVerification = submitResendVerification;
 
-export async function verifyEmail(): Promise<AuthFormSubmitResult> {
-  return { status: "ok" };
+export async function submitVerifyEmail(
+  token: string,
+): Promise<AuthFormSubmitResult> {
+  try {
+    const response = await fetch("/api/admin/auth/verify-email", {
+      body: JSON.stringify({ token }),
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    let body: unknown = null;
+
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+
+    if (response.ok) {
+      return { status: "ok" };
+    }
+
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "error" in body &&
+      typeof body.error === "object" &&
+      body.error !== null &&
+      "code" in body.error &&
+      body.error.code === "TOKEN_EXPIRED"
+    ) {
+      return { code: "EXPIRED_LINK", status: "error" };
+    }
+
+    return { code: "INVALID_LINK", status: "error" };
+  } catch {
+    return { code: "NETWORK_ERROR", status: "error" };
+  }
+}
+
+export async function verifyEmail(
+  token: string,
+): Promise<AuthFormSubmitResult> {
+  return submitVerifyEmail(token);
 }
 
 export async function logout(): Promise<{ status: "unconnected" }> {

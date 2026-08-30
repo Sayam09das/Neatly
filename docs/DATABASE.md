@@ -101,7 +101,7 @@ Stores administrative user accounts for dashboard access and content authorship.
 | `passwordHash` | String | NOT NULL | `bcrypt` hashed password string |
 | `role` | Enum (`UserRole`) | NOT NULL, Default: `ADMIN` | Role authorization level |
 | `status` | Enum (`UserStatus`) | NOT NULL, Default: `ACTIVE` | Account access status |
-| `emailVerifiedAt` | DateTime | NULLABLE | Set when the admin email verification token is consumed |
+| `emailVerifiedAt` | DateTime | NULLABLE | Set when an email verification or cleaner invitation token is consumed. Customer registration stores the email immediately and leaves this null until `/verify-email` succeeds. |
 | `lastLoginAt` | DateTime | NULLABLE | Timestamp of last successful login |
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
 | `updatedAt` | DateTime | NOT NULL, UpdatedAt | Record modification timestamp (UTC) |
@@ -137,14 +137,14 @@ Single-use password reset tokens. Raw tokens are never stored. Tokens expire 60 
 
 ### 5.5 Email Verification Token (`EmailVerificationToken`)
 
-Single-use email verification tokens. Raw tokens are never stored. Admin email verification tokens expire 24 hours after issue. Cleaner invitation tokens reuse this table with a 7-day TTL (`AUTH_CLEANER_INVITATION_TTL_MS`). Both are hashed, single-use, and invalidated after successful consumption. There is no separate invitation model.
+Single-use email verification tokens. Raw tokens are never stored. Admin and customer email verification tokens expire 24 hours after issue. Cleaner invitation tokens reuse this table with a 7-day TTL (`AUTH_CLEANER_INVITATION_TTL_MS`). All are hashed, single-use, and invalidated after successful consumption. There is no separate invitation model. Customer pending verification is `User.emailVerifiedAt = null`, not a separate account-status enum.
 
 | Field Name | Data Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
 | `id` | String (CUID) | Primary Key, Default: Auto | Unique identifier |
-| `userId` | String | NOT NULL, FK (`User`) | Owning user (admin verification or invited cleaner staff) |
+| `userId` | String | NOT NULL, FK (`User`) | Owning user (admin verification, customer verification, or invited cleaner staff) |
 | `tokenHash` | String | NOT NULL, UNIQUE | HMAC hash of the verification or invitation token |
-| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (24 hours for admin verification; 7 days for cleaner invitations) |
+| `expiresAt` | DateTime | NOT NULL | Expiry timestamp (24 hours for admin and customer verification; 7 days for cleaner invitations) |
 | `usedAt` | DateTime | NULLABLE | Set when the token is consumed |
 | `createdAt` | DateTime | NOT NULL, Default: `now()` | Record creation timestamp (UTC) |
 

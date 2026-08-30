@@ -23,6 +23,14 @@ export const createCleanerFormSchema = z.object({
 export const updateCleanerFormSchema = createCleanerFormSchema;
 
 export const createServiceFormSchema = z.object({
+  coverImageUrl: z
+    .string()
+    .trim()
+    .max(2_048)
+    .refine(
+      (value): boolean => value === "" || value.startsWith("https://"),
+      "Enter a valid HTTPS image URL.",
+    ),
   fullDescription: z
     .string()
     .trim()

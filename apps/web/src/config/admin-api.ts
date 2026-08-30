@@ -18,6 +18,7 @@ export const ADMIN_API_PATHS = {
   customerStatus: `${ADMIN_API_PREFIX}/customers/:id/status`,
   dashboard: `${ADMIN_API_PREFIX}/dashboard`,
   me: `${ADMIN_API_PREFIX}/me`,
+  media: `${ADMIN_API_PREFIX}/media`,
   notifications: `${ADMIN_API_PREFIX}/notifications`,
   notificationsReadAll: `${ADMIN_API_PREFIX}/notifications/read-all`,
   notificationRead: `${ADMIN_API_PREFIX}/notifications/:id/read`,

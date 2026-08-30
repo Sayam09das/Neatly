@@ -16,6 +16,7 @@ export const AUTH_SESSION_SECRET_MIN_LENGTH = 32;
 export const AUTH_SESSION_TOKEN_HEADER = "x-session-token";
 export const AUTH_ADMIN_RESET_PASSWORD_PATH = "/admin/reset-password";
 export const AUTH_ADMIN_VERIFY_EMAIL_PATH = "/admin/verify-email";
+export const AUTH_CUSTOMER_VERIFY_EMAIL_PATH = "/verify-email";
 export const AUTH_GENERIC_RESET_NOTICE =
   "If an account exists for this email, instructions have been sent.";
 export const AUTH_GENERIC_VERIFY_NOTICE =

@@ -15,7 +15,7 @@ import {
   PortfolioIcon,
   QuotesIcon,
   ServicesIcon,
-  TestimonialsIcon,
+  UserIcon,
 } from "@/components/admin/admin-icons";
 import {
   AdminMetricCard,
@@ -35,11 +35,11 @@ type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 const dashboardIcons: Partial<Record<AdminNavIconName, IconComponent>> = {
   bookings: BookingsIcon,
+  cleaners: UserIcon,
   contacts: ContactsIcon,
   customers: CustomersIcon,
   portfolio: PortfolioIcon,
   quotes: QuotesIcon,
-  reviews: TestimonialsIcon,
   services: ServicesIcon,
 };
 
@@ -86,6 +86,7 @@ export function AdminDashboard({
             <AdminMetricsGrid>
               {adminDashboardMetrics.map((metric) => (
                 <AdminMetricCard
+                  href={metric.href}
                   icon={getDashboardIcon(metric.icon)}
                   key={metric.id}
                   label={metric.label}

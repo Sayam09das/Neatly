@@ -21,7 +21,6 @@ export async function registerCustomerController(
     const body = getValidatedBody<RegisterUserInput>(context);
     const user = await getAuthService().registerUser(body, {
       role: "STAFF",
-      verifyEmail: true,
     });
     await getDomainServices().customers.ensureForSession({
       email: user.email,

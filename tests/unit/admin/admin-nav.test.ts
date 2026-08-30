@@ -34,7 +34,7 @@ describe("getAdminPageTitle", (): void => {
 
 describe("isAdminNavItemActive", (): void => {
   it("treats the admin home path as exact-only", (): void => {
-    expect(isAdminNavItemActive("/admin", ADMIN_PATHS.home)).toBe(true);
+    expect(isAdminNavItemActive(ADMIN_PATHS.home, ADMIN_PATHS.home)).toBe(true);
     expect(isAdminNavItemActive("/admin/quotes", ADMIN_PATHS.home)).toBe(false);
     expect(isAdminNavItemActive("/admin/quotes/123", ADMIN_PATHS.home)).toBe(
       false,

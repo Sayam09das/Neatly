@@ -27,6 +27,15 @@ const securityHeaders: Array<{ key: string; value: string }> = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+        protocol: "https",
+      },
+    ],
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   agentRules: false,

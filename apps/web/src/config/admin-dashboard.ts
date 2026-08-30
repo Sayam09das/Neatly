@@ -17,7 +17,7 @@ export const adminDashboardCopy = {
   loadingLabel: "Loading overview",
   metricErrorLabel: "Unable to load",
   metricsDescription:
-    "These counts come from live customer, booking, service, and review records.",
+    "These counts come from live customer, cleaner, booking, and service records.",
   metricsHeading: "Overview",
   trendDecreaseLabel: "Decrease compared with previous period",
   trendIncreaseLabel: "Increase compared with previous period",
@@ -33,6 +33,7 @@ export const adminDashboardCopy = {
 } as const;
 
 export interface AdminDashboardMetricConfig {
+  href: string;
   icon: AdminNavIconName;
   id: string;
   label: string;
@@ -40,24 +41,28 @@ export interface AdminDashboardMetricConfig {
 
 export const adminDashboardMetrics: readonly AdminDashboardMetricConfig[] = [
   {
+    href: ADMIN_PATHS.customers,
     icon: "customers",
     id: "customers",
     label: "Customers",
   },
   {
+    href: ADMIN_PATHS.cleaners,
+    icon: "cleaners",
+    id: "cleaners",
+    label: "Cleaners",
+  },
+  {
+    href: ADMIN_PATHS.bookings,
     icon: "bookings",
     id: "bookings",
     label: "Bookings",
   },
   {
+    href: ADMIN_PATHS.services,
     icon: "services",
     id: "services",
     label: "Active services",
-  },
-  {
-    icon: "reviews",
-    id: "reviews",
-    label: "Reviews",
   },
 ] as const;
 

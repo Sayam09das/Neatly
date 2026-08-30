@@ -20,6 +20,7 @@ describe("CatalogService", (): void => {
 
     expect(created.slug).toBe("home-refresh");
     expect(created.isActive).toBe(true);
+    expect(created.coverImageUrl).toBeNull();
 
     const fetched = await catalog.getById(created.id);
     expect(fetched.id).toBe(created.id);
@@ -149,6 +150,19 @@ describe("CatalogService", (): void => {
     ]);
     expect(JSON.stringify(help)).not.toContain("isActive");
     expect(JSON.stringify(help)).not.toContain("coverMediaId");
+  });
+
+  it("stores an HTTPS thumbnail link as cover media", async (): Promise<void> => {
+    const { catalog } = createDomainHarness();
+    const created = await catalog.create(admin, {
+      ...offeringInput,
+      coverImageUrl: "https://cdn.example.com/covers/home.jpg",
+    });
+
+    expect(created.coverMediaId).toEqual(expect.any(String));
+    expect(created.coverImageUrl).toBe(
+      "https://cdn.example.com/covers/home.jpg",
+    );
   });
 
   it("rejects missing offerings", async (): Promise<void> => {

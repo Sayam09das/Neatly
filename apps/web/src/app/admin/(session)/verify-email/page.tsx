@@ -21,6 +21,7 @@ interface AdminVerifyEmailPageProps {
   searchParams: Promise<{
     email?: string | string[];
     status?: string | string[];
+    token?: string | string[];
   }>;
 }
 
@@ -35,6 +36,7 @@ export default async function AdminVerifyEmailPage({
       <VerifyEmailPanel
         email={readSearchParam(params.email)}
         initialView={view ?? "idle"}
+        token={readSearchParam(params.token) ?? null}
       />
     </AuthShell>
   );

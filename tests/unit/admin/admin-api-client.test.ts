@@ -374,6 +374,11 @@ describe("Admin API clients", (): void => {
       supportingText: "4 active",
       value: "5",
     });
+    expect(view.metrics.cleaners).toEqual({
+      status: "success",
+      supportingText: "1 active",
+      value: "1",
+    });
     expect(JSON.stringify(view)).not.toContain("%");
     expect(JSON.stringify(view)).not.toContain("revenue");
   });

@@ -12,9 +12,13 @@ import {
   AdminFormDialog,
   AdminFormField,
 } from "@/components/admin/admin-mutation-dialogs";
+import { ServiceThumbnailFields } from "@/components/admin/services/service-thumbnail-fields";
 import { adminServiceCopy } from "@/config/admin-services";
 import { collectZodFieldErrors } from "@/lib/admin/mutation-input";
-import { createAdminService } from "@/lib/admin/services";
+import {
+  createAdminService,
+  uploadAdminServiceThumbnail,
+} from "@/lib/admin/services";
 import { useAdminMutation } from "@/lib/admin/use-admin-mutation";
 import { toast } from "@/lib/toast";
 import { createServiceFormSchema } from "@/lib/validations/admin-mutation.schema";
@@ -34,10 +38,13 @@ export function ServicesCreateDialog({
   const shortId = useId();
   const fullId = useId();
   const [values, setValues] = useState({
+    coverImageUrl: "",
     fullDescription: "",
     name: "",
     shortDescription: "",
   });
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const mutation = useAdminMutation(createAdminService);
 
@@ -46,7 +53,14 @@ export function ServicesCreateDialog({
       return;
     }
 
-    setValues({ fullDescription: "", name: "", shortDescription: "" });
+    setValues({
+      coverImageUrl: "",
+      fullDescription: "",
+      name: "",
+      shortDescription: "",
+    });
+    setThumbnailFile(null);
+    setUploading(false);
     setFieldErrors({});
     mutation.reset();
   }, [open, mutation.reset]);
@@ -63,7 +77,35 @@ export function ServicesCreateDialog({
     }
 
     setFieldErrors({});
-    const result = await mutation.submit(parsed.data);
+    let coverMediaId: string | undefined;
+
+    if (thumbnailFile !== null) {
+      setUploading(true);
+      const uploaded = await uploadAdminServiceThumbnail(
+        thumbnailFile,
+        parsed.data.name,
+      );
+      setUploading(false);
+
+      if (!uploaded.ok) {
+        setFieldErrors({ file: uploaded.message });
+        toast.error({ title: adminServiceCopy.createError });
+        return;
+      }
+
+      coverMediaId = uploaded.data.id;
+    }
+
+    const result = await mutation.submit({
+      fullDescription: parsed.data.fullDescription,
+      name: parsed.data.name,
+      shortDescription: parsed.data.shortDescription,
+      ...(coverMediaId === undefined
+        ? parsed.data.coverImageUrl === ""
+          ? {}
+          : { coverImageUrl: parsed.data.coverImageUrl }
+        : { coverMediaId }),
+    });
 
     if (!result.ok) {
       setFieldErrors(result.fields);
@@ -85,7 +127,7 @@ export function ServicesCreateDialog({
       onSubmit={handleSubmit}
       open={open}
       submitLabel={adminServiceCopy.saveLabel}
-      submitting={mutation.status === "submitting"}
+      submitting={mutation.status === "submitting" || uploading}
       title={adminServiceCopy.createTitle}
     >
       <AdminFormField
@@ -128,6 +170,16 @@ export function ServicesCreateDialog({
           value={values.fullDescription}
         />
       </AdminFormField>
+      <ServiceThumbnailFields
+        coverImageUrl={values.coverImageUrl}
+        file={thumbnailFile}
+        fileError={fieldErrors.file}
+        linkError={fieldErrors.coverImageUrl}
+        onCoverImageUrlChange={(coverImageUrl): void => {
+          setValues({ ...values, coverImageUrl });
+        }}
+        onFileChange={setThumbnailFile}
+      />
     </AdminFormDialog>
   );
 }

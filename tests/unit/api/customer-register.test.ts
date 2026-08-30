@@ -55,7 +55,7 @@ describe("Customer register API", (): void => {
     } as never);
   });
 
-  it("creates a verified customer without a session", async (): Promise<void> => {
+  it("creates an unverified customer without a session", async (): Promise<void> => {
     const response = await dispatchApi({
       body: JSON.stringify(registerPayload),
       headers: { "content-type": "application/json" },
@@ -73,7 +73,6 @@ describe("Customer register API", (): void => {
     expect(response.body).not.toContain("password");
     expect(registerUser).toHaveBeenCalledWith(registerPayload, {
       role: "STAFF",
-      verifyEmail: true,
     });
     expect(ensureForSession).toHaveBeenCalledWith({
       email: createdUser.email,

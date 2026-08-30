@@ -90,6 +90,24 @@ export function isLocalCustomerServiceImage(src: string | null): src is string {
   return src?.startsWith("/") === true && !src.startsWith("//");
 }
 
+export function isHttpsCustomerServiceImage(src: string | null): src is string {
+  if (src === null || src.trim() === "") {
+    return false;
+  }
+
+  try {
+    return new URL(src).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function isUsableCustomerServiceImage(
+  src: string | null,
+): src is string {
+  return isLocalCustomerServiceImage(src) || isHttpsCustomerServiceImage(src);
+}
+
 export function mapPublicCatalogList(
   value: unknown,
 ): CustomerServiceList | null {

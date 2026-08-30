@@ -77,6 +77,10 @@ export async function requireCustomerPage(): Promise<AuthUser> {
     redirect(CUSTOMER_LOGIN_PATH);
   }
 
+  if (isAdminOperatorRole(user.role)) {
+    redirect(AUTH_ADMIN_HOME_PATH);
+  }
+
   return user;
 }
 

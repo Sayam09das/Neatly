@@ -4,13 +4,14 @@ import {
   AUTH_ADMIN_VERIFY_EMAIL_PATH,
   AUTH_CLEANER_ACTIVATE_PATH,
   AUTH_CLEANER_INVITATION_TTL_MS,
+  AUTH_CUSTOMER_VERIFY_EMAIL_PATH,
   AUTH_EMAIL_VERIFICATION_TTL_MS,
   AUTH_GENERIC_RESET_NOTICE,
   AUTH_GENERIC_VERIFY_NOTICE,
   AUTH_PASSWORD_RESET_TTL_MS,
   AUTH_SESSION_MAX_AGE_SECONDS,
 } from "../config/auth.ts";
-import { isAdminRole } from "../lib/auth/authorization.ts";
+import { isAdminOperatorRole, isAdminRole } from "../lib/auth/authorization.ts";
 import { AUTH_ERROR_MESSAGES, AuthError } from "../lib/auth/errors.ts";
 import { logAuthEvent } from "../lib/auth/logger.ts";
 import { hashPassword, verifyPassword } from "../lib/auth/password.ts";
@@ -149,7 +150,7 @@ export class AuthService {
     });
 
     if (verifiedAt === null) {
-      await this.dispatchVerificationEmail(user.id, user.email);
+      await this.dispatchVerificationEmail(user.id, user.email, user.role);
     }
 
     return toAuthUser(user);
@@ -171,13 +172,28 @@ export class AuthService {
       user?.passwordHash ?? (await this.getDummyPasswordHash());
     const passwordMatches = await verifyPassword(values.password, passwordHash);
 
-    if (
-      user === null ||
-      !passwordMatches ||
-      user.status !== "ACTIVE" ||
-      user.emailVerifiedAt === null ||
-      !isAdminRole(user.role)
-    ) {
+    if (user === null || !passwordMatches || !isAdminRole(user.role)) {
+      throw new AuthError(
+        "INVALID_CREDENTIALS",
+        AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
+      );
+    }
+
+    if (user.status !== "ACTIVE") {
+      throw new AuthError(
+        "INVALID_CREDENTIALS",
+        AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
+      );
+    }
+
+    if (user.emailVerifiedAt === null) {
+      if (!isAdminOperatorRole(user.role)) {
+        throw new AuthError(
+          "EMAIL_UNVERIFIED",
+          AUTH_ERROR_MESSAGES.EMAIL_UNVERIFIED,
+        );
+      }
+
       throw new AuthError(
         "INVALID_CREDENTIALS",
         AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS,
@@ -459,14 +475,22 @@ export class AuthService {
       user.status === "ACTIVE" &&
       user.emailVerifiedAt === null
     ) {
-      await this.dispatchVerificationEmail(user.id, user.email);
+      await this.dispatchVerificationEmail(user.id, user.email, user.role);
     }
 
     return { message: AUTH_GENERIC_VERIFY_NOTICE };
   }
 
-  public async verifyEmail(input: unknown): Promise<AuthUser> {
+  public async verifyEmail(
+    input: unknown,
+    context: AuthServiceContext = { ip: "unknown" },
+  ): Promise<AuthUser> {
     const values = parseSchema(verifyEmailSchema, input);
+
+    if (!this.verifyLimiter.consume(`verify-token:${context.ip}`)) {
+      throw new AuthError("RATE_LIMITED", AUTH_ERROR_MESSAGES.RATE_LIMITED);
+    }
+
     const record = await this.repository.findEmailVerificationTokenByHash(
       hashAuthToken(values.token, this.sessionSecret),
     );
@@ -724,6 +748,7 @@ export class AuthService {
   private async dispatchVerificationEmail(
     userId: string,
     email: string,
+    role: AuthUserRole,
   ): Promise<void> {
     const siteUrl = this.options.siteUrl;
 
@@ -745,7 +770,7 @@ export class AuthService {
     try {
       await this.emailService.sendVerificationEmail({
         to: email,
-        verifyUrl: this.buildVerifyUrl(token, siteUrl),
+        verifyUrl: this.buildVerifyUrl(token, siteUrl, role),
       });
     } catch {
       logAuthEvent({
@@ -761,8 +786,15 @@ export class AuthService {
     return url.toString();
   }
 
-  private buildVerifyUrl(token: string, siteUrl: string): string {
-    const url = new URL(AUTH_ADMIN_VERIFY_EMAIL_PATH, `${siteUrl}/`);
+  private buildVerifyUrl(
+    token: string,
+    siteUrl: string,
+    role: AuthUserRole,
+  ): string {
+    const path = isAdminOperatorRole(role)
+      ? AUTH_ADMIN_VERIFY_EMAIL_PATH
+      : AUTH_CUSTOMER_VERIFY_EMAIL_PATH;
+    const url = new URL(path, `${siteUrl}/`);
     url.searchParams.set("token", token);
     return url.toString();
   }

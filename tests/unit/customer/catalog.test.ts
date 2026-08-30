@@ -3,6 +3,7 @@ import { CUSTOMER_PATHS } from "@/config/customer";
 import {
   customerServicesHref,
   isLocalCustomerServiceImage,
+  isUsableCustomerServiceImage,
   loadPublicCatalog,
   loadPublicCatalogDetail,
   mapPublicCatalogDetail,
@@ -60,6 +61,13 @@ describe("customer services query", (): void => {
     expect(isLocalCustomerServiceImage("//cdn.example/kitchen.jpg")).toBe(
       false,
     );
+    expect(isUsableCustomerServiceImage("/media/kitchen.jpg")).toBe(true);
+    expect(
+      isUsableCustomerServiceImage("https://cdn.example.com/kitchen.jpg"),
+    ).toBe(true);
+    expect(
+      isUsableCustomerServiceImage("http://cdn.example.com/kitchen.jpg"),
+    ).toBe(false);
   });
 
   it("maps public catalog detail payloads without inventing price or duration", (): void => {

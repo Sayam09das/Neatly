@@ -110,8 +110,24 @@ export const catalogListQuerySchema = createAdminListQuerySchema(
   },
 );
 
+const optionalHttpsUrl = z
+  .string()
+  .trim()
+  .max(2_048)
+  .nullable()
+  .optional()
+  .refine(
+    (value): boolean =>
+      value === undefined ||
+      value === null ||
+      value === "" ||
+      value.startsWith("https://"),
+    "Enter a valid HTTPS image URL.",
+  );
+
 export const createCatalogBodySchema = z.strictObject({
   benefits: stringListSchema.optional(),
+  coverImageUrl: optionalHttpsUrl,
   coverMediaId: idSchema.optional().nullable(),
   excludedTasks: stringListSchema.optional(),
   faqs: jsonValueSchema.optional(),

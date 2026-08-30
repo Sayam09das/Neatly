@@ -10,6 +10,7 @@ import {
   assertProductionConfig,
   loadApiEnv,
   loadAuthEnv,
+  loadStorageEnv,
 } from "../../../apps/server/src/config/env.ts";
 import { API_PATHS } from "../../../apps/server/src/contracts/v1.ts";
 import { checkDatabaseConnection } from "../../../apps/server/src/lib/database-health.ts";
@@ -162,6 +163,25 @@ describe("loadApiEnv", (): void => {
   });
 });
 
+describe("loadStorageEnv", (): void => {
+  it("defaults the service thumbnail bucket to Services_Thumb", (): void => {
+    const env = loadStorageEnv({
+      SUPABASE_SECRET_KEY: "service-role-test-key",
+      SUPABASE_URL: "https://example.supabase.co",
+    });
+
+    expect(env).toEqual({
+      serviceRoleKey: "service-role-test-key",
+      servicesThumbBucket: "Services_Thumb",
+      supabaseUrl: "https://example.supabase.co",
+    });
+  });
+
+  it("returns null when Supabase credentials are missing", (): void => {
+    expect(loadStorageEnv({})).toBeNull();
+  });
+});
+
 describe("loadAuthEnv", (): void => {
   it("loads a valid session secret and site URL", (): void => {
     const secret = "local-development-session-secret-value";
@@ -172,7 +192,80 @@ describe("loadAuthEnv", (): void => {
 
     expect(env.sessionSecret).toBe(secret);
     expect(env.siteUrl).toBe("https://neatly.example");
-    expect(env.smtp).toBeNull();
+    expect(env.email).toBeNull();
+  });
+
+  it("loads SMTP settings when every mail variable is present", (): void => {
+    const env = loadAuthEnv({
+      SESSION_SECRET: "local-development-session-secret-value",
+      SITE_URL: "https://neatly.example",
+      SMTP_FROM_EMAIL: "hello@neatly.example",
+      SMTP_FROM_NAME: "Neatly",
+      SMTP_HOST: "smtp-relay.brevo.com",
+      SMTP_PASSWORD: "xsmtpsib-test-password",
+      SMTP_PORT: "587",
+      SMTP_USER: "hello@neatly.example",
+    });
+
+    expect(env.email).toEqual({
+      fromEmail: "hello@neatly.example",
+      fromName: "Neatly",
+      host: "smtp-relay.brevo.com",
+      password: "xsmtpsib-test-password",
+      port: 587,
+      user: "hello@neatly.example",
+    });
+  });
+
+  it("strips wrapping quotes from SMTP environment values", (): void => {
+    const env = loadAuthEnv({
+      SESSION_SECRET: "local-development-session-secret-value",
+      SITE_URL: "https://neatly.example",
+      SMTP_FROM_EMAIL: "'hello@neatly.example'",
+      SMTP_FROM_NAME: '"Neatly"',
+      SMTP_HOST: '"smtp-relay.brevo.com"',
+      SMTP_PASSWORD: '"xsmtpsib-test-password"',
+      SMTP_USER: "'hello@neatly.example'",
+    });
+
+    expect(env.email).toEqual({
+      fromEmail: "hello@neatly.example",
+      fromName: "Neatly",
+      host: "smtp-relay.brevo.com",
+      password: "xsmtpsib-test-password",
+      port: 587,
+      user: "hello@neatly.example",
+    });
+  });
+
+  it("does not take down auth when SMTP is incomplete or only HTTP API vars exist", (): void => {
+    const incomplete = loadAuthEnv({
+      SESSION_SECRET: "local-development-session-secret-value",
+      SITE_URL: "https://neatly.example",
+      SMTP_PASSWORD: "xsmtpsib-test-password",
+    });
+    const httpApiOnly = loadAuthEnv({
+      BREVO_API_KEY: "xkeysib-test-key",
+      BREVO_FROM_EMAIL: "hello@neatly.example",
+      BREVO_FROM_NAME: "Neatly",
+      SESSION_SECRET: "local-development-session-secret-value",
+      SITE_URL: "https://neatly.example",
+    });
+
+    expect(incomplete.email).toBeNull();
+    expect(httpApiOnly.email).toBeNull();
+  });
+
+  it("rejects incomplete SMTP configuration in production startup", (): void => {
+    expect((): void => {
+      assertProductionConfig({
+        BREVO_API_KEY: "xkeysib-test-key",
+        DATABASE_URL: "postgresql://neatly:secret@localhost:5432/neatly",
+        NODE_ENV: "production",
+        SESSION_SECRET: "local-development-session-secret-value",
+        SITE_URL: "https://neatly.example",
+      });
+    }).toThrow("SMTP_HOST is missing");
   });
 
   it("rejects a short SESSION_SECRET without echoing the value", (): void => {
@@ -218,6 +311,15 @@ describe("assertProductionConfig", (): void => {
       });
     }).toThrow(/DATABASE_URL is required/);
 
+    expect((): void => {
+      assertProductionConfig({
+        DATABASE_URL: databaseUrl,
+        NODE_ENV: "production",
+        SESSION_SECRET: "local-development-session-secret-value",
+        SITE_URL: "https://neatly.example",
+      });
+    }).toThrow("SMTP_HOST is missing");
+
     try {
       assertProductionConfig({
         DATABASE_URL: databaseUrl,
@@ -232,5 +334,21 @@ describe("assertProductionConfig", (): void => {
       }
       expect(error.message).not.toContain(databaseUrl);
     }
+  });
+
+  it("accepts a complete production email configuration", (): void => {
+    expect((): void => {
+      assertProductionConfig({
+        DATABASE_URL: "postgresql://neatly:secret@localhost:5432/neatly",
+        NODE_ENV: "production",
+        SESSION_SECRET: "local-development-session-secret-value",
+        SITE_URL: "https://neatly.example",
+        SMTP_FROM_EMAIL: "hello@neatly.example",
+        SMTP_FROM_NAME: "Neatly",
+        SMTP_HOST: "smtp-relay.brevo.com",
+        SMTP_PASSWORD: "xsmtpsib-test-password",
+        SMTP_USER: "hello@neatly.example",
+      });
+    }).not.toThrow();
   });
 });

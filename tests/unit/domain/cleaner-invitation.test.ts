@@ -7,9 +7,8 @@ import { ValidationError } from "../../../apps/server/src/lib/errors.ts";
 import { AuthService } from "../../../apps/server/src/services/auth.service.ts";
 import type {
   CleanerInvitationEmailInput,
+  EmailMessage,
   EmailProvider,
-  PasswordResetEmailInput,
-  VerificationEmailInput,
 } from "../../../apps/server/src/services/email/provider.ts";
 import { EmailService } from "../../../apps/server/src/services/email.service.ts";
 import { InMemoryAuthRepository } from "../auth/in-memory-auth-repository";
@@ -25,26 +24,25 @@ class RecordingEmailProvider implements EmailProvider {
   public failInvitation = false;
   public readonly invitations: CleanerInvitationEmailInput[] = [];
 
-  public async sendPasswordResetEmail(
-    _input: PasswordResetEmailInput,
-  ): Promise<void> {
-    return undefined;
-  }
+  public async sendEmail(message: EmailMessage): Promise<void> {
+    if (message.activateUrl === undefined) {
+      return;
+    }
 
-  public async sendVerificationEmail(
-    _input: VerificationEmailInput,
-  ): Promise<void> {
-    return undefined;
-  }
-
-  public async sendCleanerInvitationEmail(
-    input: CleanerInvitationEmailInput,
-  ): Promise<void> {
     if (this.failInvitation) {
       throw new Error("Invitation email failed.");
     }
 
-    this.invitations.push(input);
+    this.invitations.push({
+      activateUrl: message.activateUrl,
+      expiresInDays: 7,
+      name: message.recipientName ?? "",
+      to: message.to,
+    });
+  }
+
+  public async verifyConnection(): Promise<void> {
+    return undefined;
   }
 }
 

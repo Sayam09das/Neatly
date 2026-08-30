@@ -74,10 +74,10 @@ The technology stack is selected to provide maximum performance, rapid developer
 
 ### 3.7 Transactional Email Integration
 * **Abstraction:** `EmailProvider` interface allowing seamless provider swapping.
-* **Default Adapter:** Resend (or SendGrid / Brevo via environment configuration).
+* **Default Adapter:** Nodemailer over Brevo SMTP (`smtp-relay.brevo.com:587`, STARTTLS). Production requires `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, and `SMTP_FROM_NAME`. Transactional mail does not call `api.brevo.com`. If SMTP is incomplete, send operations fail instead of reporting a console success.
 
 ### 3.8 File & Media Storage
-* **Abstraction:** `StorageProvider` interface supporting local disk storage (development) and cloud object storage (Cloudinary / AWS S3 / UploadThing for production).
+* **Abstraction:** `StorageProvider` interface. Service thumbnails use Supabase Storage (`SUPABASE_SERVICES_THUMB_BUCKET`, default `Services_Thumb`) through the API-side `MediaService`. Only `MediaAsset` metadata is stored in PostgreSQL.
 
 ### 3.9 Deployment & Infrastructure
 * **Next.js Host:** Vercel (or equivalent Node.js server container environment)
@@ -127,7 +127,7 @@ The technology stack is selected to provide maximum performance, rapid developer
                    ▼                      ▼                      ▼
         ┌──────────────────┐    ┌──────────────────┐   ┌──────────────────┐
         │  DATA ACCESS LAYER│    │  EMAIL PROVIDER  │   │ STORAGE PROVIDER │
-        │   (Prisma ORM)   │    │ (Resend/SendGrid)│   │ (Cloudinary/S3)  │
+        │   (Prisma ORM)   │    │ (Brevo SMTP)     │   │ (Cloudinary/S3)  │
         └──────────┬───────┘    └──────────────────┘   └──────────────────┘
                    │
                    ▼
@@ -239,7 +239,8 @@ Admin Route Hierarchy (Protected via Middleware)
 ├── /admin/login            -> Unprotected Sign-in Form
 ├── /admin/forgot-password  -> Unprotected Reset Link Request
 └── /admin/ (Protected Layout with Admin Sidebar & Topbar)
-    ├── /admin              -> Dashboard Overview Widgets & Metrics
+    ├── /admin              -> Redirects to /admin/dashboard
+    ├── /admin/dashboard    -> Dashboard Overview Widgets & Metrics
     ├── /admin/quotes       -> Pipeline Table (Filter by status, view, update status, notes)
     ├── /admin/contacts     -> Message Inbox Table (View message, toggle read/archive)
     ├── /admin/customers    -> Customer list (create, edit, activate/deactivate)
@@ -289,8 +290,8 @@ Customer Route Hierarchy
 * **Quote request:** `/quote` is a public multi-step visitor form. `POST /api/v1/customer/quotes` persists a `QuoteRequest` with status `NEW`. The server ignores client identity fields, `status`, `price`, and `adminNotes`. Optional `serviceId` must reference an active catalog item. Honeypot plus IP rate limiting (3 / 15 minutes) apply. Confirmation is request-received, not a booking. Authenticated reads are `GET /api/v1/customer/quotes` and `GET /api/v1/customer/quotes/:id`, scoped to quotes whose `email` matches the session user. Other customers' quotes return the same not-found response. There is no `QuoteRequest.customerId`; email is the ownership key. The client cannot set or change quote status or money fields.
 * **Booking flow:** `/booking` requires a session. `POST /api/v1/customer/bookings` creates a `PENDING` booking for the session customer (provisioned from the authenticated user). The client cannot set status, cleaner, customer id, or price. There is no availability-slot engine; `scheduledAt` is a preferred time stored as UTC, not a reserved slot.
 * **Booking confirmation:** `/booking/confirmation/[bookingId]` fetches the existing booking. It never creates a booking. Other customers' bookings return the same not-found experience.
-* **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard`, `/booking`, `/services/[slug]/apply`, and `/dashboard/services/[slug]/apply` requests redirect to `/login` with a safe `next` path. `/services` and `/services/[slug]` stay public. `/register` is customer self-register (`POST /api/v1/customer/register` via `POST /api/customer/auth/register`). `/login` is the customer sign-in page. The browser never sends `role`, `customerId`, or `userId`. Ownership is session email / `Customer.userId`. Logout reuses `POST /api/admin/auth/logout`. `/admin/register` remains admin-only and still sends a verification email.
-* **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only (`ADMIN`, `SUPER_ADMIN`, `CONTENT_MANAGER`, `STAFF`). Login may authenticate a verified `STAFF` user (customer self-register). Admin pages and `/api/v1/admin/*` require an operator role (`ADMIN`, `SUPER_ADMIN`, `CONTENT_MANAGER`) — `STAFF` is not an admin operator. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for customer booking ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
+* **Authentication:** `requireCustomerPage()` and middleware require a session. Unauthenticated `/dashboard`, `/booking`, `/services/[slug]/apply`, and `/dashboard/services/[slug]/apply` requests redirect to `/login` with a safe `next` path. `/services` and `/services/[slug]` stay public. `/register` is customer self-register (`POST /api/v1/customer/register` via `POST /api/customer/auth/register`). Registration stores the email, creates an unverified `STAFF` user (`emailVerifiedAt` null), links a `Customer` row, and sends a hashed verification email. It does not create a session. `/verify-email` consumes `POST /api/admin/auth/verify-email`. `/login` is the customer sign-in page and rejects unverified accounts with `EMAIL_UNVERIFIED`. The browser never sends `role`, `customerId`, or `userId`. Ownership is session email / `Customer.userId`. Logout reuses `POST /api/admin/auth/logout`. `/admin/register` remains admin-only and still sends a verification email. There is no public cleaner registration.
+* **Authorization:** The HTTP API remains authoritative for ownership. Prisma `UserRole` stays admin-only (`ADMIN`, `SUPER_ADMIN`, `CONTENT_MANAGER`, `STAFF`). Login may authenticate a verified, active `STAFF` user (customer self-register). Unverified customers cannot obtain a session or open `/dashboard`. Admin pages and `/api/v1/admin/*` require an operator role (`ADMIN`, `SUPER_ADMIN`, `CONTENT_MANAGER`) — `STAFF` is not an admin operator. Customer records are the `Customer` model, optionally linked with `Customer.userId`. Portal actor role `CUSTOMER` is used for customer booking ownership checks. Browser requests must not send `customerId` or `userId` as an authorization query parameter, and must not call `/api/v1/admin/*`.
 * **Privacy:** `/dashboard` and booking confirmation are `force-dynamic` and `robots: noindex`. Customer query keys include the session user id. Logout clears customer client cache listeners.
 * **Customer HTTP APIs:** Public customer self-register lives at `POST /api/v1/customer/register` (`{ name, email, password }` only). Public catalog listing lives at `GET /api/v1/customer/services`. Public catalog detail lives at `GET /api/v1/customer/services/:slug`. Quote create lives at `POST /api/v1/customer/quotes`. Authenticated quote list/detail live at `GET /api/v1/customer/quotes` and `GET /api/v1/customer/quotes/:id` (session email ownership). Authenticated customer overview lives at `GET /api/v1/customer/dashboard`. Authenticated help topics live at `GET /api/v1/customer/help` (published service FAQs only). Authenticated booking list/create/get live at `GET|POST /api/v1/customer/bookings` and `GET /api/v1/customer/bookings/:id`. Customer booking mutations live at `PATCH /api/v1/customer/bookings/:id` (notes, preferred `scheduledAt`, service address) and `POST /api/v1/customer/bookings/:id/cancel`. Profile lives at `GET|PATCH /api/v1/customer/me` (`name`, `phone`, `address` only). Account security lives at `GET /api/v1/customer/account`, `POST /api/v1/customer/account/password`, `POST /api/v1/customer/account/verify-email`, `POST /api/v1/customer/account/sessions/:id`, and `POST /api/v1/customer/account/logout-all`. Customer reviews live at `GET|POST /api/v1/customer/reviews`, `PATCH /api/v1/customer/reviews/:id`, and `POST /api/v1/customer/reviews/:id/delete`. Customer in-app notifications live at `GET /api/v1/customer/notifications`, `GET /api/v1/customer/notifications/unread-count`, `GET /api/v1/customer/notifications/:id`, `PATCH /api/v1/customer/notifications/:id/read`, and `POST /api/v1/customer/notifications/read-all`. Customer live delivery is one-way SSE (`GET /api/v1/customer/notifications/stream`) after the inbox row is persisted. Inbox rows use the same `Notification` model (`recipientId` = session user id). Customers cannot create system notifications or open another inbox. List and overview queries are scoped to the session customer; the client cannot supply `customerId`. Same-origin browser mutations proxy through `apps/web` `/api/v1/customer/*`.
 * **Dashboard overview:** `/dashboard` is a private Server Component. It loads session identity plus `GET /api/v1/customer/dashboard` (`upcomingBooking`, customer-owned summary counts, recent bookings). There are no mock metrics or admin aggregates.
@@ -413,7 +414,7 @@ All API routes follow RESTful conventions under `/api/v1/*` or dedicated Next.js
 * `POST /api/newsletter` — Subscribe email to newsletter.
 * `GET  /api/v1/customer/services` — Fetch active public catalog services (`search`, `page`, `limit`). Inactive records are excluded by the domain, not the client.
 * `GET  /api/v1/customer/services/:slug` — Fetch one active public catalog service. Missing or inactive slugs return the standard not-found envelope.
-* `POST /api/v1/customer/register` — Create a customer account from `{ name, email, password }`. Extra `role`, `customerId`, and `userId` fields are rejected. The server creates a verified `STAFF` user and links a `Customer` row from session identity. Same-origin BFF is `POST /api/customer/auth/register`.
+* `POST /api/v1/customer/register` — Create a customer account from `{ name, email, password }`. Extra `role`, `customerId`, and `userId` fields are rejected. The server creates an unverified `STAFF` user (`emailVerifiedAt` null), stores the email, links a `Customer` row, and sends a verification email. Same-origin BFF is `POST /api/customer/auth/register`. The BFF does not set a session cookie.
 * `POST /api/v1/customer/quotes` — Submit a public quote request (`NEW`). Client `status`, `price`, and `adminNotes` are rejected. Honeypot plus IP rate limiting apply.
 * `GET  /api/v1/customer/quotes` — List quote requests whose `email` matches the session user (`page`, `limit`, optional `status`).
 * `GET  /api/v1/customer/quotes/:id` — Read one session-owned quote request. Other customers' ids return not-found.
@@ -513,7 +514,7 @@ Neatly enforces strict Zod schema validation at every input boundary:
 
 ### Validation Rule Guidelines
 * **Forms & APIs:** Shared Zod schemas (located in `/lib/validations/`) ensure client-side and server-side validation rules remain 100% synchronized.
-* **Environment Variables:** Zod schema validation runs on application boot (`/env.mjs`) to verify required environment variables (`DATABASE_URL`, `SESSION_SECRET`, `EMAIL_API_KEY`) exist before server start.
+* **Environment Variables:** Zod schema validation runs on application boot (`/env.mjs`) to verify required environment variables (`DATABASE_URL`, `SESSION_SECRET`, `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`) exist before server start.
 
 ---
 
@@ -577,11 +578,11 @@ Application Exception Occurs
   * `Max-Age: 604800` (7-day session validity).
 * **CSRF:** Cookie-authenticated auth mutations also require a matching `Origin`, `Referer`, or `Host` against `NEXT_PUBLIC_SITE_URL`.
 * **Password Reset:** Hashed, single-use tokens expire after 60 minutes. A successful reset rehashes the password and deletes all sessions for that admin.
-* **Email Verification:** Hashed, single-use tokens expire after 24 hours. Login requires `emailVerifiedAt` to be set. Resend and forgot-password always return a generic notice.
+* **Email Verification:** Hashed, single-use tokens expire after 24 hours. Customer links use `/verify-email?token=`; admin links use `/admin/verify-email?token=`. Login requires `emailVerifiedAt` to be set. Unverified customer credentials return `EMAIL_UNVERIFIED` and do not create a session. Unverified admin credentials still return `INVALID_CREDENTIALS`. Resend and forgot-password always return a generic notice.
 * **Account Enumeration:** Forgot-password and resend-verification always return: "If an account exists for this email, instructions have been sent."
 * **Rate Limiting:** Maximum 5 login, forgot-password, reset-password, and resend-verification attempts per IP per 15 minutes (in-process limiter on the API; Redis is out of MVP scope).
 * **Authorization Boundary:** The server session cookie is the source of truth. `getSession()` / `getCurrentUser()` resolve the admin through the API (request-deduped, dynamic, never cached). `requireAuth()` throws for API handlers. `requireAdminPage()` redirects unauthenticated visitors to `/admin/login`. `requireRole()` / `requirePermission()` enforce RBAC. There is no client `AuthProvider` and no JWT refresh flow.
-* **Route Protection:** Middleware only checks cookie presence on `/admin/*` (except login / register / forgot-password / reset-password / verify-email). The `app/admin/(app)` layout validates the session through the backend API and redirects if it is missing or expired. The `app/admin/(session)` layout sends an already-authenticated admin to `/admin`. Public marketing routes are never gated.
+* **Route Protection:** Middleware only checks cookie presence on `/admin/*` (except login / register / forgot-password / reset-password / verify-email). The `app/admin/(app)` layout validates the session through the backend API and redirects if it is missing or expired. The `app/admin/(session)` layout sends an already-authenticated admin to `/admin/dashboard`. `/admin` redirects to `/admin/dashboard`. Shared `/login` sends admin operators to `/admin/dashboard` and customers to `/dashboard`. Public marketing routes are never gated.
 * **Authenticated API Client:** Same-origin `adminRequest()` sends the session cookie (`credentials: "same-origin"`, `cache: "no-store"`). Browser Admin GETs, POSTs, and PATCHes use `/api/v1/admin/*`; the Next.js BFF checks same-origin CSRF, forwards the session as `x-session-token` to the HTTP API, and never returns that token to JavaScript. Typed Admin clients live in `apps/web/src/lib/admin/`. Mutations send only allowlisted fields. HTTP 401 is unauthorized / session invalid and reuses the existing Admin login redirect. HTTP 403 is authenticated-but-forbidden and must not log the user out. There is no retry or token-refresh loop. Admin responses are `Cache-Control: no-store` and are never publicly cached.
 
 ### Auth API Contract
@@ -590,10 +591,10 @@ Browser-facing Next.js routes return the standard `{ success, data, error, times
 
 | Route | Auth required | Request body | Success `data` | Error codes |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST /api/admin/auth/login` | No | `{ email, password }` | `{ user, expiresAt }` | `INVALID_INPUT`, `INVALID_CREDENTIALS`, `RATE_LIMITED`, `FORBIDDEN` |
+| `POST /api/admin/auth/login` | No | `{ email, password }` | `{ user, expiresAt }` | `INVALID_INPUT`, `INVALID_CREDENTIALS`, `EMAIL_UNVERIFIED`, `RATE_LIMITED`, `FORBIDDEN` |
 | `POST /api/admin/auth/logout` | No | none | `{ signedOut: true }` | `FORBIDDEN` |
 | `POST /api/admin/auth/register` | No | `{ name, email, password }` | `{ user }` | `INVALID_INPUT`, `FORBIDDEN` |
-| `POST /api/customer/auth/register` | No | `{ name, email, password }` | `{ user, expiresAt }` | `INVALID_INPUT`, `FORBIDDEN`, `RATE_LIMITED` |
+| `POST /api/customer/auth/register` | No | `{ name, email, password }` | `{ user }` | `INVALID_INPUT`, `FORBIDDEN`, `RATE_LIMITED` |
 | `POST /api/admin/auth/forgot-password` | No | `{ email }` | `{ message }` | `INVALID_INPUT`, `RATE_LIMITED`, `FORBIDDEN` |
 | `POST /api/admin/auth/reset-password` | No | `{ token, password }` | `{ user: { id, email } }` | `INVALID_INPUT`, `TOKEN_INVALID`, `TOKEN_EXPIRED`, `RATE_LIMITED`, `FORBIDDEN` |
 | `POST /api/admin/auth/verify-email` | No | `{ token }` | `{ user: { id, email } }` | `INVALID_INPUT`, `TOKEN_INVALID`, `TOKEN_EXPIRED`, `FORBIDDEN` |
@@ -861,10 +862,18 @@ Live Production Site + Automated Smoke Test Verification
 | `DATABASE_URL` | API Server Only | PostgreSQL connection string | ❌ NO |
 | `SESSION_SECRET` | API Server Only | Secret string for session and token hashing | ❌ NO |
 | `SITE_URL` | API Server Only | Public origin used in auth emails | ❌ NO |
-| `SMTP_PASSWORD` | API Server Only | Brevo API key for transactional email | ❌ NO |
+| `SMTP_HOST` | API Server Only | Brevo SMTP host (`smtp-relay.brevo.com`) | ❌ NO |
+| `SMTP_PORT` | API Server Only | SMTP port (`587` STARTTLS, or `465`) | ❌ NO |
+| `SMTP_USER` | API Server Only | Brevo SMTP username | ❌ NO |
+| `SMTP_PASSWORD` | API Server Only | Brevo SMTP key. Never log this value | ❌ NO |
+| `SMTP_FROM_EMAIL` | API Server Only | Verified Brevo sender address | ❌ NO |
+| `SMTP_FROM_NAME` | API Server Only | Sender display name | ❌ NO |
 | `NEATLY_API_URL` | Next.js Server Only | Origin of the Neatly HTTP API | ❌ NO |
 | `CORS_ORIGIN` | API Server Only | Explicit browser origin for credentialed CORS | ❌ NO |
-| `STORAGE_API_KEY` | API Server Only | API key for Cloudinary/S3 storage | ❌ NO |
+| `SUPABASE_URL` | API Server Only | Supabase project URL for storage uploads | ❌ NO |
+| `SUPABASE_SECRET_KEY` | API Server Only | Supabase service-role key for storage uploads | ❌ NO |
+| `SUPABASE_SERVICES_THUMB_BUCKET` | API Server Only | Public bucket for service thumbnails (`Services_Thumb`) | ❌ NO |
+| `STORAGE_API_KEY` | API Server Only | Reserved storage credential | ❌ NO |
 | `NEXT_PUBLIC_SITE_URL`| Client + Next.js Server | Public canonical URL (e.g., `https://neatly.com`) | ✅ YES |
 
 ---
@@ -886,7 +895,8 @@ neatly/
 │   │   └── terms/page.tsx       # Terms of Service
 │   ├── admin/                   # Protected Admin Route Group (Shared Admin Layout)
 │   │   ├── login/page.tsx       # Admin Login Form
-│   │   ├── page.tsx             # Admin Dashboard Overview
+│   │   ├── page.tsx             # Redirects to /admin/dashboard
+│   │   ├── dashboard/page.tsx   # Admin Dashboard Overview
 │   │   ├── quotes/page.tsx      # Quote Pipeline Management
 │   │   ├── contacts/page.tsx    # Message Inbox Management
 │   │   ├── services/page.tsx    # Services CMS

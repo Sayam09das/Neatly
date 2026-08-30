@@ -62,6 +62,7 @@ export interface PublicCatalogListQuery {
 
 export interface CreateCatalogInput {
   benefits?: string[];
+  coverImageUrl?: string | null;
   coverMediaId?: string | null;
   excludedTasks?: string[];
   faqs?: unknown;
@@ -78,6 +79,7 @@ export interface CreateCatalogInput {
 
 export interface UpdateCatalogInput {
   benefits?: string[];
+  coverImageUrl?: string | null;
   coverMediaId?: string | null;
   excludedTasks?: string[];
   faqs?: unknown;

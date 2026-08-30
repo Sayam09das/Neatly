@@ -124,7 +124,7 @@ describe("RegisterForm", (): void => {
         }),
     );
 
-    render(<RegisterForm onSubmit={onSubmit} />);
+    render(<RegisterForm mode="admin" onSubmit={onSubmit} />);
 
     await user.type(
       screen.getByLabelText(authRegisterCopy.nameLabel),
@@ -177,7 +177,13 @@ describe("RegisterForm", (): void => {
       async (): Promise<AuthFormSubmitResult> => ({ status: "ok" }),
     );
 
-    render(<RegisterForm onSubmit={onSubmit} successHref="/dashboard" />);
+    render(
+      <RegisterForm
+        mode="admin"
+        onSubmit={onSubmit}
+        successHref="/dashboard"
+      />,
+    );
 
     await user.type(
       screen.getByLabelText(authRegisterCopy.nameLabel),
@@ -201,6 +207,46 @@ describe("RegisterForm", (): void => {
 
     await waitFor((): void => {
       expect(assign).toHaveBeenCalledWith("/dashboard");
+    });
+  });
+
+  it("sends customers to verify-email after register", async (): Promise<void> => {
+    const user = userEvent.setup();
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { assign },
+    });
+    const onSubmit = vi.fn(
+      async (): Promise<AuthFormSubmitResult> => ({ status: "ok" }),
+    );
+
+    render(<RegisterForm onSubmit={onSubmit} />);
+
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.nameLabel),
+      "Ada Lovelace",
+    );
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.emailLabel),
+      "ada@neatly.example",
+    );
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.passwordLabel),
+      validPassword,
+    );
+    await user.type(
+      screen.getByLabelText(authRegisterCopy.confirmPasswordLabel),
+      validPassword,
+    );
+    await user.click(
+      screen.getByRole("button", { name: authRegisterCopy.submit }),
+    );
+
+    await waitFor((): void => {
+      expect(assign).toHaveBeenCalledWith(
+        "/verify-email?email=ada%40neatly.example",
+      );
     });
   });
 

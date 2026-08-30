@@ -41,3 +41,8 @@ Thumbs.db
 # Secrets
 *.pem
 *.key
+
+# Local package store & uploads
+.pnpm-store/
+uploads/
+

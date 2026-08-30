@@ -11,6 +11,7 @@ import type { BookingRepository } from "../../../apps/server/src/repositories/bo
 import type { CatalogRepository } from "../../../apps/server/src/repositories/catalog.repository.ts";
 import type { CleanerRepository } from "../../../apps/server/src/repositories/cleaner.repository.ts";
 import type { CustomerRepository } from "../../../apps/server/src/repositories/customer.repository.ts";
+import type { MediaRepository } from "../../../apps/server/src/repositories/media.repository.ts";
 import type { NotificationRepository } from "../../../apps/server/src/repositories/notification.repository.ts";
 import type { QuoteRepository } from "../../../apps/server/src/repositories/quote.repository.ts";
 import type { ReviewRepository } from "../../../apps/server/src/repositories/review.repository.ts";
@@ -53,6 +54,11 @@ import type {
   UpdateCustomerInput,
 } from "../../../apps/server/src/services/customers/customer.types.ts";
 import { DashboardService } from "../../../apps/server/src/services/dashboard/dashboard.service.ts";
+import { MediaService } from "../../../apps/server/src/services/media/media.service.ts";
+import type {
+  CreateMediaInput,
+  MediaRecord,
+} from "../../../apps/server/src/services/media/media.types.ts";
 import { NotificationService } from "../../../apps/server/src/services/notifications/notification.service.ts";
 import type {
   CreateNotificationInput,
@@ -88,6 +94,7 @@ export class InMemoryDomainStore {
   public readonly catalog = new Map<string, CatalogRecord>();
   public readonly cleaners = new Map<string, CleanerRecord>();
   public readonly customers = new Map<string, CustomerRecord>();
+  public readonly media = new Map<string, MediaRecord>();
   public readonly notifications = new Map<string, NotificationRecord>();
   public readonly quotes = new Map<string, QuoteRequestRecord>();
   public readonly reviews = new Map<string, ReviewRecord>();
@@ -286,6 +293,7 @@ export interface DomainHarness {
   customers: CustomerService;
   dashboard: DashboardService;
   invitations: CleanerInvitationGateway;
+  media: MediaService;
   notifications: NotificationService;
   quotes: QuoteService;
   reviews: ReviewService;
@@ -317,7 +325,8 @@ export function createDomainHarness(
     bookingRepo,
     invitationGateway,
   );
-  const catalog = new CatalogService(catalogRepo);
+  const media = new MediaService(new InMemoryMediaRepository(store), null);
+  const catalog = new CatalogService(catalogRepo, media);
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
     bookingRepo,
@@ -354,6 +363,7 @@ export function createDomainHarness(
     customers,
     dashboard,
     invitations: invitationGateway,
+    media,
     notifications,
     quotes,
     reviews,
@@ -595,6 +605,37 @@ export class InMemoryCleanerRepository implements CleanerRepository {
   }
 }
 
+export class InMemoryMediaRepository implements MediaRepository {
+  private readonly store: InMemoryDomainStore;
+
+  public constructor(store: InMemoryDomainStore) {
+    this.store = store;
+  }
+
+  public async create(input: CreateMediaInput): Promise<MediaRecord> {
+    const row: MediaRecord = {
+      ...input,
+      id: createId(),
+    };
+    this.store.media.set(row.id, row);
+    return row;
+  }
+
+  public async findById(id: string): Promise<MediaRecord | null> {
+    return this.store.media.get(id) ?? null;
+  }
+
+  public async findByStorageKey(
+    storageKey: string,
+  ): Promise<MediaRecord | null> {
+    return (
+      [...this.store.media.values()].find(
+        (row) => row.storageKey === storageKey,
+      ) ?? null
+    );
+  }
+}
+
 export class InMemoryCatalogRepository implements CatalogRepository {
   private readonly store: InMemoryDomainStore;
 
@@ -616,11 +657,13 @@ export class InMemoryCatalogRepository implements CatalogRepository {
     input: CreateCatalogInput & { slug: string },
   ): Promise<CatalogRecord> {
     const now = new Date();
+    const coverMediaId = input.coverMediaId ?? null;
+    const cover = readCoverFromStore(this.store, coverMediaId);
     const row: CatalogRecord = {
       benefits: input.benefits ?? [],
-      coverImageAlt: null,
-      coverImageUrl: null,
-      coverMediaId: input.coverMediaId ?? null,
+      coverImageAlt: cover.altText,
+      coverImageUrl: cover.url,
+      coverMediaId,
       createdAt: now,
       excludedTasks: input.excludedTasks ?? [],
       faqs: input.faqs ?? null,
@@ -651,10 +694,16 @@ export class InMemoryCatalogRepository implements CatalogRepository {
       return null;
     }
 
-    const row: CatalogRecord = {
+    const merged: CatalogRecord = {
       ...current,
       ...omitUndefined(input),
       updatedAt: new Date(),
+    };
+    const cover = readCoverFromStore(this.store, merged.coverMediaId);
+    const row: CatalogRecord = {
+      ...merged,
+      coverImageAlt: cover.altText,
+      coverImageUrl: cover.url,
     };
     this.store.catalog.set(id, row);
     return row;
@@ -1343,6 +1392,23 @@ function countWhere<T>(
 
 function createId(): string {
   return `c${randomUUID().replaceAll("-", "").slice(0, 24)}`;
+}
+
+function readCoverFromStore(
+  store: InMemoryDomainStore,
+  coverMediaId: string | null,
+): { altText: string | null; url: string | null } {
+  if (coverMediaId === null) {
+    return { altText: null, url: null };
+  }
+
+  const media = store.media.get(coverMediaId);
+
+  if (media === undefined) {
+    return { altText: null, url: null };
+  }
+
+  return { altText: media.altText, url: media.url };
 }
 
 function omitUndefined<T extends object>(input: T): Partial<T> {

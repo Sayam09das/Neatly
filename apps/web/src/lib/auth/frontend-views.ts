@@ -4,6 +4,7 @@ const RESET_LINK_VIEWS: ReadonlySet<string> = new Set(["invalid", "expired"]);
 const VERIFY_EMAIL_VIEWS: ReadonlySet<string> = new Set([
   "already-verified",
   "expired",
+  "invalid",
   "verified",
 ]);
 

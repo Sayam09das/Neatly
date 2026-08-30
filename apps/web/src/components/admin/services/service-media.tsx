@@ -11,21 +11,22 @@ interface ServiceMediaProps {
 export function ServiceMedia({
   coverImageUrl,
 }: ServiceMediaProps): ReactElement {
-  const isLocalImage = isLocalServiceImage(coverImageUrl);
+  const src = usableCoverImage(coverImageUrl);
 
   return (
     <span
       aria-hidden="true"
-      className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-foreground"
+      className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-foreground"
       data-slot="service-media"
     >
-      {isLocalImage ? (
+      {src !== null ? (
         <Image
           alt=""
-          className="size-10 object-cover motion-safe:transition-transform motion-safe:duration-normal motion-safe:ease-standard motion-safe:group-hover:scale-105"
-          height={40}
-          src={coverImageUrl}
-          width={40}
+          className="object-cover motion-safe:transition-transform motion-safe:duration-normal motion-safe:ease-standard motion-safe:group-hover:scale-105"
+          fill
+          sizes="40px"
+          src={src}
+          unoptimized
         />
       ) : (
         <ServicesIcon className="size-5" />
@@ -34,6 +35,19 @@ export function ServiceMedia({
   );
 }
 
-function isLocalServiceImage(src: string | null): src is string {
-  return src?.startsWith("/") === true && !src.startsWith("//");
+function usableCoverImage(src: string | null): string | null {
+  if (src === null || src.trim() === "") {
+    return null;
+  }
+
+  if (src.startsWith("/") && !src.startsWith("//")) {
+    return src;
+  }
+
+  try {
+    const url = new URL(src);
+    return url.protocol === "https:" ? src : null;
+  } catch {
+    return null;
+  }
 }

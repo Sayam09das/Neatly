@@ -26,6 +26,7 @@ import {
   adminDashboardController,
   adminMeController,
 } from "../../controllers/admin/dashboard.controller.ts";
+import { uploadMediaController } from "../../controllers/admin/media.controller.ts";
 import {
   createNotificationController,
   listNotificationsController,
@@ -193,6 +194,12 @@ export const adminRoutes: readonly RouteDefinition[] = [
     method: "POST",
     middleware: [...adminMutation, validateParams(idParamSchema)],
     path: API_PATHS.adminCleanerResendInvitation,
+  },
+  {
+    handler: uploadMediaController,
+    method: "POST",
+    middleware: adminMutation,
+    path: API_PATHS.adminMedia,
   },
   {
     handler: listServicesController,

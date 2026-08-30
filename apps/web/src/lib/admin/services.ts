@@ -203,9 +203,58 @@ function mapService(value: unknown): AdminService | null {
 }
 
 export interface AdminServiceWriteInput {
+  coverImageUrl?: string;
+  coverMediaId?: string;
   fullDescription: string;
   name: string;
   shortDescription: string;
+}
+
+function toServiceWriteBody(input: AdminServiceWriteInput): {
+  coverImageUrl?: string;
+  coverMediaId?: string;
+  fullDescription: string;
+  name: string;
+  shortDescription: string;
+} {
+  return {
+    ...(input.coverMediaId === undefined
+      ? {}
+      : { coverMediaId: input.coverMediaId }),
+    ...(input.coverImageUrl === undefined || input.coverImageUrl.trim() === ""
+      ? {}
+      : { coverImageUrl: input.coverImageUrl.trim() }),
+    fullDescription: input.fullDescription.trim(),
+    name: input.name.trim(),
+    shortDescription: input.shortDescription.trim(),
+  };
+}
+
+function mapMediaPayload(value: unknown): { id: string } | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const media = isRecord(value.media) ? value.media : value;
+  const id = readString(media.id);
+  return id === null ? null : { id };
+}
+
+export async function uploadAdminServiceThumbnail(
+  file: File,
+  altText: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<{ id: string }>> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("altText", altText);
+
+  const result = await adminRequest<unknown>(ADMIN_API_PATHS.media, {
+    ...init,
+    body,
+    method: "POST",
+  });
+  return mapAdminResult(result, mapMediaPayload);
 }
 
 export async function createAdminService(
@@ -214,11 +263,7 @@ export async function createAdminService(
 ): Promise<AdminApiResult<AdminService>> {
   const result = await adminRequest<unknown>(ADMIN_API_PATHS.services, {
     ...init,
-    body: JSON.stringify({
-      fullDescription: input.fullDescription.trim(),
-      name: input.name.trim(),
-      shortDescription: input.shortDescription.trim(),
-    }),
+    body: JSON.stringify(toServiceWriteBody(input)),
     method: "POST",
   });
   return mapAdminResult(result, mapServicePayload);
@@ -233,11 +278,7 @@ export async function updateAdminService(
     withAdminApiId(ADMIN_API_PATHS.service, id),
     {
       ...init,
-      body: JSON.stringify({
-        fullDescription: input.fullDescription.trim(),
-        name: input.name.trim(),
-        shortDescription: input.shortDescription.trim(),
-      }),
+      body: JSON.stringify(toServiceWriteBody(input)),
       method: "PATCH",
     },
   );

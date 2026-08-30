@@ -19,6 +19,7 @@ export class AuthError extends Error {
 export const AUTH_ERROR_HTTP_STATUS: Record<AuthErrorCode, number> = {
   INVALID_INPUT: 400,
   INVALID_CREDENTIALS: 401,
+  EMAIL_UNVERIFIED: 403,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   SESSION_EXPIRED: 401,
@@ -29,6 +30,7 @@ export const AUTH_ERROR_HTTP_STATUS: Record<AuthErrorCode, number> = {
 };
 
 export const AUTH_ERROR_MESSAGES = {
+  EMAIL_UNVERIFIED: "Please verify your email before signing in.",
   INVALID_CREDENTIALS: "Invalid email or password.",
   UNAUTHORIZED: "Authentication is required.",
   FORBIDDEN: "You do not have permission to perform this action.",

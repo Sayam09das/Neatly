@@ -9,7 +9,10 @@ import {
   customerServicePath,
   customerServicesCopy,
 } from "@/config/customer";
-import { isLocalCustomerServiceImage } from "@/lib/customer/catalog";
+import {
+  isLocalCustomerServiceImage,
+  isUsableCustomerServiceImage,
+} from "@/lib/customer/catalog";
 import type { CustomerService } from "@/types/customer";
 
 interface ServicesDiscoveryCardProps {
@@ -73,7 +76,7 @@ function ServiceCoverImage({
   priority,
   service,
 }: ServicesDiscoveryCardProps): ReactElement {
-  if (!isLocalCustomerServiceImage(service.coverImageUrl)) {
+  if (!isUsableCustomerServiceImage(service.coverImageUrl)) {
     return (
       <div
         className="flex size-full items-center justify-center text-muted-foreground"
@@ -101,6 +104,7 @@ function ServiceCoverImage({
           : "(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
       }
       src={service.coverImageUrl}
+      unoptimized={!isLocalCustomerServiceImage(service.coverImageUrl)}
     />
   );
 }

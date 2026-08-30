@@ -54,8 +54,8 @@ export interface AdminDashboardViewModel {
   activityItems: readonly AdminActivityItem[];
   metrics: {
     bookings: AdminMetricPresentation;
+    cleaners: AdminMetricPresentation;
     customers: AdminMetricPresentation;
-    reviews: AdminMetricPresentation;
     services: AdminMetricPresentation;
   };
   operationItems: readonly AdminActivityItem[];
@@ -93,13 +93,13 @@ export function toAdminDashboardViewModel(
         data.bookings.total,
         `${String(data.bookings.pending)} pending`,
       ),
+      cleaners: successMetric(
+        data.cleaners.total,
+        `${String(data.cleaners.active)} active`,
+      ),
       customers: successMetric(
         data.customers.total,
         `${String(data.customers.active)} active`,
-      ),
-      reviews: successMetric(
-        data.reviews.total,
-        `${String(data.reviews.active)} visible`,
       ),
       services: successMetric(
         data.services.active,
