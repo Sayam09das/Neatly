@@ -17,7 +17,13 @@ export async function requireAuth(
   _res: ServerResponse,
   context: RequestContext,
 ): Promise<void> {
-  const user = await getAuthService().resolveSession(getSessionToken(req));
+  const sessionToken = getSessionToken(req);
+
+  if (sessionToken === undefined) {
+    throw new AuthenticationError();
+  }
+
+  const user = await getAuthService().resolveSession(sessionToken);
 
   if (user === null) {
     throw new AuthenticationError();

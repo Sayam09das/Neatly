@@ -2,6 +2,28 @@ import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
 
+const TEST_SESSION_SECRET = "test-session-secret-value-32-chars-min";
+const TEST_SITE_URL = "http://localhost:3000";
+
+function isUnset(value: string | undefined): boolean {
+  return value === undefined || value.trim() === "";
+}
+
+function applyTestEnvDefaults(): void {
+  if (isUnset(process.env.SESSION_SECRET)) {
+    process.env.SESSION_SECRET = TEST_SESSION_SECRET;
+  }
+
+  if (
+    isUnset(process.env.SITE_URL) &&
+    isUnset(process.env.NEXT_PUBLIC_SITE_URL)
+  ) {
+    process.env.SITE_URL = TEST_SITE_URL;
+  }
+}
+
+applyTestEnvDefaults();
+
 function stubDomApis(): void {
   if (typeof window === "undefined") {
     return;

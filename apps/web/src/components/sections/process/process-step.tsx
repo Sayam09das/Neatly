@@ -1,137 +1,87 @@
-"use client";
-
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { type ReactElement, useState } from "react";
-import { durationSeconds } from "@/animations/config/durations";
-import { easings } from "@/animations/config/easings";
-import { useIsomorphicLayoutEffect } from "@/animations/hooks/use-isomorphic-layout-effect";
-import { useReducedMotion } from "@/animations/hooks/use-reduced-motion";
+import { cn } from "@neatly/utils";
+import Link from "next/link";
+import type { ReactElement } from "react";
 import type { landingHowItWorks } from "@/config/landing";
-import {
-  PROCESS_FINE_POINTER_QUERY,
-  PROCESS_HOVER_IMAGE_SCALE,
-  PROCESS_HOVER_LIFT_PX,
-  PROCESS_TAP_SCALE,
-} from "./process-animation";
 
 type ProcessStep = (typeof landingHowItWorks.steps)[number];
 
-interface ProcessStepCardProps {
+export interface ProcessStepCta {
+  href: string;
+  label: string;
+}
+
+interface ProcessStepItemProps {
+  alignEnd: boolean;
+  cta?: ProcessStepCta;
   step: ProcessStep;
 }
 
-const hoverTransition = {
-  duration: durationSeconds.normal,
-  ease: easings.standard.framer,
-} as const;
-
-const imageHoverTransition = {
-  duration: durationSeconds.slow,
-  ease: easings.enter.framer,
-} as const;
-
-function useFinePointer(): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useIsomorphicLayoutEffect((): (() => void) => {
-    const media = window.matchMedia(PROCESS_FINE_POINTER_QUERY);
-    const sync = (): void => {
-      setMatches(media.matches);
-    };
-
-    sync();
-    media.addEventListener("change", sync);
-
-    return (): void => {
-      media.removeEventListener("change", sync);
-    };
-  }, []);
-
-  return matches;
-}
-
-export function ProcessStepCard({ step }: ProcessStepCardProps): ReactElement {
-  const prefersReducedMotion = useReducedMotion();
-  const hoverEnabled = useFinePointer() && !prefersReducedMotion;
-
-  const cardClassName =
-    "overflow-hidden rounded-xl border border-secondary-foreground/15 bg-background text-foreground";
-
-  const image = (
-    <div
-      className="relative aspect-video overflow-hidden bg-muted"
-      data-process-image-mask
+export function ProcessStepItem({
+  alignEnd,
+  cta,
+  step,
+}: ProcessStepItemProps): ReactElement {
+  return (
+    <article
+      className={cn(
+        "min-w-0 motion-safe:transition-transform motion-safe:duration-normal motion-safe:ease-standard",
+        "motion-safe:group-hover:-translate-y-1",
+        alignEnd ? "lg:text-left" : "lg:text-right",
+      )}
     >
-      <div className="absolute inset-0" data-process-image-reveal>
-        <div className="absolute inset-0" data-process-image-parallax>
-          {hoverEnabled ? (
-            <motion.div
-              className="absolute inset-0"
-              transition={imageHoverTransition}
-              variants={{
-                hover: { scale: PROCESS_HOVER_IMAGE_SCALE },
-                rest: { scale: 1 },
-              }}
-            >
-              <ProcessStepImage step={step} />
-            </motion.div>
-          ) : (
-            <div className="absolute inset-0">
-              <ProcessStepImage step={step} />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  const body = (
-    <div className="p-6">
-      <p className="text-label text-primary uppercase" data-process-number>
+      <p
+        className="font-mono text-label text-accent uppercase motion-safe:transition-transform motion-safe:duration-normal motion-safe:ease-standard motion-safe:group-hover:scale-105 dark:text-accent-foreground"
+        data-process-number
+      >
         {step.number}
       </p>
-      <h3 className="mt-3 text-h3 tracking-tight">{step.title}</h3>
-      <p className="mt-3 text-body-small text-muted-foreground">{step.body}</p>
-    </div>
-  );
-
-  if (prefersReducedMotion) {
-    return (
-      <article className={cardClassName}>
-        {image}
-        {body}
-      </article>
-    );
-  }
-
-  return (
-    <motion.article
-      className={cardClassName}
-      initial="rest"
-      transition={hoverTransition}
-      variants={{
-        hover: { y: -PROCESS_HOVER_LIFT_PX },
-        rest: { y: 0 },
-      }}
-      whileHover={hoverEnabled ? "hover" : undefined}
-      whileTap={{ scale: PROCESS_TAP_SCALE }}
-    >
-      {image}
-      {body}
-    </motion.article>
+      <h3 className="mt-3 text-h3 text-secondary-foreground tracking-tight">
+        {step.title}
+      </h3>
+      <p className="mt-3 max-w-md text-body-small text-secondary-foreground/80 lg:max-w-none">
+        {step.body}
+      </p>
+      {cta === undefined ? null : (
+        <p className={cn("mt-5", alignEnd ? "lg:text-left" : "lg:text-right")}>
+          <StepCta href={cta.href} label={cta.label} />
+        </p>
+      )}
+    </article>
   );
 }
 
-function ProcessStepImage({ step }: ProcessStepCardProps): ReactElement {
+interface StepCtaProps {
+  href: string;
+  label: string;
+}
+
+function StepCta({ href, label }: StepCtaProps): ReactElement {
   return (
-    <Image
-      alt={step.image.alt}
-      className="object-cover"
-      fill
-      sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
-      src={step.image.src}
-      style={{ objectPosition: step.image.objectPosition }}
-    />
+    <Link
+      className="group/cta inline-flex min-h-touch items-center gap-2 text-body-small font-semibold text-secondary-foreground underline-offset-4 motion-safe:transition-colors motion-safe:duration-normal motion-safe:ease-standard hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+      href={href}
+    >
+      {label}
+      <StepCtaArrow />
+    </Link>
+  );
+}
+
+function StepCtaArrow(): ReactElement {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-4 motion-safe:transition-transform motion-safe:duration-normal motion-safe:ease-standard motion-safe:group-hover/cta:translate-x-0.5"
+      fill="none"
+      viewBox="0 0 16 16"
+    >
+      <path
+        d="M3 8h10M9 4l4 4-4 4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
   );
 }

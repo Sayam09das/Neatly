@@ -34,31 +34,35 @@ function createProcessMarkup(): HTMLElement {
   rule.setAttribute("data-process-rule", "");
   header.append(rule);
 
+  const mediaMask = document.createElement("div");
+  mediaMask.setAttribute("data-process-media-mask", "");
+  root.append(mediaMask);
+
+  const mediaReveal = document.createElement("div");
+  mediaReveal.setAttribute("data-process-media-reveal", "");
+  mediaMask.append(mediaReveal);
+
   const progressLine = document.createElement("div");
   progressLine.setAttribute("data-process-progress-line", "");
   root.append(progressLine);
 
+  const timeline = document.createElement("ol");
+  timeline.setAttribute("data-process-timeline", "");
+  root.append(timeline);
+
   for (let index = 0; index < PROCESS_STEP_COUNT; index += 1) {
     const dot = document.createElement("span");
     dot.setAttribute("data-process-dot", "");
-    root.append(dot);
+    timeline.append(dot);
 
     const step = document.createElement("li");
     step.setAttribute("data-process-step", "");
-
-    const mask = document.createElement("div");
-    mask.setAttribute("data-process-image-mask", "");
-    step.append(mask);
-
-    const image = document.createElement("div");
-    image.setAttribute("data-process-image-reveal", "");
-    mask.append(image);
 
     const number = document.createElement("p");
     number.setAttribute("data-process-number", "");
     step.append(number);
 
-    root.append(step);
+    timeline.append(step);
   }
 
   document.body.append(root);
@@ -71,20 +75,23 @@ describe("createProcessAnimation", (): void => {
     const root = createProcessMarkup();
     const heading = root.querySelector<HTMLElement>("[data-process-heading]");
     const firstStep = root.querySelector<HTMLElement>("[data-process-step]");
-    const lastStep = root.querySelectorAll<HTMLElement>(
-      "[data-process-step]",
-    )[2];
-    const firstMask = root.querySelector<HTMLElement>(
-      "[data-process-image-mask]",
+    const lastStep = root.querySelectorAll<HTMLElement>("[data-process-step]")[
+      PROCESS_STEP_COUNT - 1
+    ];
+    const mediaMask = root.querySelector<HTMLElement>(
+      "[data-process-media-mask]",
     );
-    const firstImage = root.querySelector<HTMLElement>(
-      "[data-process-image-reveal]",
+    const mediaImage = root.querySelector<HTMLElement>(
+      "[data-process-media-reveal]",
     );
     const firstNumber = root.querySelector<HTMLElement>(
       "[data-process-number]",
     );
     const firstDot = root.querySelector<HTMLElement>("[data-process-dot]");
-    const lastDot = root.querySelectorAll<HTMLElement>("[data-process-dot]")[2];
+    const lastDot =
+      root.querySelectorAll<HTMLElement>("[data-process-dot]")[
+        PROCESS_STEP_COUNT - 1
+      ];
     const rule = root.querySelector<HTMLElement>("[data-process-rule]");
     const progressLine = root.querySelector<HTMLElement>(
       "[data-process-progress-line]",
@@ -94,8 +101,8 @@ describe("createProcessAnimation", (): void => {
       heading === null ||
       firstStep === null ||
       lastStep === undefined ||
-      firstMask === null ||
-      firstImage === null ||
+      mediaMask === null ||
+      mediaImage === null ||
       firstNumber === null ||
       firstDot === null ||
       lastDot === undefined ||
@@ -113,12 +120,12 @@ describe("createProcessAnimation", (): void => {
 
     expect(Number(gsap.getProperty(heading, "opacity"))).toBe(0);
     expect(Number(gsap.getProperty(firstStep, "opacity"))).toBe(0);
-    expect(Number(gsap.getProperty(firstImage, "scale"))).toBe(
+    expect(Number(gsap.getProperty(mediaImage, "scale"))).toBe(
       PROCESS_IMAGE_SCALE_FROM_DESKTOP,
     );
-    expect(gsap.getProperty(firstMask, "clipPath")).toBe(PROCESS_CLIP_HIDDEN);
+    expect(gsap.getProperty(mediaMask, "clipPath")).toBe(PROCESS_CLIP_HIDDEN);
     expect(Number(gsap.getProperty(rule, "scaleX"))).toBe(0);
-    expect(Number(gsap.getProperty(progressLine, "scaleX"))).toBe(0);
+    expect(Number(gsap.getProperty(progressLine, "scaleY"))).toBe(0);
     expect(Number(gsap.getProperty(firstDot, "opacity"))).toBe(
       PROCESS_DOT_INACTIVE_OPACITY,
     );
@@ -127,10 +134,10 @@ describe("createProcessAnimation", (): void => {
     expect(Number(gsap.getProperty(heading, "opacity"))).toBe(1);
     expect(Number(gsap.getProperty(firstStep, "opacity"))).toBe(1);
     expect(Number(gsap.getProperty(lastStep, "opacity"))).toBe(1);
-    expect(Number(gsap.getProperty(firstImage, "scale"))).toBe(1);
+    expect(Number(gsap.getProperty(mediaImage, "scale"))).toBe(1);
     expect(Number(gsap.getProperty(firstNumber, "opacity"))).toBe(1);
     expect(Number(gsap.getProperty(rule, "scaleX"))).toBe(1);
-    expect(Number(gsap.getProperty(progressLine, "scaleX"))).toBe(1);
+    expect(Number(gsap.getProperty(progressLine, "scaleY"))).toBe(1);
     expect(Number(gsap.getProperty(lastDot, "scale"))).toBe(
       PROCESS_DOT_ACTIVE_SCALE,
     );
@@ -139,7 +146,7 @@ describe("createProcessAnimation", (): void => {
     expect(Number(gsap.getProperty(heading, "opacity"))).toBe(0);
     expect(Number(gsap.getProperty(firstStep, "opacity"))).toBe(0);
     expect(Number(gsap.getProperty(lastStep, "opacity"))).toBe(0);
-    expect(Number(gsap.getProperty(progressLine, "scaleX"))).toBe(0);
+    expect(Number(gsap.getProperty(progressLine, "scaleY"))).toBe(0);
 
     timeline.kill();
     root.remove();
@@ -147,14 +154,14 @@ describe("createProcessAnimation", (): void => {
 
   it("skips clip-path and uses the mobile image scale in compact mode", (): void => {
     const root = createProcessMarkup();
-    const firstMask = root.querySelector<HTMLElement>(
-      "[data-process-image-mask]",
+    const mediaMask = root.querySelector<HTMLElement>(
+      "[data-process-media-mask]",
     );
-    const firstImage = root.querySelector<HTMLElement>(
-      "[data-process-image-reveal]",
+    const mediaImage = root.querySelector<HTMLElement>(
+      "[data-process-media-reveal]",
     );
 
-    if (firstMask === null || firstImage === null) {
+    if (mediaMask === null || mediaImage === null) {
       throw new Error("Process animation fixtures were not created.");
     }
 
@@ -164,15 +171,15 @@ describe("createProcessAnimation", (): void => {
       enableScrollTrigger: false,
     });
 
-    expect(Number(gsap.getProperty(firstImage, "scale"))).toBe(
+    expect(Number(gsap.getProperty(mediaImage, "scale"))).toBe(
       PROCESS_IMAGE_SCALE_FROM_MOBILE,
     );
-    expect(gsap.getProperty(firstMask, "clipPath")).not.toBe(
+    expect(gsap.getProperty(mediaMask, "clipPath")).not.toBe(
       PROCESS_CLIP_HIDDEN,
     );
 
     timeline.progress(1);
-    expect(Number(gsap.getProperty(firstImage, "scale"))).toBe(1);
+    expect(Number(gsap.getProperty(mediaImage, "scale"))).toBe(1);
 
     timeline.kill();
     root.remove();

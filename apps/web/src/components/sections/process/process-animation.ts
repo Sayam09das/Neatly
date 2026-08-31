@@ -3,7 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { easings } from "@/animations/config/easings";
 import { registerGsapPlugins } from "@/animations/gsap/plugins";
 
-export const PROCESS_STEP_COUNT = 3;
+export const PROCESS_STEP_COUNT = 5;
 export const PROCESS_EYEBROW_Y_PX = 20;
 export const PROCESS_HEADING_Y_PX = 40;
 export const PROCESS_INTRO_Y_PX = 20;
@@ -60,6 +60,8 @@ interface ProcessTargets {
   eyebrow: HTMLElement | null;
   heading: HTMLElement | null;
   intro: HTMLElement | null;
+  mediaImage: HTMLElement | null;
+  mediaMask: HTMLElement | null;
   progressLine: HTMLElement | null;
   rule: HTMLElement | null;
   steps: Array<ProcessStepTargets>;
@@ -88,6 +90,8 @@ function collectTargets(root: HTMLElement): ProcessTargets {
     eyebrow: root.querySelector<HTMLElement>("[data-process-eyebrow]"),
     heading: root.querySelector<HTMLElement>("[data-process-heading]"),
     intro: root.querySelector<HTMLElement>("[data-process-intro]"),
+    mediaImage: root.querySelector<HTMLElement>("[data-process-media-reveal]"),
+    mediaMask: root.querySelector<HTMLElement>("[data-process-media-mask]"),
     progressLine: root.querySelector<HTMLElement>(
       "[data-process-progress-line]",
     ),
@@ -118,11 +122,19 @@ function setInitialStates(targets: ProcessTargets, compact: boolean): void {
     gsap.set(targets.rule, { scaleX: 0, transformOrigin: "left center" });
   }
 
-  if (!compact && targets.progressLine !== null) {
+  if (targets.progressLine !== null) {
     gsap.set(targets.progressLine, {
-      scaleX: 0,
-      transformOrigin: "left center",
+      scaleY: 0,
+      transformOrigin: "top center",
     });
+  }
+
+  if (targets.mediaImage !== null) {
+    gsap.set(targets.mediaImage, { force3D: true, scale: imageScale });
+  }
+
+  if (!compact && targets.mediaMask !== null) {
+    gsap.set(targets.mediaMask, { clipPath: PROCESS_CLIP_HIDDEN });
   }
 
   for (const target of targets.steps) {
@@ -199,6 +211,18 @@ function addHeaderTweens(
       PROCESS_INTRO_AT,
     );
   }
+
+  if (targets.mediaImage !== null) {
+    timeline.to(targets.mediaImage, { scale: 1 }, PROCESS_INTRO_AT);
+  }
+
+  if (!compact && targets.mediaMask !== null) {
+    timeline.to(
+      targets.mediaMask,
+      { clipPath: PROCESS_CLIP_VISIBLE },
+      PROCESS_INTRO_AT,
+    );
+  }
 }
 
 function addStepTweens(
@@ -210,13 +234,13 @@ function addStepTweens(
   const stepSpan =
     Math.max(targets.steps.length - 1, 0) * PROCESS_STEP_STAGGER + duration;
 
-  if (!compact && targets.progressLine !== null && targets.steps.length > 0) {
+  if (targets.progressLine !== null && targets.steps.length > 0) {
     timeline.to(
       targets.progressLine,
       {
         duration: stepSpan,
         ease: "none",
-        scaleX: 1,
+        scaleY: 1,
       },
       PROCESS_STEPS_AT,
     );
@@ -359,9 +383,29 @@ export function createProcessAnimation(
       targets,
       PROCESS_DURATION_MOBILE,
     );
+    const timelineRoot =
+      root.querySelector<HTMLElement>("[data-process-timeline]") ?? root;
 
     attachPlayTrigger(headerTimeline, header ?? root, PROCESS_SCROLL_START);
     createMobileStepTriggers(targets, PROCESS_DURATION_MOBILE);
+
+    if (targets.progressLine !== null) {
+      gsap.fromTo(
+        targets.progressLine,
+        { scaleY: 0 },
+        {
+          ease: "none",
+          scaleY: 1,
+          scrollTrigger: {
+            end: PROCESS_STORY_END,
+            invalidateOnRefresh: true,
+            scrub: PROCESS_STORY_SCRUB,
+            start: PROCESS_SCROLL_START,
+            trigger: timelineRoot,
+          },
+        },
+      );
+    }
 
     if (enableParallax) {
       createParallax(root);

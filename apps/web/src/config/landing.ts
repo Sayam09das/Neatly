@@ -401,47 +401,68 @@ export const landingFeaturedWork = {
 };
 
 export const landingHowItWorks = {
-  eyebrow: "The process",
-  heading: "How it works",
+  eyebrow: "How it works",
+  heading: "Cleaning made simple.",
   headingId: "process-heading",
   intro:
-    "Three steps from request to a finished visit. Payment is not part of the quote.",
+    "From choosing your service to completing your cleaning, Neatly keeps every step clear, straightforward, and easy to manage.",
+  image: {
+    alt: "A woman relaxing on a beige sofa in a freshly cleaned sunlit living room with a tidy kitchen beyond.",
+    height: 864,
+    objectPosition: "55% 42%",
+    src: "/images/how_it_works/03_result.jpeg",
+    width: 1536,
+  },
+  primaryCta: {
+    href: navbarCta.href,
+    label: navbarCta.label,
+  },
+  quotesCta: {
+    href: CUSTOMER_PATHS.quotes,
+    label: "View your quotes",
+  },
+  secondaryCta: {
+    href: CUSTOMER_PATHS.services,
+    label: "Explore Services",
+  },
   steps: [
     {
-      body: "Share the property type, service, and timing. No payment on this step.",
-      image: {
-        alt: "A customer in a sunlit modern kitchen looking at a phone, with a cleaner working softly in the background.",
-        height: 864,
-        objectPosition: "42% 40%",
-        src: "/images/how_it_works/01_request.jpeg",
-        width: 1536,
+      body: "Browse Neatly's cleaning services and choose the one that best fits your space and needs.",
+      cta: {
+        href: CUSTOMER_PATHS.services,
+        label: "Explore Services",
       },
+      id: "choose",
       number: "01",
-      title: "Tell us what you need",
+      title: "Choose a Service",
     },
     {
-      body: "Confirm the scope and schedule with the team. The quote stays a conversation, not a checkout.",
-      image: {
-        alt: "A cleaner in a sage apron speaking with a customer at a marble kitchen island in a bright apartment.",
-        height: 864,
-        objectPosition: "48% 38%",
-        src: "/images/how_it_works/02_quote.jpeg",
-        width: 1536,
+      body: "Tell us what you need, when you need it, and provide the details that help us understand your cleaning requirements.",
+      cta: {
+        href: CUSTOMER_PATHS.quote,
+        label: "Request a Quote",
       },
+      id: "request",
       number: "02",
-      title: "Get your quote",
+      title: "Request a Quote",
     },
     {
-      body: "The booked service is completed to the agreed checklist.",
-      image: {
-        alt: "A woman relaxing on a beige sofa in a freshly cleaned sunlit living room with a tidy kitchen beyond.",
-        height: 864,
-        objectPosition: "55% 42%",
-        src: "/images/how_it_works/03_result.jpeg",
-        width: 1536,
-      },
+      body: "Our team reviews your request and provides clear pricing before you commit to the booking.",
+      id: "review",
       number: "03",
-      title: "Enjoy a cleaner space",
+      title: "Review Your Quote",
+    },
+    {
+      body: "Review your quote, accept the price, and create your booking once everything looks right.",
+      id: "accept",
+      number: "04",
+      title: "Accept & Book",
+    },
+    {
+      body: "Once your booking is assigned, your cleaner can view the job, start the work, and complete the cleaning.",
+      id: "complete",
+      number: "05",
+      title: "Your Cleaner Gets to Work",
     },
   ],
 };

@@ -19,6 +19,7 @@ import { TEMPORARY_COPY_NOTE } from "@/config/landing";
 import {
   getHomeAccountCta,
   getHomeHeroSecondaryCta,
+  getHomeProcessQuotesHref,
 } from "@/lib/customer/home";
 import type { CustomerNavbarSession } from "@/lib/customer/navbar";
 
@@ -49,7 +50,7 @@ export function LandingPage({
         <TrustIndicators />
         <FeaturedWork />
         <WordMarquee />
-        <HowItWorks />
+        <HowItWorks quotesHref={getHomeProcessQuotesHref(session)} />
         <TrustSection />
         <Statistics />
         <Testimonials />

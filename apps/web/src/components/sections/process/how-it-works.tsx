@@ -3,7 +3,11 @@ import { BandCurve } from "@/components/sections/band-curve";
 import { landingHowItWorks } from "@/config/landing";
 import { ProcessScene } from "./process-scene";
 
-export function HowItWorks(): ReactElement {
+interface HowItWorksProps {
+  quotesHref?: string;
+}
+
+export function HowItWorks({ quotesHref }: HowItWorksProps): ReactElement {
   return (
     <section
       aria-labelledby={landingHowItWorks.headingId}
@@ -12,7 +16,7 @@ export function HowItWorks(): ReactElement {
     >
       <BandCurve />
       <div className="h-16 md:h-24 lg:h-28" />
-      <ProcessScene />
+      <ProcessScene quotesHref={quotesHref} />
       <div className="h-16 md:h-24 lg:h-28" />
     </section>
   );

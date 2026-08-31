@@ -8,6 +8,7 @@ import {
 import {
   getHomeAccountCta,
   getHomeHeroSecondaryCta,
+  getHomeProcessQuotesHref,
 } from "@/lib/customer/home";
 
 const customerSession = {
@@ -32,6 +33,8 @@ describe("home CTAs", (): void => {
     });
     expect(getHomeAccountCta(null)).toBeNull();
     expect(getHomeAccountCta(adminSession)).toBeNull();
+    expect(getHomeProcessQuotesHref(null)).toBeUndefined();
+    expect(getHomeProcessQuotesHref(adminSession)).toBeUndefined();
     expect(landingCtas.primary.href).toBe(CUSTOMER_PATHS.quote);
     expect(landingCtas.secondary.href).toBe(CUSTOMER_PATHS.services);
     expect(getPublishedLandingCta(landingCtas.viewWork)).toBeNull();
@@ -48,6 +51,9 @@ describe("home CTAs", (): void => {
       href: CUSTOMER_PATHS.dashboard,
       label: customerSurfaceCopy.dashboard.title,
     });
+    expect(getHomeProcessQuotesHref(customerSession)).toBe(
+      CUSTOMER_PATHS.quotes,
+    );
     expect(getHomeHeroSecondaryCta(customerSession).href).not.toMatch(
       /^\/admin/,
     );

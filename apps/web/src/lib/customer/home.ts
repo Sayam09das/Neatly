@@ -38,3 +38,13 @@ export function getHomeAccountCta(
     label: customerSurfaceCopy.dashboard.title,
   };
 }
+
+export function getHomeProcessQuotesHref(
+  session: CustomerNavbarSession | null,
+): string | undefined {
+  if (getCustomerNavbarMode(session, "public") !== "customer") {
+    return undefined;
+  }
+
+  return CUSTOMER_PATHS.quotes;
+}

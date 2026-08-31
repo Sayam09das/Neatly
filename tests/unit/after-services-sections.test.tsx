@@ -116,7 +116,7 @@ describe("FeaturedWork", (): void => {
 });
 
 describe("HowItWorks", (): void => {
-  it("renders the three PRD process steps", (): void => {
+  it("renders the five customer journey steps", (): void => {
     render(<HowItWorks />);
 
     expect(
@@ -125,16 +125,43 @@ describe("HowItWorks", (): void => {
         name: landingHowItWorks.heading,
       }),
     ).toBeInTheDocument();
+    expect(landingHowItWorks.steps).toHaveLength(5);
 
     for (const step of landingHowItWorks.steps) {
       expect(screen.getByText(step.number)).toBeInTheDocument();
       expect(
         screen.getByRole("heading", { level: 3, name: step.title }),
       ).toBeInTheDocument();
-      expect(
-        screen.getByRole("img", { name: step.image.alt }),
-      ).toBeInTheDocument();
     }
+
+    expect(
+      screen.getByRole("img", { name: landingHowItWorks.image.alt }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: landingHowItWorks.primaryCta.label }),
+    ).toHaveAttribute("href", landingHowItWorks.primaryCta.href);
+    expect(
+      screen.getByRole("link", { name: landingHowItWorks.secondaryCta.label }),
+    ).toHaveAttribute("href", landingHowItWorks.secondaryCta.href);
+    expect(
+      screen.getByRole("link", { name: "Explore Services" }),
+    ).toHaveAttribute("href", landingHowItWorks.secondaryCta.href);
+    expect(
+      screen.getByRole("link", { name: "Request a Quote" }),
+    ).toHaveAttribute("href", landingHowItWorks.steps[1]?.cta.href);
+    expect(
+      screen.queryByRole("link", {
+        name: landingHowItWorks.quotesCta.label,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds a quotes CTA for signed-in customers", (): void => {
+    render(<HowItWorks quotesHref={landingHowItWorks.quotesCta.href} />);
+
+    expect(
+      screen.getByRole("link", { name: landingHowItWorks.quotesCta.label }),
+    ).toHaveAttribute("href", landingHowItWorks.quotesCta.href);
   });
 
   it("still renders the process when reduced motion is preferred", (): void => {
