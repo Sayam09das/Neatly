@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   actions: write
+  packages: write
 
 concurrency:
   group: production-deploy
@@ -20,6 +21,10 @@ jobs:
   verify:
     name: Verify
     uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      actions: write
+      packages: write
 
   gate:
     name: Production gate
@@ -31,13 +36,16 @@ jobs:
       - name: Record verified SHA
         env:
           RELEASE_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
         run: |
+          repo="$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')"
           {
             echo "## Production verification"
             echo
             echo "- Commit: \`${RELEASE_SHA}\`"
-            echo "- Images verified: \`neatly-web:${RELEASE_SHA}\` / \`neatly-api:${RELEASE_SHA}\`"
-            echo "- Registry push: not configured"
+            echo "- Registry: GitHub Container Registry"
+            echo "- Web: \`ghcr.io/${repo}/web:${RELEASE_SHA}\`"
+            echo "- API: \`ghcr.io/${repo}/api:${RELEASE_SHA}\`"
             echo "- Host rollout: not configured"
             echo
             echo "Apply schema changes only as a controlled API release:"

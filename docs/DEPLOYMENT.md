@@ -274,7 +274,7 @@ Jobs run in parallel after a frozen-lockfile install:
 | Typecheck | `pnpm db:validate`, `pnpm typecheck` |
 | Test | `pnpm test` |
 | Build | Next.js production build, `pnpm build:api` |
-| Docker | Web and API images, SHA tags, no push |
+| Docker | Web and API images; push `web` / `api` to GHCR on `main` |
 | CI | Aggregator. Require this check in branch protection |
 
 `pnpm db:validate` checks the Prisma schema only. CI supplies placeholder `DATABASE_URL` and `DIRECT_URL` values so Prisma can load the datasource. Those placeholders are not credentials, are not reachable, and are not production. The job does not connect to a database and does not run `prisma migrate deploy`.
@@ -285,20 +285,53 @@ Setup is shared in [`.github/actions/setup-node`](../.github/actions/setup-node/
 
 ## Docker CI
 
-After quality and application builds pass, CI builds the web and API images in parallel with Buildx. Tags are `neatly-web:<sha>` / `neatly-api:<sha>`. Layers cache on GitHub Actions except for pull requests from forks. Images are not pushed. No registry credentials are required.
+After quality and application builds pass, CI builds the web and API images in parallel with Buildx.
+
+Pull requests **build only**. Images stay on the runner and are discarded when the job ends, so they do not appear in GitHub Packages or Docker Desktop.
+
+Pushes to `main` and the Production workflow **push** to GitHub Container Registry (`ghcr.io`). Package names are lowercase:
+
+```text
+ghcr.io/<owner>/<repo>/web:<git-sha>
+ghcr.io/<owner>/<repo>/web:latest
+ghcr.io/<owner>/<repo>/api:<git-sha>
+ghcr.io/<owner>/<repo>/api:latest
+```
+
+Images include `org.opencontainers.image.source` so GitHub links the packages to this repository. Authentication uses `GITHUB_TOKEN` (`packages: write`). Fork pull requests never receive write access and are not pushed.
+
+Layers cache on GitHub Actions except for pull requests from forks. Runtime secrets are not baked into images.
+
+Pull a published image after a successful `main` run (private packages require a GitHub token):
+
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker pull ghcr.io/<owner>/<repo>/web:latest
+docker pull ghcr.io/<owner>/<repo>/api:latest
+```
+
+Or point compose at those tags:
+
+```bash
+NEATLY_WEB_IMAGE=ghcr.io/<owner>/<repo>/web:latest \
+NEATLY_API_IMAGE=ghcr.io/<owner>/<repo>/api:latest \
+docker compose pull && docker compose up
+```
+
+Local builds without GHCR still work: `docker compose build`.
 
 ## Production Deployment
 
 [`.github/workflows/production.yml`](../.github/workflows/production.yml) is a controlled, manual workflow (`workflow_dispatch`).
 
 ```text
-CI (same gates as pull requests)
+CI (same gates as pull requests, including GHCR push)
 → GitHub `production` environment approval
 → Verified SHA recorded
 → Deploy (not configured)
 ```
 
-It does **not** auto-deploy on branch push, does **not** push images, and does **not** run `pnpm db:migrate:deploy` against a live database. Enable environment protection rules on the GitHub `production` environment when you are ready to require approval. Add registry and host rollout only after those credentials exist.
+It does **not** auto-deploy on branch push and does **not** run `pnpm db:migrate:deploy` against a live database. Enable environment protection rules on the GitHub `production` environment when you are ready to require approval. Add host rollout only after those credentials exist.
 
 CI validates the application. Hosting platforms perform the actual production rollout.
 

@@ -12,6 +12,8 @@ RUN corepack enable && corepack prepare pnpm@11.13.1 --activate
 WORKDIR /app
 
 FROM base AS deps
+ENV DATABASE_URL="postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
+ENV DIRECT_URL="postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/package.json
 COPY apps/server/package.json apps/server/package.json

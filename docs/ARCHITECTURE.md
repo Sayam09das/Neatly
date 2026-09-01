@@ -853,7 +853,7 @@ GitHub pull request / merge group / push to main
 CI (parallel): Lint, Typecheck + prisma validate, Unit tests, Production builds
        │
        ▼
-Docker image builds (neatly-web:<sha>, neatly-api:<sha>, not pushed)
+Docker image builds; push to GHCR on main (ghcr.io/<owner>/<repo>/web|api)
        │
        ▼
 Required check: CI
