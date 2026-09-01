@@ -52,9 +52,9 @@ export function CookieConsentBanner(): ReactElement | null {
             {cookieConsentCopy.description}{" "}
             <Link
               className="text-foreground underline hover:text-muted-foreground"
-              href={cookieConsentCopy.privacyHref}
+              href={LEGAL_PATHS.cookies}
             >
-              {cookieConsentCopy.privacyLabel}
+              {cookieConsentCopy.policyLabel}
             </Link>
           </p>
         </div>

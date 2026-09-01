@@ -46,6 +46,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   agentRules: false,
+  output: "standalone",
   outputFileTracingRoot: workspaceRoot,
   transpilePackages: ["@neatly/config", "@neatly/ui", "@neatly/utils"],
   async headers(): Promise<
