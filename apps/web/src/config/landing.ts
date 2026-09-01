@@ -1,5 +1,5 @@
 import { APP_NAME } from "@neatly/config";
-import { CUSTOMER_PATHS } from "@/config/customer";
+import { CUSTOMER_PATHS, customerServicePath } from "@/config/customer";
 
 export const TEMPORARY_COPY_NOTE =
   "Temporary copy until site settings, services, portfolio, testimonials, and blog are published from the CMS. Do not treat this as live business data.";
@@ -8,6 +8,15 @@ export const navbarCta = {
   href: CUSTOMER_PATHS.quote,
   label: "Get a Quote",
 } as const;
+
+export const CONTACT_PATH = "/contact";
+export const PROCESS_PATH = "/process";
+export const TESTIMONIALS_PATH = "/testimonials";
+export const BLOG_PATH = "/blog";
+export const LANDING_PROCESS_SECTION_ID = "process";
+export const LANDING_REVIEWS_SECTION_ID = "testimonials";
+export const LANDING_PROCESS_HREF = PROCESS_PATH;
+export const LANDING_REVIEWS_HREF = TESTIMONIALS_PATH;
 
 const unpublishedLandingRoute: string | null = null;
 
@@ -25,11 +34,11 @@ export const landingCtas = {
     label: "View our work",
   },
   readJournal: {
-    href: unpublishedLandingRoute,
+    href: BLOG_PATH,
     label: "Read the journal",
   },
   contact: {
-    href: unpublishedLandingRoute,
+    href: CONTACT_PATH,
     label: "Contact",
   },
   subscribe: {
@@ -38,9 +47,17 @@ export const landingCtas = {
 } as const;
 
 export const landingNavLinks = [
-  { href: "/about", label: "About" },
   { href: CUSTOMER_PATHS.services, label: "Services" },
+  { href: LANDING_PROCESS_HREF, label: "How It Works" },
+  { href: "/about", label: "About Us" },
+  { href: LANDING_REVIEWS_HREF, label: "Reviews" },
+  { href: BLOG_PATH, label: "Journal" },
+  { href: CONTACT_PATH, label: "Contact" },
 ] as const;
+
+export function blogPostPath(slug: string): string {
+  return `${BLOG_PATH}/${encodeURIComponent(slug)}`;
+}
 
 export function getPublishedLandingCta(cta: {
   href: string | null;
@@ -189,97 +206,60 @@ export const landingTrustIndicators = {
 
 export const landingWhyNeatly = {
   eyebrow: "Why Neatly",
-  heading: "Why you'll choose Neatly for your space",
+  heading: "A better way to keep your space clean.",
   headingId: "why-heading",
-  headingLead: "Why you'll choose",
-  emphasis: "Neatly",
-  headingTail: "for your space",
+  headingLines: ["A better way to keep", "your space clean."],
   intro:
-    "Cleaning means letting a team into a home or workplace. Neatly is built around vetted professionals, a clear scope, considered materials, and a satisfaction standard—stated before you request a quote.",
-  benefits: [
+    "Neatly keeps the cleaning experience simple, clear, and easy to manage — from your first request to the final clean.",
+  primaryCta: {
+    href: navbarCta.href,
+    label: navbarCta.label,
+  },
+  secondaryCta: {
+    href: LANDING_PROCESS_HREF,
+    label: "How It Works",
+  },
+  features: [
     {
+      body: "Tell us what you need and receive a quote based on your cleaning request before moving forward.",
+      icon: "quotes",
       index: "01",
-      title: "Rigorous vetting",
-      body: "Who enters a property, and how they are screened, is part of the standard—not an afterthought.",
-      featured: false,
-      image: {
-        alt: "A vetted cleaner wearing an ID badge and apron, holding folded cloths beside a supply cart in a modern kitchen.",
-        height: 1536,
-        objectPosition: "50% 22%",
-        src: "/images/why_use/why_use_01.jpeg",
-        width: 2752,
-      },
+      title: "Clear, upfront quotes",
     },
     {
+      body: "Choose from the services available through Neatly and select the option that fits your cleaning needs.",
+      icon: "services",
       index: "02",
-      title: "Satisfaction standard",
-      body: "Complimentary reclean guarantee if any detail is missed. Satisfaction is our explicit commitment.",
-      featured: true,
-      image: {
-        alt: "A Neatly cleaner wiping a marble kitchen island with a microfiber cloth.",
-        height: 1536,
-        objectPosition: "50% 32%",
-        src: "/images/why_use/why_use_02.jpeg",
-        width: 2752,
-      },
+      title: "Services built around your space",
     },
     {
+      body: "Once your booking is ready, Neatly assigns a cleaner to the job so you know who is responsible for completing your service.",
+      icon: "cleaners",
       index: "03",
-      title: "Transparent scope",
-      body: "What is included, and what is an add-on, is detailed in published service checklists before booking.",
-      featured: false,
-      image: {
-        alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows.",
-        height: 1536,
-        objectPosition: "50% 48%",
-        src: "/images/why_use/why_use_03.jpeg",
-        width: 2752,
-      },
+      title: "Assigned professionals",
+    },
+    {
+      body: "Track your booking through the Neatly workflow, from request and assignment to completion.",
+      icon: "workflow",
+      index: "04",
+      title: "Simple from start to finish",
     },
   ],
-  metrics: [
-    {
-      body: "Comprehensive general liability and property damage protection on every visit.",
-      label: "Insured coverage",
-      suffix: "%",
-      value: 100,
-    },
-    {
-      body: "Over 500+ verified customer reviews with consistent high satisfaction ratings.",
-      label: "Verified reviews",
-      suffix: "+",
-      value: 500,
-    },
-    {
-      body: "Satisfaction standard with complimentary recleans if any detail is missed.",
-      label: "Published guarantee",
-      suffix: "%",
-      value: 100,
-    },
-    {
-      body: "Background checks and identity verification completed prior to placement.",
-      label: "Background-checked team",
-      suffix: "%",
-      value: 100,
-    },
-  ],
-  metricsPendingLabel: "Figure pending",
-  metricsPendingValue: "—",
 } as const;
 
 export const landingServices = {
-  eyebrow: "Services",
-  heading: "Everything your space needs to stay Neatly.",
+  eyebrow: "Our services",
+  heading: "Choose a service",
   headingId: "services-heading",
-  headingLead: "Everything your space",
-  headingEmphasis: "needs to stay Neatly.",
-  intro:
-    "Residential, deep, and commercial cleaning with a published scope. Move-in, move-out, and recurring visits are listed on the services page.",
+  headingLead: "Choose a",
+  headingEmphasis: "service",
+  intro: "Find the right cleaning service for your space.",
+  viewLabel: "View Service",
   items: [
     {
       number: "01",
       featured: true,
-      href: CUSTOMER_PATHS.services,
+      href: customerServicePath("residential-cleaning"),
       title: "Residential cleaning",
       description:
         "Regular maintenance for apartments and single-family homes. Recurring or one-time, with inclusions stated before you request a quote.",
@@ -294,7 +274,7 @@ export const landingServices = {
     {
       number: "02",
       featured: false,
-      href: CUSTOMER_PATHS.services,
+      href: customerServicePath("deep-cleaning"),
       title: "Deep cleaning",
       description:
         "Detail work beyond a standard visit, including baseboards, interior appliances, and scrubbing where the published checklist includes them.",
@@ -309,7 +289,22 @@ export const landingServices = {
     {
       number: "03",
       featured: false,
-      href: CUSTOMER_PATHS.services,
+      href: customerServicePath("move-in-move-out-cleaning"),
+      title: "Move-in / move-out cleaning",
+      description:
+        "Transition cleaning so a property is ready for the next occupancy. Scope is stated before you request a quote.",
+      image: {
+        alt: "A bright living room with a beige sofa, light-wood coffee table, and marble fireplace after a move-in clean.",
+        height: 1200,
+        objectPosition: "50% 48%",
+        src: "/images/Services/03_move.jpeg",
+        width: 896,
+      },
+    },
+    {
+      number: "04",
+      featured: false,
+      href: customerServicePath("commercial-cleaning"),
       title: "Commercial cleaning",
       description:
         "Offices, studios, and small workplaces. Scope is set per property so expectations stay explicit.",
@@ -321,8 +316,29 @@ export const landingServices = {
         width: 1376,
       },
     },
+    {
+      number: "05",
+      featured: false,
+      href: customerServicePath("recurring-cleaning"),
+      title: "Recurring cleaning",
+      description:
+        "Scheduled weekly, bi-weekly, or monthly visits. Frequency and inclusions stay explicit in the quote.",
+      image: {
+        alt: "A smiling Neatly cleaner in a green apron holding microfiber cloths beside a service cart in an open kitchen.",
+        height: 1536,
+        objectPosition: "48% 36%",
+        src: "/images/Services/05_recurring.jpeg",
+        width: 2752,
+      },
+    },
   ],
 } as const;
+
+export function landingServiceStillBySrc(
+  src: string,
+): (typeof landingServices.items)[number]["image"] | undefined {
+  return landingServices.items.find((item) => item.image.src === src)?.image;
+}
 
 export const landingFeaturedWork = {
   eyebrow: "Our work",
@@ -405,7 +421,12 @@ export const landingHowItWorks = {
   heading: "Cleaning made simple.",
   headingId: "process-heading",
   intro:
-    "From choosing your service to completing your cleaning, Neatly keeps every step clear, straightforward, and easy to manage.",
+    "From choosing a service to completing your cleaning, Neatly keeps every step clear and easy to follow.",
+  ctaEyebrow: "Ready when you are",
+  ctaHeading: "Let's get your space feeling fresh.",
+  ctaHeadingId: "process-cta-heading",
+  ctaDescription:
+    "Choose a service, request your quote, and take the next step with Neatly.",
   image: {
     alt: "A woman relaxing on a beige sofa in a freshly cleaned sunlit living room with a tidy kitchen beyond.",
     height: 864,
@@ -413,6 +434,44 @@ export const landingHowItWorks = {
     src: "/images/how_it_works/03_result.jpeg",
     width: 1536,
   },
+  journeyHeading: "Your cleaning journey",
+  journey: [
+    {
+      detail: "Selected",
+      icon: "service",
+      id: "service",
+      label: "Service",
+      stepIds: ["choose"],
+    },
+    {
+      detail: "Accepted",
+      icon: "quote",
+      id: "quote",
+      label: "Quote",
+      stepIds: ["request", "accept"],
+    },
+    {
+      detail: "Confirmed",
+      icon: "booking",
+      id: "booking",
+      label: "Booking",
+      stepIds: ["book"],
+    },
+    {
+      detail: "Assigned",
+      icon: "cleaner",
+      id: "cleaner",
+      label: "Cleaner",
+      stepIds: ["assign"],
+    },
+    {
+      detail: "Completed",
+      icon: "complete",
+      id: "completed",
+      label: "Cleaning",
+      stepIds: ["complete", "review"],
+    },
+  ],
   primaryCta: {
     href: navbarCta.href,
     label: navbarCta.label,
@@ -427,42 +486,61 @@ export const landingHowItWorks = {
   },
   steps: [
     {
-      body: "Browse Neatly's cleaning services and choose the one that best fits your space and needs.",
+      body: "Browse the available services and select the one that fits your space.",
       cta: {
         href: CUSTOMER_PATHS.services,
         label: "Explore Services",
       },
+      icon: "service",
       id: "choose",
       number: "01",
       title: "Choose a Service",
     },
     {
-      body: "Tell us what you need, when you need it, and provide the details that help us understand your cleaning requirements.",
+      body: "Tell us what you need so we can prepare a quote before you commit.",
       cta: {
         href: CUSTOMER_PATHS.quote,
         label: "Request a Quote",
       },
+      icon: "quote",
       id: "request",
       number: "02",
       title: "Request a Quote",
     },
     {
-      body: "Our team reviews your request and provides clear pricing before you commit to the booking.",
-      id: "review",
-      number: "03",
-      title: "Review Your Quote",
-    },
-    {
-      body: "Review your quote, accept the price, and create your booking once everything looks right.",
+      body: "Review the quote and accept it when you are ready to move forward.",
+      icon: "accept",
       id: "accept",
-      number: "04",
-      title: "Accept & Book",
+      number: "03",
+      title: "Accept Your Quote",
     },
     {
-      body: "Once your booking is assigned, your cleaner can view the job, start the work, and complete the cleaning.",
-      id: "complete",
+      body: "Confirm the details and create your booking once the quote looks right.",
+      icon: "booking",
+      id: "book",
+      number: "04",
+      title: "Book Your Cleaning",
+    },
+    {
+      body: "Neatly assigns a cleaner so you know who is responsible for the visit.",
+      icon: "cleaner",
+      id: "assign",
       number: "05",
-      title: "Your Cleaner Gets to Work",
+      title: "Cleaner Gets Assigned",
+    },
+    {
+      body: "Your cleaner completes the work according to the agreed service.",
+      icon: "complete",
+      id: "complete",
+      number: "06",
+      title: "Cleaning Is Completed",
+    },
+    {
+      body: "After the cleaning, you can share your experience through a review.",
+      icon: "review",
+      id: "review",
+      number: "07",
+      title: "Leave a Review",
     },
   ],
 };
@@ -547,16 +625,41 @@ export interface LandingTestimonial {
   name: string;
   quote: string;
   date?: string;
+  featured?: boolean;
   image?: LandingTestimonialImage;
   location?: string;
+  rating?: number;
   service?: string;
 }
 
+export const landingTestimonialCategoryLabels = {
+  COMMERCIAL: "Commercial",
+  DEEP_CLEAN: "Deep clean",
+  MOVE_IN_OUT: "Move-in / Move-out",
+  RESIDENTIAL: "Residential",
+} as const;
+
+export type LandingTestimonialCategory =
+  keyof typeof landingTestimonialCategoryLabels;
+
 export const landingTestimonials = {
-  emptyAttribution: "Featured reviews pending",
+  emptyAttribution: "Published reviews appear here",
+  emptyCta: navbarCta,
+  emptyHeading: "Trusted by customers who value a cleaner space.",
   emptyMediaLabel:
     "Reserved brand photographs. A customer photograph will appear here when a review is published.",
-  emptyMessage: "Real experiences from Neatly customers will appear here.",
+  emptyMessage:
+    "Customer reviews will appear here as more Neatly cleanings are completed.",
+  errorMessage: "Customer reviews are temporarily unavailable.",
+  eyebrow: "Customer reviews",
+  heading: "Loved by customers who value a cleaner space.",
+  headingId: "testimonials-heading",
+  headingLead: "Loved by customers who value",
+  headingTail: "a cleaner space.",
+  intro:
+    "Real experiences from customers who have used Neatly. Names, ratings, and quotes will never be invented.",
+  items: [] satisfies Array<LandingTestimonial>,
+  loadingLabel: "Loading customer reviews",
   emptySlots: [
     {
       alt: "A tidy living room with a cleaned wood table, folded cloth, and garden light through tall windows. Reserved story photograph 01.",
@@ -580,24 +683,26 @@ export const landingTestimonials = {
       width: 1024,
     },
   ],
-  eyebrow: "Customer stories",
-  heading: "Experiences from Neatly customers.",
-  headingId: "testimonials-heading",
-  intro:
-    "Featured reviews appear here after they are published in the testimonials CMS. Names, ratings, and quotes will never be invented.",
-  items: [] satisfies Array<LandingTestimonial>,
 };
 
 export const landingFinalCta = {
   description:
-    "The quote flow asks only for the details needed to price the visit. Payment is not part of this step.",
-  heading: "Ready for a clear quote?",
+    "Choose the service that fits your space, request a quote, and take the next step with Neatly.",
+  eyebrow: "Ready when you are",
+  heading: "A cleaner space starts here.",
   headingId: "final-cta-heading",
+  headingLines: ["A cleaner space", "starts here."],
+  primaryCta: navbarCta,
+  secondaryCta: {
+    href: CUSTOMER_PATHS.services,
+    label: "Explore Services",
+  },
 };
 
 export const landingBlogHighlights = {
   emptyMessage:
     "The three latest published articles will appear here from the blog CMS.",
+  errorMessage: "Journal notes are temporarily unavailable.",
   eyebrow: "Journal",
   featuredImage: {
     alt: "Folded oatmeal linen towels, an unlabeled amber glass bottle, and olive leaves on a sunlit cream marble kitchen counter.",
@@ -613,6 +718,7 @@ export const landingBlogHighlights = {
   headingLead: "From the",
   intro:
     "Guides and home-care notes publish here when they are live in the journal.",
+  loadingLabel: "Loading journal notes",
   pendingCategory: "Note",
   reservedCount: 3,
   slotPendingDate: "Date pending",
@@ -646,8 +752,10 @@ export const landingNewsletter = {
   consent:
     "Subscribe only if you want occasional cleaning and home-care notes. Unsubscribe will be available on every message.",
   description:
-    "The live form will post to the newsletter endpoint in a later step. This form does not submit data yet.",
+    "Occasional cleaning and home-care notes. No sales sequences from this form.",
+  errorMessage: "We could not save that email. Please try again.",
   eyebrow: "Newsletter",
+  fieldError: "Enter a valid email.",
   heading: "Email notes",
   headingEmphasis: "notes",
   headingId: "newsletter-heading",
@@ -660,8 +768,9 @@ export const landingNewsletter = {
     src: "/images/newsletter/01_notes.jpeg",
     width: 1536,
   },
-  unavailableMessage:
-    "Newsletter signup is not connected yet. No email will be stored from this form.",
+  submittingLabel: "Saving",
+  successMessage:
+    "You are on the list. Every message will include a way to unsubscribe.",
 };
 
 export const landingMarquee = {
@@ -681,6 +790,7 @@ export const landingFooter = {
   legalLinks: [
     { href: "/privacy", label: "Privacy" },
     { href: "/terms", label: "Terms" },
+    { href: "/cookies", label: "Cookies" },
   ],
   phoneLabel: "Phone",
   placeholderContact: {

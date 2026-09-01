@@ -8,16 +8,25 @@ import {
 import { NewsletterMetrics } from "@/components/admin/newsletter/newsletter-metrics";
 import { NewsletterTable } from "@/components/admin/newsletter/newsletter-table";
 import { NewsletterToolbar } from "@/components/admin/newsletter/newsletter-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminNewsletterCopy,
   defaultAdminNewsletterFilters,
 } from "@/config/admin-newsletter";
 import {
+  type AdminNewsletterList,
   filterNewsletterSubscribers,
   hasActiveNewsletterFilters,
+  listAdminNewsletterSubscribers,
   paginateNewsletterSubscribers,
 } from "@/lib/admin/newsletter";
 import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminNewsletterFilters,
   AdminNewsletterPagination,
@@ -43,7 +52,32 @@ function AdminNewsletterLive(): ReactElement {
   const { filters, page, setFilters, setPage } = useAdminListState({
     defaults: defaultAdminNewsletterFilters,
   });
-  const hasActiveFilters = hasActiveNewsletterFilters(filters);
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    dateRange: filters.dateRange,
+    page,
+    query: debouncedQuery,
+    status: filters.status,
+    subscribedFrom: filters.subscribedFrom,
+    subscribedTo: filters.subscribedTo,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminNewsletterSubscribers(
+        {
+          ...filters,
+          page,
+          query: debouncedQuery,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+  useAdminRefresh("newsletter", query.retry);
 
   return (
     <AdminNewsletterView
@@ -51,11 +85,10 @@ function AdminNewsletterLive(): ReactElement {
       onFiltersChange={setFilters}
       onPageChange={setPage}
       page={page}
-      presentation={
-        hasActiveFilters
-          ? { status: "ready", subscribers: [] }
-          : { status: "empty" }
-      }
+      presentation={toLiveNewsletterPresentation(
+        query,
+        hasActiveNewsletterFilters(filters),
+      )}
     />
   );
 }
@@ -187,5 +220,34 @@ function resolveVisibleSubscribers(
   return {
     pagination: paged.pagination,
     subscribers: paged.subscribers,
+  };
+}
+
+function toLiveNewsletterPresentation(
+  query: AdminQueryState<AdminNewsletterList>,
+  hasActiveFilters: boolean,
+): AdminNewsletterPresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.subscribers.length === 0) {
+    return hasActiveFilters
+      ? {
+          pagination: query.data?.pagination,
+          status: "ready",
+          subscribers: [],
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    pagination: query.data.pagination,
+    status: "ready",
+    subscribers: query.data.subscribers,
   };
 }

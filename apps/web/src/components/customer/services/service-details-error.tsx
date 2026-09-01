@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { ReactElement } from "react";
 import {
   CUSTOMER_PATHS,
-  customerErrorCopy,
+  customerCatalogErrorCopy,
   customerServicePath,
   customerServicesCopy,
   customerSurfaceCopy,
@@ -22,12 +22,12 @@ export function ServiceDetailsError({
         {customerSurfaceCopy.serviceDetail.heading}
       </h1>
       <p className="mt-4 text-body text-muted-foreground">
-        {customerErrorCopy.description}
+        {customerCatalogErrorCopy.description}
       </p>
       <p className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
         <Button asChild>
           <Link href={customerServicePath(slug)}>
-            {customerErrorCopy.action}
+            {customerCatalogErrorCopy.action}
           </Link>
         </Button>
         <Link

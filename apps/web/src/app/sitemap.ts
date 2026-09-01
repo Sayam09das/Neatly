@@ -16,7 +16,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${siteUrl}/about`,
     },
     {
+      url: `${siteUrl}/contact`,
+    },
+    {
+      url: `${siteUrl}/process`,
+    },
+    {
       url: `${siteUrl}/services`,
+    },
+    {
+      url: `${siteUrl}/testimonials`,
+    },
+    {
+      url: `${siteUrl}/blog`,
+    },
+    {
+      url: `${siteUrl}/privacy`,
+    },
+    {
+      url: `${siteUrl}/terms`,
+    },
+    {
+      url: `${siteUrl}/cookies`,
     },
   ];
 }

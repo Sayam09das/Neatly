@@ -94,6 +94,10 @@ describe("SiteFooter", (): void => {
       "href",
       "/terms",
     );
+    expect(screen.getByRole("link", { name: "Cookies" })).toHaveAttribute(
+      "href",
+      "/cookies",
+    );
     expect(
       screen.queryByRole("link", { name: /facebook/i }),
     ).not.toBeInTheDocument();

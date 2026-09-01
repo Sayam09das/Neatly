@@ -1,6 +1,7 @@
-import Image from "next/image";
+import { Button } from "@neatly/ui";
 import Link from "next/link";
 import type { ReactElement } from "react";
+import { ServiceDetailCover } from "@/components/customer/services/service-detail-cover";
 import {
   CUSTOMER_PATHS,
   customerQuoteLabel,
@@ -8,10 +9,6 @@ import {
   customerServiceDetailCopy,
   customerServicesCopy,
 } from "@/config/customer";
-import {
-  isLocalCustomerServiceImage,
-  isUsableCustomerServiceImage,
-} from "@/lib/customer/catalog";
 import type { CustomerServiceDetail } from "@/types/customer";
 
 interface ServiceDetailHeroProps {
@@ -25,27 +22,30 @@ export function ServiceDetailHero({
   const quoteLabel = customerQuoteLabel(service.name);
 
   return (
-    <header className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
-      <div className="min-w-0">
+    <header className="grid gap-10 lg:grid-cols-12 lg:items-center lg:gap-16">
+      <div className="min-w-0 lg:col-span-6">
+        {service.isFeatured ? (
+          <p className="text-label text-primary uppercase">
+            {customerServicesCopy.featuredLabel}
+          </p>
+        ) : null}
         <h1
-          className="text-h1 text-foreground tracking-tight"
+          className="text-display text-foreground tracking-tight"
           id="customer-service-heading"
         >
           {service.name}
         </h1>
         {service.shortDescription.trim() === "" ? null : (
-          <p className="mt-4 max-w-prose text-body text-muted-foreground">
+          <p className="mt-6 max-w-prose text-body text-muted-foreground">
             {service.shortDescription}
           </p>
         )}
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Link
-            aria-label={quoteLabel}
-            className="inline-flex min-h-touch items-center justify-center rounded-full bg-primary px-5 py-2.5 text-button font-semibold text-primary-foreground motion-safe:transition-colors motion-safe:duration-normal hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            href={quoteHref}
-          >
-            {customerServiceDetailCopy.quoteCta}
-          </Link>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Button asChild>
+            <Link aria-label={quoteLabel} href={quoteHref}>
+              {customerServiceDetailCopy.quoteCta}
+            </Link>
+          </Button>
           <Link
             className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             href={CUSTOMER_PATHS.services}
@@ -54,39 +54,9 @@ export function ServiceDetailHero({
           </Link>
         </div>
       </div>
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted">
-        <ServiceCoverImage service={service} />
+      <div className="lg:col-span-6">
+        <ServiceDetailCover service={service} />
       </div>
     </header>
-  );
-}
-
-function ServiceCoverImage({ service }: ServiceDetailHeroProps): ReactElement {
-  if (!isUsableCustomerServiceImage(service.coverImageUrl)) {
-    return (
-      <div
-        className="flex size-full items-center justify-center text-muted-foreground"
-        data-slot="customer-service-image-fallback"
-      >
-        <span className="sr-only">{customerServicesCopy.imageUnavailable}</span>
-      </div>
-    );
-  }
-
-  const alt =
-    service.coverImageAlt !== null && service.coverImageAlt.trim() !== ""
-      ? service.coverImageAlt
-      : service.name;
-
-  return (
-    <Image
-      alt={alt}
-      className="object-cover"
-      fill
-      priority
-      sizes="(min-width: 1024px) 40vw, 100vw"
-      src={service.coverImageUrl}
-      unoptimized={!isLocalCustomerServiceImage(service.coverImageUrl)}
-    />
   );
 }

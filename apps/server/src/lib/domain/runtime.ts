@@ -2,6 +2,7 @@ import { loadStorageEnv } from "../../config/env.ts";
 import { PrismaBookingRepository } from "../../repositories/booking.repository.ts";
 import { PrismaCatalogRepository } from "../../repositories/catalog.repository.ts";
 import { PrismaCleanerRepository } from "../../repositories/cleaner.repository.ts";
+import { PrismaCmsRepository } from "../../repositories/cms.repository.ts";
 import { PrismaCustomerRepository } from "../../repositories/customer.repository.ts";
 import { PrismaMediaRepository } from "../../repositories/media.repository.ts";
 import { PrismaNotificationRepository } from "../../repositories/notification.repository.ts";
@@ -13,6 +14,7 @@ import { AdminService } from "../../services/admin/admin.service.ts";
 import { BookingService } from "../../services/bookings/booking.service.ts";
 import { CatalogService } from "../../services/catalog/catalog.service.ts";
 import { CleanerService } from "../../services/cleaners/cleaner.service.ts";
+import { CmsService } from "../../services/cms/cms.service.ts";
 import { CustomerService } from "../../services/customers/customer.service.ts";
 import { DashboardService } from "../../services/dashboard/dashboard.service.ts";
 import { MediaService } from "../../services/media/media.service.ts";
@@ -29,6 +31,7 @@ export interface DomainServices {
   bookings: BookingService;
   catalog: CatalogService;
   cleaners: CleanerService;
+  cms: CmsService;
   customers: CustomerService;
   dashboard: DashboardService;
   media: MediaService;
@@ -53,6 +56,7 @@ export function createPrismaDomainServices(): DomainServices {
   const customerRepo = new PrismaCustomerRepository();
   const cleanerRepo = new PrismaCleanerRepository();
   const catalogRepo = new PrismaCatalogRepository();
+  const cmsRepo = new PrismaCmsRepository();
   const bookingRepo = new PrismaBookingRepository();
   const quoteRepo = new PrismaQuoteRepository();
   const reviewRepo = new PrismaReviewRepository();
@@ -72,6 +76,7 @@ export function createPrismaDomainServices(): DomainServices {
     storageEnv === null ? null : new SupabaseStorageProvider(storageEnv),
   );
   const catalog = new CatalogService(catalogRepo, media);
+  const cms = new CmsService(cmsRepo);
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
     bookingRepo,
@@ -105,6 +110,7 @@ export function createPrismaDomainServices(): DomainServices {
     bookings,
     catalog,
     cleaners,
+    cms,
     customers,
     dashboard,
     media,

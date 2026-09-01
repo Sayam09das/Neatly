@@ -24,6 +24,18 @@ export function reviewNotFound(): NotFoundError {
   return new NotFoundError("Review was not found.");
 }
 
+export function blogPostNotFound(): NotFoundError {
+  return new NotFoundError("Blog post was not found.");
+}
+
+export function portfolioProjectNotFound(): NotFoundError {
+  return new NotFoundError("Portfolio project was not found.");
+}
+
+export function newsletterSubscriberNotFound(): NotFoundError {
+  return new NotFoundError("Newsletter subscriber was not found.");
+}
+
 export function notificationNotFound(): NotFoundError {
   return new NotFoundError("Notification was not found.");
 }

@@ -1,9 +1,22 @@
-import { ADMIN_LIST_PAGE_SIZE } from "@/config/admin-api";
+import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
 import {
   adminNewsletterCopy,
   adminNewsletterDateRangeLabels,
   adminNewsletterStatusLabels,
 } from "@/config/admin-newsletter";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readIsoDate,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import {
   ADMIN_NEWSLETTER_DATE_RANGE_ALL,
   ADMIN_NEWSLETTER_STATUS_ALL,
@@ -201,6 +214,124 @@ export function paginateNewsletterSubscribers(
       totalPages: total === 0 ? 0 : totalPages,
     },
     subscribers: subscribers.slice(start, start + pageSize),
+  };
+}
+
+export interface AdminNewsletterList {
+  pagination: AdminNewsletterPagination;
+  subscribers: readonly AdminNewsletterSubscriber[];
+}
+
+export interface AdminNewsletterListQuery extends AdminNewsletterFilters {
+  page: number;
+}
+
+export async function listAdminNewsletterSubscribers(
+  query: AdminNewsletterListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminNewsletterList>> {
+  const bounds = resolveNewsletterDateBounds(query);
+
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.newsletter, {
+      filters: {
+        status:
+          query.status === ADMIN_NEWSLETTER_STATUS_ALL
+            ? undefined
+            : query.status,
+        subscribedFrom: bounds?.start.toISOString(),
+        subscribedTo: bounds?.end.toISOString(),
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapNewsletterList);
+}
+
+export async function getAdminNewsletterSubscriber(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminNewsletterSubscriber>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.newsletterSubscriber, id),
+    init,
+  );
+  return mapAdminResult(result, mapNewsletterPayload);
+}
+
+function mapNewsletterPayload(
+  value: unknown,
+): AdminNewsletterSubscriber | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapNewsletterSubscriber(value.subscriber ?? value);
+}
+
+function mapNewsletterList(value: unknown): AdminNewsletterList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const subscribers: AdminNewsletterSubscriber[] = [];
+
+  for (const item of value.items) {
+    const subscriber = mapNewsletterSubscriber(item);
+
+    if (subscriber === null) {
+      return null;
+    }
+
+    subscribers.push(subscriber);
+  }
+
+  return { pagination, subscribers };
+}
+
+function mapNewsletterSubscriber(
+  value: unknown,
+): AdminNewsletterSubscriber | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+  const email = readString(value.email);
+  const status = readString(value.status);
+  const createdAt = readIsoDate(value.createdAt);
+  const subscribedAt = readIsoDate(value.subscribedAt);
+  const updatedAt = readIsoDate(value.updatedAt);
+
+  if (
+    id === null ||
+    email === null ||
+    status === null ||
+    createdAt === null ||
+    subscribedAt === null ||
+    updatedAt === null ||
+    !isAdminNewsletterStatus(status)
+  ) {
+    return null;
+  }
+
+  return {
+    createdAt,
+    email,
+    id,
+    status,
+    subscribedAt,
+    unsubscribedAt: readIsoDate(value.unsubscribedAt),
+    updatedAt,
   };
 }
 

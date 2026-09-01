@@ -14,7 +14,7 @@ export function LandingSection({
   return (
     <section
       aria-labelledby={labelledBy}
-      className="mx-auto w-full max-w-page px-gutter py-section"
+      className="mx-auto w-full max-w-page scroll-mt-20 overflow-x-hidden px-gutter py-section"
       id={id}
     >
       {children}

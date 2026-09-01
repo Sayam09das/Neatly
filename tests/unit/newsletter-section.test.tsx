@@ -6,7 +6,7 @@ import { Newsletter } from "@/components/sections/newsletter";
 import { landingCtas, landingNewsletter } from "@/config/landing";
 
 describe("Newsletter", (): void => {
-  it("renders a disabled capture form and does not invent a live list", (): void => {
+  it("renders a live capture form and does not invent a public subscriber list", (): void => {
     render(<Newsletter />);
 
     expect(
@@ -17,14 +17,13 @@ describe("Newsletter", (): void => {
     ).toBeInTheDocument();
     expect(screen.getByText(landingNewsletter.eyebrow)).toBeInTheDocument();
     expect(screen.getByText(landingNewsletter.description)).toBeInTheDocument();
-    expect(screen.getByLabelText(landingNewsletter.inputLabel)).toBeDisabled();
+    expect(screen.getByLabelText(landingNewsletter.inputLabel)).toBeEnabled();
     expect(
       screen.getByRole("button", { name: landingCtas.subscribe.label }),
-    ).toBeDisabled();
-    expect(
-      screen.getByText(landingNewsletter.unavailableMessage),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
     expect(screen.getByText(landingNewsletter.consent)).toBeInTheDocument();
+    expect(screen.queryByText(/not connected yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/@example\.test/i)).not.toBeInTheDocument();
     expect(landingNewsletter.image.src).toContain("newsletter");
   });
 });

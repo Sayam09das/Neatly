@@ -14,7 +14,12 @@ import { NewsletterLoading } from "@/components/admin/newsletter/newsletter-stat
 import { NewsletterStatusBadge } from "@/components/admin/newsletter/newsletter-status-badge";
 import { ADMIN_PATHS } from "@/config/admin-nav";
 import { adminNewsletterCopy } from "@/config/admin-newsletter";
-import { formatNewsletterInstant } from "@/lib/admin/newsletter";
+import {
+  formatNewsletterInstant,
+  getAdminNewsletterSubscriber,
+} from "@/lib/admin/newsletter";
+import { useAdminQuery } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import type {
   AdminNewsletterDetailsPresentation,
   AdminNewsletterSubscriber,
@@ -29,9 +34,60 @@ export function AdminNewsletterDetails({
   presentation,
   subscriberId,
 }: AdminNewsletterDetailsProps): ReactElement {
+  if (presentation !== undefined) {
+    return (
+      <NewsletterDetails
+        presentation={presentation}
+        subscriberId={subscriberId}
+      />
+    );
+  }
+
+  return <AdminNewsletterDetailsLive subscriberId={subscriberId} />;
+}
+
+function AdminNewsletterDetailsLive({
+  subscriberId,
+}: {
+  subscriberId: string;
+}): ReactElement {
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) => getAdminNewsletterSubscriber(subscriberId, { signal }),
+    requestKey: `newsletter-${subscriberId}`,
+  });
+  useAdminRefresh("newsletter", query.retry);
+
+  if (query.status === "loading") {
+    return (
+      <NewsletterDetails
+        presentation={{ status: "loading" }}
+        subscriberId={subscriberId}
+      />
+    );
+  }
+
+  if (query.status === "error") {
+    return (
+      <NewsletterDetails
+        presentation={{ onRetry: query.retry, status: "error" }}
+        subscriberId={subscriberId}
+      />
+    );
+  }
+
+  if (query.data === null) {
+    return (
+      <NewsletterDetails
+        presentation={{ status: "empty" }}
+        subscriberId={subscriberId}
+      />
+    );
+  }
+
   return (
     <NewsletterDetails
-      presentation={presentation ?? { status: "empty" }}
+      presentation={{ status: "ready", subscriber: query.data }}
       subscriberId={subscriberId}
     />
   );

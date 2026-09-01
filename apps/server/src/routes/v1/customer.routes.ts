@@ -7,6 +7,10 @@ import {
   updateCustomerPasswordController,
 } from "../../controllers/customer/account.controller.ts";
 import {
+  getPublicBlogPostController,
+  listPublicBlogPostsController,
+} from "../../controllers/customer/blog.controller.ts";
+import {
   cancelCustomerBookingController,
   createCustomerBookingController,
   getCustomerBookingController,
@@ -15,6 +19,7 @@ import {
   updateCustomerBookingController,
 } from "../../controllers/customer/bookings.controller.ts";
 import { listCustomerHelpController } from "../../controllers/customer/help.controller.ts";
+import { subscribePublicNewsletterController } from "../../controllers/customer/newsletter.controller.ts";
 import {
   getCustomerNotificationController,
   getCustomerUnreadNotificationCountController,
@@ -45,6 +50,7 @@ import {
   getPublicServiceController,
   listPublicServicesController,
 } from "../../controllers/customer/services.controller.ts";
+import { listPublicTestimonialsController } from "../../controllers/customer/testimonials.controller.ts";
 import type { RouteDefinition } from "../../lib/router.ts";
 import { registerUserSchema } from "../../lib/validations/auth.schema.ts";
 import {
@@ -65,13 +71,19 @@ import {
 } from "../../lib/validations/customer-review.schema.ts";
 import { idParamSchema } from "../../lib/validations/primitives.ts";
 import {
+  publicBlogListQuerySchema,
+  publicBlogSlugParamSchema,
+} from "../../lib/validations/public-blog.schema.ts";
+import {
   publicCatalogListQuerySchema,
   publicCatalogSlugParamSchema,
 } from "../../lib/validations/public-catalog.schema.ts";
+import { subscribeNewsletterBodySchema } from "../../lib/validations/public-newsletter.schema.ts";
 import { createPublicQuoteBodySchema } from "../../lib/validations/public-quote.schema.ts";
 import {
   limitCustomerMutations,
   limitCustomerStreams,
+  limitPublicNewsletterMutations,
   limitPublicQuoteMutations,
   requireAuth,
   validateBody,
@@ -80,6 +92,32 @@ import {
 } from "../../middleware/index.ts";
 
 export const customerRoutes: readonly RouteDefinition[] = [
+  {
+    handler: listPublicTestimonialsController,
+    method: "GET",
+    path: API_PATHS.customerTestimonials,
+  },
+  {
+    handler: listPublicBlogPostsController,
+    method: "GET",
+    middleware: [validateQuery(publicBlogListQuerySchema)],
+    path: API_PATHS.customerBlog,
+  },
+  {
+    handler: getPublicBlogPostController,
+    method: "GET",
+    middleware: [validateParams(publicBlogSlugParamSchema)],
+    path: API_PATHS.customerBlogPost,
+  },
+  {
+    handler: subscribePublicNewsletterController,
+    method: "POST",
+    middleware: [
+      limitPublicNewsletterMutations,
+      validateBody(subscribeNewsletterBodySchema),
+    ],
+    path: API_PATHS.customerNewsletter,
+  },
   {
     handler: listPublicServicesController,
     method: "GET",

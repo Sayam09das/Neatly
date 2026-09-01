@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 import { ServicesDiscovery } from "@/components/customer/services/services-discovery";
 import {
   CUSTOMER_PATHS,
+  customerCatalogErrorCopy,
   customerEmptyCopy,
-  customerErrorCopy,
   customerServiceApplyLabel,
   customerServiceApplyPath,
   customerServiceDetailsLabel,
@@ -126,10 +126,10 @@ describe("ServicesDiscovery", (): void => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      customerErrorCopy.description,
+      customerCatalogErrorCopy.description,
     );
     expect(
-      screen.getByRole("button", { name: customerErrorCopy.action }),
+      screen.getByRole("button", { name: customerCatalogErrorCopy.action }),
     ).toBeInTheDocument();
   });
 });

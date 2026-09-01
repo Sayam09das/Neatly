@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-labelledby="neatly-icon-title">
   <title id="neatly-icon-title">Neatly</title>
-  <rect width="32" height="32" rx="8" fill="#171717"/>
+  <rect width="32" height="32" rx="8" fill="#10241a"/>
   <path
-    fill="#FAFAFA"
+    fill="#ffffff"
     d="M10 8h3.2l5.1 8.4V8H22v16h-3.2L13.7 15.6V24H10V8Z"
   />
 </svg>

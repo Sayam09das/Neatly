@@ -38,8 +38,14 @@ describe("home CTAs", (): void => {
     expect(landingCtas.primary.href).toBe(CUSTOMER_PATHS.quote);
     expect(landingCtas.secondary.href).toBe(CUSTOMER_PATHS.services);
     expect(getPublishedLandingCta(landingCtas.viewWork)).toBeNull();
-    expect(getPublishedLandingCta(landingCtas.readJournal)).toBeNull();
-    expect(getPublishedLandingCta(landingCtas.contact)).toBeNull();
+    expect(getPublishedLandingCta(landingCtas.readJournal)).toEqual({
+      href: "/blog",
+      label: landingCtas.readJournal.label,
+    });
+    expect(getPublishedLandingCta(landingCtas.contact)).toEqual({
+      href: landingCtas.contact.href,
+      label: landingCtas.contact.label,
+    });
   });
 
   it("adds a customer account action without exposing admin routes", (): void => {

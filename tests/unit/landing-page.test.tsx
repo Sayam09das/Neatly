@@ -6,6 +6,7 @@ import { LandingPage } from "@/components/landing-page";
 import { CUSTOMER_PATHS, customerSurfaceCopy } from "@/config/customer";
 import {
   landingCtas,
+  landingFinalCta,
   landingHowItWorks,
   landingServices,
   landingStatistics,
@@ -45,26 +46,30 @@ describe("LandingPage architecture", (): void => {
 
     expect(headings).toEqual([
       landingWhyNeatly.heading,
-      landingServices.heading,
       "Trust, stated plainly",
       "Featured work",
       landingHowItWorks.heading,
       landingTrustProof.heading,
       "By the numbers",
       landingTestimonials.heading,
-      "Ready for a clear quote?",
+      landingFinalCta.heading,
       "From the journal",
       "Email notes",
       "Neatly",
     ]);
+    expect(
+      screen.queryByRole("heading", { name: landingServices.heading }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector("#services")).toBeNull();
   }, 15000);
 });
 
 describe("landing content", (): void => {
   it("renders verified trust metrics and clear testimonials standards", (): void => {
+    expect(landingWhyNeatly.features).toHaveLength(4);
     expect(
-      landingWhyNeatly.metrics.every(
-        (metric) => typeof metric.value === "number",
+      landingWhyNeatly.features.every(
+        (feature) => feature.title.length > 0 && feature.body.length > 0,
       ),
     ).toBe(true);
     expect(
@@ -89,8 +94,26 @@ describe("landing content", (): void => {
       screen.getAllByRole("link", { name: landingCtas.secondary.label })[0],
     ).toHaveAttribute("href", landingCtas.secondary.href);
     expect(document.querySelector('a[href="/portfolio"]')).toBeNull();
-    expect(document.querySelector('a[href="/blog"]')).toBeNull();
-    expect(document.querySelector('a[href="/contact"]')).toBeNull();
+    expect(
+      screen.getByRole("link", { name: landingCtas.readJournal.label }),
+    ).toHaveAttribute("href", "/blog");
+    expect(
+      screen.getAllByRole("link", { name: landingWhyNeatly.primaryCta.label })
+        .length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", {
+        name: landingWhyNeatly.secondaryCta.label,
+      })[0],
+    ).toHaveAttribute("href", landingWhyNeatly.secondaryCta.href);
+    expect(
+      screen.getAllByRole("link", { name: landingCtas.contact.label })[0],
+    ).toHaveAttribute("href", landingCtas.contact.href);
+    expect(
+      screen.queryByRole("link", {
+        name: landingHowItWorks.quotesCta.label,
+      }),
+    ).not.toBeInTheDocument();
   }, 15000);
 
   it("adds a customer account action without exposing admin navigation", (): void => {
@@ -113,6 +136,9 @@ describe("landing content", (): void => {
         name: customerSurfaceCopy.dashboard.title,
       })[0],
     ).toHaveAttribute("href", CUSTOMER_PATHS.dashboard);
+    expect(
+      screen.getByRole("link", { name: landingHowItWorks.quotesCta.label }),
+    ).toHaveAttribute("href", CUSTOMER_PATHS.quotes);
     expect(
       screen.queryByRole("link", { name: "Admin" }),
     ).not.toBeInTheDocument();

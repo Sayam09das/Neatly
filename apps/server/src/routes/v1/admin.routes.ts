@@ -16,6 +16,14 @@ import {
   updateCleanerStatusController,
 } from "../../controllers/admin/cleaners.controller.ts";
 import {
+  getBlogPostController,
+  getNewsletterSubscriberController,
+  getPortfolioProjectController,
+  listBlogPostsController,
+  listNewsletterSubscribersController,
+  listPortfolioProjectsController,
+} from "../../controllers/admin/cms.controller.ts";
+import {
   createCustomerController,
   getCustomerController,
   listCustomersController,
@@ -60,6 +68,7 @@ import { adminNamespaceController } from "../../controllers/admin.controller.ts"
 import type { RouteDefinition } from "../../lib/router.ts";
 import {
   assignCleanerBodySchema,
+  blogListQuerySchema,
   bookingListQuerySchema,
   bookingStatusBodySchema,
   catalogListQuerySchema,
@@ -72,7 +81,9 @@ import {
   createNotificationBodySchema,
   customerListQuerySchema,
   customerStatusBodySchema,
+  newsletterListQuerySchema,
   notificationListQuerySchema,
+  portfolioListQuerySchema,
   quoteListQuerySchema,
   reviewListQuerySchema,
   updateBookingBodySchema,
@@ -317,6 +328,42 @@ export const adminRoutes: readonly RouteDefinition[] = [
     method: "GET",
     middleware: [...adminAccess, validateQuery(reviewListQuerySchema)],
     path: API_PATHS.adminReviews,
+  },
+  {
+    handler: listBlogPostsController,
+    method: "GET",
+    middleware: [...adminAccess, validateQuery(blogListQuerySchema)],
+    path: API_PATHS.adminBlog,
+  },
+  {
+    handler: getBlogPostController,
+    method: "GET",
+    middleware: [...adminAccess, validateParams(idParamSchema)],
+    path: API_PATHS.adminBlogPost,
+  },
+  {
+    handler: listPortfolioProjectsController,
+    method: "GET",
+    middleware: [...adminAccess, validateQuery(portfolioListQuerySchema)],
+    path: API_PATHS.adminPortfolio,
+  },
+  {
+    handler: getPortfolioProjectController,
+    method: "GET",
+    middleware: [...adminAccess, validateParams(idParamSchema)],
+    path: API_PATHS.adminPortfolioProject,
+  },
+  {
+    handler: listNewsletterSubscribersController,
+    method: "GET",
+    middleware: [...adminAccess, validateQuery(newsletterListQuerySchema)],
+    path: API_PATHS.adminNewsletter,
+  },
+  {
+    handler: getNewsletterSubscriberController,
+    method: "GET",
+    middleware: [...adminAccess, validateParams(idParamSchema)],
+    path: API_PATHS.adminNewsletterSubscriber,
   },
   {
     handler: getReviewController,

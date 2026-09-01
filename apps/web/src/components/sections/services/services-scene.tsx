@@ -41,13 +41,9 @@ export function ServicesScene(): ReactElement {
           data-services-rule
         />
       </div>
-      <ul className="mt-16 grid gap-grid md:grid-cols-2">
+      <ul className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {landingServices.items.map((service) => (
-          <li
-            className={service.featured ? "md:col-span-2" : undefined}
-            data-service-card
-            key={service.title}
-          >
+          <li data-service-card key={service.title}>
             <ServiceCard service={service} />
           </li>
         ))}

@@ -39,7 +39,12 @@ describe("ServiceDetails", (): void => {
     expect(screen.getByText("Counters")).toBeInTheDocument();
     expect(screen.getByText("Interior oven")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: customerQuoteLabel(service.name) }),
+      screen.getAllByRole("link", { name: customerQuoteLabel(service.name) }),
+    ).not.toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", {
+        name: customerQuoteLabel(service.name),
+      })[0],
     ).toHaveAttribute("href", customerServiceApplyPath(service.slug));
     expect(
       screen.getByRole("link", { name: customerServicesCopy.backToServices }),

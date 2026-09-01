@@ -116,7 +116,7 @@ describe("FeaturedWork", (): void => {
 });
 
 describe("HowItWorks", (): void => {
-  it("renders the five customer journey steps", (): void => {
+  it("renders the seven customer journey steps", (): void => {
     render(<HowItWorks />);
 
     expect(
@@ -125,10 +125,10 @@ describe("HowItWorks", (): void => {
         name: landingHowItWorks.heading,
       }),
     ).toBeInTheDocument();
-    expect(landingHowItWorks.steps).toHaveLength(5);
+    expect(landingHowItWorks.steps).toHaveLength(7);
 
     for (const step of landingHowItWorks.steps) {
-      expect(screen.getByText(step.number)).toBeInTheDocument();
+      expect(screen.getAllByText(step.number).length).toBeGreaterThan(0);
       expect(
         screen.getByRole("heading", { level: 3, name: step.title }),
       ).toBeInTheDocument();
@@ -138,20 +138,42 @@ describe("HowItWorks", (): void => {
       screen.getByRole("img", { name: landingHowItWorks.image.alt }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: landingHowItWorks.primaryCta.label }),
-    ).toHaveAttribute("href", landingHowItWorks.primaryCta.href);
+      screen.queryByText(landingHowItWorks.journeyHeading),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: landingHowItWorks.secondaryCta.label }),
-    ).toHaveAttribute("href", landingHowItWorks.secondaryCta.href);
+      screen.queryByRole("heading", { name: landingHowItWorks.ctaHeading }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Explore Services" }),
+      screen.getAllByRole("link", {
+        name: landingHowItWorks.secondaryCta.label,
+      }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("link", { name: "Explore Services" })[0],
     ).toHaveAttribute("href", landingHowItWorks.secondaryCta.href);
     expect(
       screen.getByRole("link", { name: "Request a Quote" }),
-    ).toHaveAttribute("href", landingHowItWorks.steps[1]?.cta.href);
+    ).toHaveAttribute("href", "/quote");
     expect(
       screen.queryByRole("link", {
         name: landingHowItWorks.quotesCta.label,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("can render the section heading as the page h1", (): void => {
+    render(<HowItWorks headingLevel="h1" />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: landingHowItWorks.heading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        level: 2,
+        name: landingHowItWorks.heading,
       }),
     ).not.toBeInTheDocument();
   });

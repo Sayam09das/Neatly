@@ -136,4 +136,106 @@ describe("ReviewService", (): void => {
     expect(workspace.reviews.map((item) => item.id)).toEqual([created.id]);
     expect(workspace.eligibleBookings).toEqual([]);
   });
+
+  it("lists only active testimonials for the public homepage", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    const hidden = await harness.reviews.create(admin, {
+      content: "This unpublished note must stay off the homepage.",
+      customerName: "Hidden",
+      isActive: false,
+      rating: 5,
+    });
+    const featured = await harness.reviews.create(admin, {
+      content: "The team left the kitchen spotless.",
+      customerName: "Ada",
+      customerRole: "Westside",
+      isFeatured: true,
+      rating: 5,
+      serviceCategory: "RESIDENTIAL",
+      sortOrder: 2,
+    });
+    const later = await harness.reviews.create(admin, {
+      content: "Careful work throughout the apartment.",
+      customerName: "Bea",
+      rating: 4,
+      sortOrder: 1,
+    });
+
+    const listed = await harness.reviews.listPublic();
+
+    expect(listed.items.map((item) => item.id)).toEqual([
+      featured.id,
+      later.id,
+    ]);
+    expect(listed.items[0]).toMatchObject({
+      customerName: "Ada",
+      featured: true,
+      rating: 5,
+      serviceCategory: "RESIDENTIAL",
+    });
+    expect(listed.items.some((item) => item.id === hidden.id)).toBe(false);
+    expect(JSON.stringify(listed.items)).not.toContain("customerId");
+    expect(JSON.stringify(listed.items)).not.toContain("bookingId");
+    expect(JSON.stringify(listed.items)).not.toContain("avatarMediaId");
+  });
+
+  it("caps the public homepage list and keeps pending customer reviews private", async (): Promise<void> => {
+    const harness = createDomainHarness();
+    const customer = await harness.customers.create(admin, {
+      email: "ada@neatly.example",
+      name: "Ada",
+      userId: "customer-a",
+    });
+    const offering = await harness.catalog.create(admin, {
+      fullDescription: "Home",
+      name: "Home Refresh",
+      shortDescription: "Weekly",
+    });
+    const booking = await harness.bookings.create(admin, {
+      customerId: customer.id,
+      serviceId: offering.id,
+    });
+    await harness.bookings.changeStatus(admin, booking.id, "CONFIRMED");
+    await harness.bookings.assignCleaner(
+      admin,
+      booking.id,
+      (
+        await harness.cleaners.create(admin, {
+          email: "mia@neatly.example",
+          name: "Mia",
+        })
+      ).id,
+    );
+    await harness.bookings.changeStatus(admin, booking.id, "IN_PROGRESS");
+    await harness.bookings.complete(admin, booking.id);
+
+    const actor: Actor = { id: "customer-a", role: "CUSTOMER" };
+    await harness.reviews.createForCustomer(
+      actor,
+      {
+        email: "ada@neatly.example",
+        id: "customer-a",
+        name: "Ada",
+      },
+      {
+        bookingId: booking.id,
+        content: "The team was careful and on time.",
+        rating: 5,
+      },
+    );
+
+    for (let index = 0; index < 8; index += 1) {
+      await harness.reviews.create(admin, {
+        content: `Published review number ${String(index + 1)} for the homepage.`,
+        customerName: `Reviewer ${String(index + 1)}`,
+        rating: 5,
+      });
+    }
+
+    const listed = await harness.reviews.listPublic();
+    expect(listed.items).toHaveLength(6);
+    expect(listed.items.every((item) => item.customerName !== "Ada")).toBe(
+      true,
+    );
+  });
 });

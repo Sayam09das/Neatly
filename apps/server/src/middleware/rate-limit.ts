@@ -12,6 +12,8 @@ import {
   ADMIN_MUTATION_RATE_LIMIT_WINDOW_MS,
   ADMIN_SSE_RATE_LIMIT_MAX,
   ADMIN_SSE_RATE_LIMIT_WINDOW_MS,
+  PUBLIC_NEWSLETTER_RATE_LIMIT_MAX,
+  PUBLIC_NEWSLETTER_RATE_LIMIT_WINDOW_MS,
 } from "../config/constants.ts";
 import { loadApiEnv } from "../config/env.ts";
 import {
@@ -40,6 +42,11 @@ const customerMutationLimiter = new MemoryRateLimiter(
 const quoteLimiter = new MemoryRateLimiter(
   QUOTE_RATE_LIMIT_MAX,
   QUOTE_RATE_LIMIT_WINDOW_MS,
+);
+
+const newsletterLimiter = new MemoryRateLimiter(
+  PUBLIC_NEWSLETTER_RATE_LIMIT_MAX,
+  PUBLIC_NEWSLETTER_RATE_LIMIT_WINDOW_MS,
 );
 
 const authLimiter = new MemoryRateLimiter(
@@ -123,6 +130,22 @@ export function limitPublicQuoteMutations(
   const key = `quote:${context.ip}`;
 
   if (!quoteLimiter.consume(key)) {
+    throw new RateLimitError();
+  }
+}
+
+export function limitPublicNewsletterMutations(
+  _req: IncomingMessage,
+  _res: ServerResponse,
+  context: RequestContext,
+): void {
+  if (loadApiEnv().nodeEnv === "test") {
+    return;
+  }
+
+  const key = `newsletter:${context.ip}`;
+
+  if (!newsletterLimiter.consume(key)) {
     throw new RateLimitError();
   }
 }

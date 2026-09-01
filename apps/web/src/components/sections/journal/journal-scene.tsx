@@ -9,12 +9,25 @@ import {
   landingBlogHighlights,
   landingCtas,
 } from "@/config/landing";
+import type { LandingJournalPost } from "@/lib/customer/public-blog";
 import { JournalFeaturedCard, JournalSlotCard } from "./journal-cards";
 import { useJournalAnimation } from "./use-journal-animation";
 
-export function JournalScene(): ReactElement {
+export type JournalStatus = "error" | "success";
+
+interface JournalSceneProps {
+  posts: ReadonlyArray<LandingJournalPost>;
+  status: JournalStatus;
+}
+
+export function JournalScene({
+  posts,
+  status,
+}: JournalSceneProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const readJournal = getPublishedLandingCta(landingCtas.readJournal);
+  const featured = posts[0];
+  const slotPosts = posts.slice(1, 1 + landingBlogHighlights.reservedCount);
 
   useJournalAnimation({ rootRef });
 
@@ -44,13 +57,25 @@ export function JournalScene(): ReactElement {
         >
           {landingBlogHighlights.intro}
         </p>
+        {status === "error" ? (
+          <p
+            className="mx-auto mt-4 max-w-xl text-body text-muted-foreground"
+            role="status"
+          >
+            {landingBlogHighlights.errorMessage}
+          </p>
+        ) : null}
       </div>
       <div className="mt-16 grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start lg:gap-12">
-        <JournalFeaturedCard />
+        <JournalFeaturedCard post={featured} />
         <ul className="grid gap-grid">
           {landingBlogHighlights.slots.map((slot, index) => (
             <li data-journal-slot key={slot.src}>
-              <JournalSlotCard index={index + 1} slot={slot} />
+              <JournalSlotCard
+                index={index + 1}
+                post={slotPosts[index]}
+                slot={slot}
+              />
             </li>
           ))}
         </ul>

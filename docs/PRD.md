@@ -155,7 +155,7 @@ To keep the MVP tightly focused on lead generation, conversion, and business con
 ## 9. MVP SCOPE MATRIX
 
 ### 9.1 Public Marketing Website
-* **Home Page:** High-converting landing page with Hero, Trust Indicators, Why Neatly, Services Overview, Featured Work, Process Steps, Stats, Testimonials, CTA, Blog Highlights, Newsletter, and Footer.
+* **Home Page:** High-converting landing page with Hero, Why Neatly, Trust Indicators, Featured Work, Process Steps, Stats, Testimonials, CTA, Blog Highlights, Newsletter, and Footer. Service exploration lives on `/services`.
 * **About Page:** Brand story, company mission, quality guarantees, team/service standards, safety protocols.
 * **Services Index Page:** Grid view of all active cleaning services with high-level descriptions.
 * **Service Detail Pages (`/services/[slug]`):** Dedicated pages for individual services with scope checklists, FAQs, and quote CTAs.
@@ -192,6 +192,8 @@ Neatly Public Portal
 ├── /about (Company Story, Guarantees & Values)
 ├── /services (Services Directory)
 │   └── /services/[slug] (Individual Service Scope & Quote CTA)
+├── /process (How It Works)
+├── /testimonials (Published Customer Reviews)
 ├── /portfolio (Work Showcase & Before/Afters)
 ├── /blog (Articles & Maintenance Insights)
 │   └── /blog/[slug] (Article Detail Page)
@@ -225,18 +227,17 @@ The homepage is Neatly’s primary conversion tool. It must contain the followin
 | Section | Purpose | Primary Content | User Action | Conversion Goal | CMS Managed |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. Navbar** | Navigation & Branding | Logo, links, contact phone, primary CTA button. | Click link or CTA. | Navigate to target page or Quote flow. | Partial (Settings) |
-| **2. Hero** | Value Prop & Hook | Headline, value prop copy, primary CTA, secondary link, trust badges, imagery. | Click "Get a Free Quote". | Enter Quote flow immediately. | Yes (Settings) |
-| **3. Trust Indicators** | Immediate Credibility | Insured badge, verified reviews score, satisfaction guarantee icon, background check promise. | Scan trust badges. | Build psychological safety. | Yes (Settings) |
-| **4. Why Neatly** | Differentiating Value | 3-4 feature pillars (Rigorous vetting, eco-friendly products, 100% satisfaction guarantee, transparent pricing). | Read core differentiators. | Establish competitive edge. | Yes (Settings) |
-| **5. Services Summary** | Service Exploration | Grid of key service cards with descriptions and direct detail links. | Click "View Service". | Direct user to relevant service scope. | Yes (Services Module) |
-| **6. Featured Work** | Proof of Quality | Before/After image slider or side-by-side comparison gallery of actual cleaning results. | Interact with before/after slider. | Validate work quality visually. | Yes (Portfolio Module) |
-| **7. How It Works** | Process Clarity | 3-step simple process (1. Request Quote -> 2. Confirm Schedule -> 3. Enjoy Clean Space). | Review process steps. | Eliminate process ambiguity. | Yes (Settings) |
-| **8. Statistics** | Social Proof | Counter statistics (e.g., 500+ Homes Cleaned, 99.4% Satisfaction Rate, 100% Insured Staff). | Read stats. | Reinforce operational scale. | Yes (Settings) |
-| **9. Testimonials** | Authentic Advocacy | Carousel or grid of customer reviews with star ratings and verified badges. | Read customer reviews. | Leverage peer social proof. | Yes (Testimonials Module) |
-| **10. Primary CTA Banner** | Final Conversion Push | Compelling conversion headline, short copy, prominent "Request Your Quote" button. | Click Quote CTA. | Convert remaining hesitant visitors. | Yes (Settings) |
-| **11. Blog Highlights** | Authority & SEO | Grid of 3 latest blog posts with cover images, dates, and titles. | Click blog article. | Improve SEO dwell time & authority. | Yes (Blog Module) |
-| **12. Newsletter** | Lead Capture | Minimal email capture input box with consent copy and subscribe button. | Enter email & submit. | Capture top-of-funnel leads. | No (System Form) |
-| **13. Footer** | Navigation & Legal | Business address, phone, email, operating hours, nav links, social links, legal links, copyright. | Click footer links. | Provide secondary navigation & compliance. | Yes (Settings) |
+| **2. Hero** | Value Prop & Hook | Headline, value prop copy, primary CTA, secondary link to `/services`, trust badges, imagery. | Click "Get a Free Quote" or "Explore services". | Enter Quote flow immediately or open the services catalog. | Yes (Settings) |
+| **3. Why Neatly** | Differentiating Value | 3-4 feature pillars (Rigorous vetting, eco-friendly products, 100% satisfaction guarantee, transparent pricing). | Read core differentiators. | Establish competitive edge. | Yes (Settings) |
+| **4. Trust Indicators** | Immediate Credibility | Insured badge, verified reviews score, satisfaction guarantee icon, background check promise. | Scan trust badges. | Build psychological safety. | Yes (Settings) |
+| **5. Featured Work** | Proof of Quality | Before/After image slider or side-by-side comparison gallery of actual cleaning results. | Interact with before/after slider. | Validate work quality visually. | Yes (Portfolio Module) |
+| **6. How It Works** | Process Clarity | 3-step simple process (1. Request Quote -> 2. Confirm Schedule -> 3. Enjoy Clean Space). | Review process steps. | Eliminate process ambiguity. | Yes (Settings) |
+| **7. Statistics** | Social Proof | Counter statistics (e.g., 500+ Homes Cleaned, 99.4% Satisfaction Rate, 100% Insured Staff). | Read stats. | Reinforce operational scale. | Yes (Settings) |
+| **8. Testimonials** | Authentic Advocacy | Carousel or grid of customer reviews with star ratings and verified badges. | Read customer reviews. | Leverage peer social proof. | Yes (Testimonials Module) |
+| **9. Primary CTA Banner** | Final Conversion Push | Compelling conversion headline, short copy, prominent "Request Your Quote" button. | Click Quote CTA. | Convert remaining hesitant visitors. | Yes (Settings) |
+| **10. Blog Highlights** | Authority & SEO | Grid of 3 latest blog posts with cover images, dates, and titles. | Click blog article. | Improve SEO dwell time & authority. | Yes (Blog Module) |
+| **11. Newsletter** | Lead Capture | Minimal email capture input box with consent copy and subscribe button. | Enter email & submit. | Capture top-of-funnel leads. | No (System Form) |
+| **12. Footer** | Navigation & Legal | Business address, phone, email, operating hours, nav links, social links, legal links, copyright. | Click footer links. | Provide secondary navigation & compliance. | Yes (Settings) |
 
 ---
 

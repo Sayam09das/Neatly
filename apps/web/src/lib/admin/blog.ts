@@ -1,10 +1,24 @@
-import { ADMIN_LIST_PAGE_SIZE } from "@/config/admin-api";
+import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
 import {
   ADMIN_BLOG_EXCERPT_PREVIEW_LENGTH,
   adminBlogCopy,
   adminBlogDateRangeLabels,
   adminBlogStatusLabels,
 } from "@/config/admin-blog";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readIsoDate,
+  readNullableString,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import {
   ADMIN_BLOG_DATE_RANGE_ALL,
   ADMIN_BLOG_STATUS_ALL,
@@ -234,6 +248,152 @@ export function paginateBlogPosts(
     },
     posts: posts.slice(start, start + pageSize),
   };
+}
+
+export interface AdminBlogList {
+  pagination: AdminBlogPagination;
+  posts: readonly AdminBlogPost[];
+}
+
+export interface AdminBlogListQuery extends AdminBlogFilters {
+  page: number;
+}
+
+export async function listAdminBlogPosts(
+  query: AdminBlogListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBlogList>> {
+  const bounds = resolveBlogDateBounds(query);
+
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.blog, {
+      filters: {
+        createdFrom: bounds?.start.toISOString(),
+        createdTo: bounds?.end.toISOString(),
+        status:
+          query.status === ADMIN_BLOG_STATUS_ALL ? undefined : query.status,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapBlogList);
+}
+
+export async function getAdminBlogPost(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminBlogPost>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.blogPost, id),
+    init,
+  );
+  return mapAdminResult(result, mapBlogPayload);
+}
+
+function mapBlogPayload(value: unknown): AdminBlogPost | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapBlogPost(value.post ?? value);
+}
+
+function mapBlogList(value: unknown): AdminBlogList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const posts: AdminBlogPost[] = [];
+
+  for (const item of value.items) {
+    const post = mapBlogPost(item);
+
+    if (post === null) {
+      return null;
+    }
+
+    posts.push(post);
+  }
+
+  return { pagination, posts };
+}
+
+function mapBlogPost(value: unknown): AdminBlogPost | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+  const authorId = readString(value.authorId);
+  const content = readString(value.content);
+  const excerpt = readString(value.excerpt);
+  const slug = readString(value.slug);
+  const status = readString(value.status);
+  const title = readString(value.title);
+  const createdAt = readIsoDate(value.createdAt);
+  const updatedAt = readIsoDate(value.updatedAt);
+  const tags = readStringArray(value.tags);
+
+  if (
+    id === null ||
+    authorId === null ||
+    content === null ||
+    excerpt === null ||
+    slug === null ||
+    status === null ||
+    title === null ||
+    createdAt === null ||
+    updatedAt === null ||
+    tags === null ||
+    !isAdminBlogStatus(status)
+  ) {
+    return null;
+  }
+
+  return {
+    authorId,
+    categoryId: readNullableString(value.categoryId),
+    categoryName: readNullableString(value.categoryName),
+    content,
+    createdAt,
+    excerpt,
+    id,
+    publishedAt: readIsoDate(value.publishedAt),
+    seoDescription: readNullableString(value.seoDescription),
+    seoTitle: readNullableString(value.seoTitle),
+    slug,
+    status,
+    tags,
+    title,
+    updatedAt,
+  };
+}
+
+function readStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const items: string[] = [];
+
+  for (const item of value) {
+    if (typeof item !== "string") {
+      return null;
+    }
+
+    items.push(item);
+  }
+
+  return items;
 }
 
 export function isAdminBlogStatus(value: string): value is AdminBlogStatus {

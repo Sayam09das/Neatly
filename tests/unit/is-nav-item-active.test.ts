@@ -13,6 +13,18 @@ describe("isNavItemActive", (): void => {
     expect(isNavItemActive("/services/deep-clean", "/services")).toBe(true);
     expect(isNavItemActive("/services-extra", "/services")).toBe(false);
     expect(isNavItemActive("/blog", "/services")).toBe(false);
+    expect(isNavItemActive("/contact", "/contact")).toBe(true);
+    expect(isNavItemActive("/process", "/process")).toBe(true);
+    expect(isNavItemActive("/testimonials", "/testimonials")).toBe(true);
+    expect(isNavItemActive("/blog", "/blog")).toBe(true);
+    expect(isNavItemActive("/blog/dev-sample", "/blog")).toBe(true);
+    expect(isNavItemActive("/process", "/testimonials")).toBe(false);
+  });
+
+  it("does not mark homepage hash links as the current page", (): void => {
+    expect(isNavItemActive("/", "/#process")).toBe(false);
+    expect(isNavItemActive("/", "/#testimonials")).toBe(false);
+    expect(isNavItemActive("/about", "/#process")).toBe(false);
   });
 });
 

@@ -5,6 +5,9 @@ export const REVIEW_SORT_FIELDS = ["createdAt", "rating", "sortOrder"] as const;
 
 export const CUSTOMER_REVIEW_STATUSES = ["pending", "published"] as const;
 
+export const PUBLIC_REVIEW_LIMIT = 6;
+export const PUBLIC_REVIEW_FETCH_LIMIT = 20;
+
 export type CustomerReviewStatus = (typeof CUSTOMER_REVIEW_STATUSES)[number];
 
 export interface ReviewRecord {
@@ -80,4 +83,19 @@ export interface CustomerReviewWorkspace {
     status: "COMPLETED";
   }[];
   reviews: readonly CustomerReviewView[];
+}
+
+export interface PublicReview {
+  content: string;
+  createdAt: string;
+  customerName: string;
+  customerRole: string | null;
+  featured: boolean;
+  id: string;
+  rating: number;
+  serviceCategory: ServiceCategory | null;
+}
+
+export interface PublicReviewList {
+  items: PublicReview[];
 }

@@ -16,11 +16,14 @@ import { ADMIN_PATHS } from "@/config/admin-nav";
 import { adminPortfolioCopy } from "@/config/admin-portfolio";
 import {
   formatPortfolioInstant,
+  getAdminPortfolioProject,
   getPortfolioCategoryLabel,
   getPortfolioFeaturedLabel,
   getPortfolioLocation,
   getPortfolioTitle,
 } from "@/lib/admin/portfolio";
+import { useAdminQuery } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import type {
   AdminPortfolioDetailsPresentation,
   AdminPortfolioProject,
@@ -35,9 +38,57 @@ export function AdminPortfolioDetails({
   presentation,
   projectId,
 }: AdminPortfolioDetailsProps): ReactElement {
+  if (presentation !== undefined) {
+    return (
+      <PortfolioDetails presentation={presentation} projectId={projectId} />
+    );
+  }
+
+  return <AdminPortfolioDetailsLive projectId={projectId} />;
+}
+
+function AdminPortfolioDetailsLive({
+  projectId,
+}: {
+  projectId: string;
+}): ReactElement {
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) => getAdminPortfolioProject(projectId, { signal }),
+    requestKey: `portfolio-${projectId}`,
+  });
+  useAdminRefresh("portfolio", query.retry);
+
+  if (query.status === "loading") {
+    return (
+      <PortfolioDetails
+        presentation={{ status: "loading" }}
+        projectId={projectId}
+      />
+    );
+  }
+
+  if (query.status === "error") {
+    return (
+      <PortfolioDetails
+        presentation={{ onRetry: query.retry, status: "error" }}
+        projectId={projectId}
+      />
+    );
+  }
+
+  if (query.data === null) {
+    return (
+      <PortfolioDetails
+        presentation={{ status: "empty" }}
+        projectId={projectId}
+      />
+    );
+  }
+
   return (
     <PortfolioDetails
-      presentation={presentation ?? { status: "empty" }}
+      presentation={{ project: query.data, status: "ready" }}
       projectId={projectId}
     />
   );

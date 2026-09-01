@@ -8,13 +8,22 @@ import {
 import { BlogMetrics } from "@/components/admin/blog/blog-metrics";
 import { BlogTable } from "@/components/admin/blog/blog-table";
 import { BlogToolbar } from "@/components/admin/blog/blog-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import { adminBlogCopy, defaultAdminBlogFilters } from "@/config/admin-blog";
 import {
+  type AdminBlogList,
   filterBlogPosts,
   hasActiveBlogFilters,
+  listAdminBlogPosts,
   paginateBlogPosts,
 } from "@/lib/admin/blog";
 import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminBlogFilters,
   AdminBlogPagination,
@@ -38,7 +47,32 @@ function AdminBlogLive(): ReactElement {
   const { filters, page, setFilters, setPage } = useAdminListState({
     defaults: defaultAdminBlogFilters,
   });
-  const hasActiveFilters = hasActiveBlogFilters(filters);
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    createdFrom: filters.createdFrom,
+    createdTo: filters.createdTo,
+    dateRange: filters.dateRange,
+    page,
+    query: debouncedQuery,
+    status: filters.status,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminBlogPosts(
+        {
+          ...filters,
+          page,
+          query: debouncedQuery,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+  useAdminRefresh("blog", query.retry);
 
   return (
     <AdminBlogView
@@ -46,9 +80,10 @@ function AdminBlogLive(): ReactElement {
       onFiltersChange={setFilters}
       onPageChange={setPage}
       page={page}
-      presentation={
-        hasActiveFilters ? { posts: [], status: "ready" } : { status: "empty" }
-      }
+      presentation={toLiveBlogPresentation(
+        query,
+        hasActiveBlogFilters(filters),
+      )}
     />
   );
 }
@@ -174,5 +209,34 @@ function resolveVisiblePosts(
   return {
     pagination: paged.pagination,
     posts: paged.posts,
+  };
+}
+
+function toLiveBlogPresentation(
+  query: AdminQueryState<AdminBlogList>,
+  hasActiveFilters: boolean,
+): AdminBlogPresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.posts.length === 0) {
+    return hasActiveFilters
+      ? {
+          pagination: query.data?.pagination,
+          posts: [],
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    pagination: query.data.pagination,
+    posts: query.data.posts,
+    status: "ready",
   };
 }

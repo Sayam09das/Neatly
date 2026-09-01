@@ -3,7 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { easings } from "@/animations/config/easings";
 import { registerGsapPlugins } from "@/animations/gsap/plugins";
 
-export const PROCESS_STEP_COUNT = 5;
+export const PROCESS_STEP_COUNT = 7;
 export const PROCESS_EYEBROW_Y_PX = 20;
 export const PROCESS_HEADING_Y_PX = 40;
 export const PROCESS_INTRO_Y_PX = 20;
@@ -56,10 +56,14 @@ interface ProcessStepTargets {
 }
 
 interface ProcessTargets {
+  cta: HTMLElement | null;
+  ctaItems: Array<HTMLElement>;
+  details: Array<HTMLElement>;
   dots: Array<HTMLElement>;
   eyebrow: HTMLElement | null;
   heading: HTMLElement | null;
   intro: HTMLElement | null;
+  journeyItems: Array<HTMLElement>;
   mediaImage: HTMLElement | null;
   mediaMask: HTMLElement | null;
   progressLine: HTMLElement | null;
@@ -86,10 +90,14 @@ function collectTargets(root: HTMLElement): ProcessTargets {
   }));
 
   return {
+    cta: root.querySelector<HTMLElement>("[data-process-cta]"),
+    ctaItems: queryAll(root, "[data-process-cta-item]"),
+    details: queryAll(root, "[data-process-detail]"),
     dots,
     eyebrow: root.querySelector<HTMLElement>("[data-process-eyebrow]"),
     heading: root.querySelector<HTMLElement>("[data-process-heading]"),
     intro: root.querySelector<HTMLElement>("[data-process-intro]"),
+    journeyItems: queryAll(root, "[data-process-journey-item]"),
     mediaImage: root.querySelector<HTMLElement>("[data-process-media-reveal]"),
     mediaMask: root.querySelector<HTMLElement>("[data-process-media-mask]"),
     progressLine: root.querySelector<HTMLElement>(
@@ -116,6 +124,14 @@ function setInitialStates(targets: ProcessTargets, compact: boolean): void {
 
   if (targets.intro !== null) {
     gsap.set(targets.intro, { opacity: 0, y: PROCESS_INTRO_Y_PX });
+  }
+
+  if (targets.journeyItems.length > 0) {
+    gsap.set(targets.journeyItems, { opacity: 0, y: PROCESS_INTRO_Y_PX });
+  }
+
+  if (targets.ctaItems.length > 0) {
+    gsap.set(targets.ctaItems, { opacity: 0, y: PROCESS_INTRO_Y_PX });
   }
 
   if (targets.rule !== null) {
@@ -179,6 +195,7 @@ function addHeaderTweens(
   timeline: gsap.core.Timeline,
   targets: ProcessTargets,
   duration: number,
+  compact: boolean,
 ): void {
   if (targets.eyebrow !== null) {
     timeline.to(
@@ -200,6 +217,19 @@ function addHeaderTweens(
     timeline.to(
       targets.intro,
       { duration: duration * 0.75, opacity: 1, y: 0 },
+      PROCESS_INTRO_AT,
+    );
+  }
+
+  if (targets.journeyItems.length > 0) {
+    timeline.to(
+      targets.journeyItems,
+      {
+        duration: duration * 0.75,
+        opacity: 1,
+        stagger: PROCESS_HEADER_STAGGER,
+        y: 0,
+      },
       PROCESS_INTRO_AT,
     );
   }
@@ -279,6 +309,30 @@ function addStepTweens(
       timeline.to(target.image, { scale: 1 }, at);
     }
   }
+
+  addCtaTweens(timeline, targets, duration, PROCESS_STEPS_AT + stepSpan);
+}
+
+function addCtaTweens(
+  timeline: gsap.core.Timeline,
+  targets: ProcessTargets,
+  duration: number,
+  at: number,
+): void {
+  if (targets.ctaItems.length === 0) {
+    return;
+  }
+
+  timeline.to(
+    targets.ctaItems,
+    {
+      duration: duration * 0.75,
+      opacity: 1,
+      stagger: PROCESS_HEADER_STAGGER,
+      y: 0,
+    },
+    at,
+  );
 }
 
 function attachPlayTrigger(
@@ -304,7 +358,7 @@ function createHeaderTimeline(
   duration: number,
 ): gsap.core.Timeline {
   const timeline = createPausedTimeline(duration);
-  addHeaderTweens(timeline, targets, duration);
+  addHeaderTweens(timeline, targets, duration, true);
   return timeline;
 }
 
@@ -314,7 +368,7 @@ function createStoryTimeline(
 ): gsap.core.Timeline {
   const duration = compact ? PROCESS_DURATION_MOBILE : PROCESS_DURATION_DESKTOP;
   const timeline = createPausedTimeline(duration);
-  addHeaderTweens(timeline, targets, duration);
+  addHeaderTweens(timeline, targets, duration, compact);
   addStepTweens(timeline, targets, compact, duration);
   return timeline;
 }
@@ -337,6 +391,39 @@ function createMobileStepTriggers(
     }
 
     attachPlayTrigger(stepTimeline, target.step, PROCESS_MOBILE_STEP_START);
+  }
+}
+
+function createActiveStepTriggers(targets: ProcessTargets): void {
+  for (const [index, target] of targets.steps.entries()) {
+    ScrollTrigger.create({
+      end: "bottom 45%",
+      onToggle: (self): void => {
+        if (!self.isActive) {
+          return;
+        }
+
+        for (const [stepIndex, step] of targets.steps.entries()) {
+          step.step.classList.toggle("is-active", stepIndex === index);
+        }
+
+        const stepId = target.step.dataset.processStepId ?? "";
+
+        for (const item of targets.journeyItems) {
+          const stages = (item.dataset.processJourneyStages ?? "").split(",");
+          item.classList.toggle("is-active", stages.includes(stepId));
+        }
+
+        for (const detail of targets.details) {
+          detail.classList.toggle(
+            "is-active",
+            detail.dataset.processDetailId === stepId,
+          );
+        }
+      },
+      start: "top 70%",
+      trigger: target.step,
+    });
   }
 }
 
@@ -389,6 +476,12 @@ export function createProcessAnimation(
     attachPlayTrigger(headerTimeline, header ?? root, PROCESS_SCROLL_START);
     createMobileStepTriggers(targets, PROCESS_DURATION_MOBILE);
 
+    if (targets.cta !== null) {
+      const ctaTimeline = createPausedTimeline(PROCESS_DURATION_MOBILE);
+      addCtaTweens(ctaTimeline, targets, PROCESS_DURATION_MOBILE, 0);
+      attachPlayTrigger(ctaTimeline, targets.cta, PROCESS_SCROLL_START);
+    }
+
     if (targets.progressLine !== null) {
       gsap.fromTo(
         targets.progressLine,
@@ -411,6 +504,8 @@ export function createProcessAnimation(
       createParallax(root);
     }
 
+    createActiveStepTriggers(targets);
+
     return { timeline: headerTimeline };
   }
 
@@ -426,6 +521,7 @@ export function createProcessAnimation(
       start: PROCESS_SCROLL_START,
       trigger: root,
     });
+    createActiveStepTriggers(targets);
   }
 
   if (enableParallax && enableScrollTrigger) {

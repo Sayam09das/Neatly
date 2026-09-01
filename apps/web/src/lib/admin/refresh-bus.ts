@@ -1,11 +1,14 @@
 import type { AdminRealtimeEventType } from "@/lib/realtime/admin-event";
 
 export const ADMIN_REFRESH_KEYS = [
+  "blog",
   "bookings",
   "cleaners",
   "customers",
   "dashboard",
+  "newsletter",
   "notifications",
+  "portfolio",
   "quotes",
   "reviews",
   "services",

@@ -45,6 +45,23 @@ vi.mock("@/lib/admin/use-admin-list-state", () => ({
   }),
 }));
 
+vi.mock("@/lib/admin/newsletter", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/admin/newsletter")>();
+
+  return {
+    ...actual,
+    listAdminNewsletterSubscribers: vi.fn().mockResolvedValue({
+      data: {
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+        subscribers: [],
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
+
 const TEST_SUBSCRIBER: AdminNewsletterSubscriber = {
   createdAt: "2026-08-30T09:00:00.000Z",
   email: "ada@neatly.test",
@@ -89,20 +106,20 @@ describe("Admin newsletter page", (): void => {
     expect(
       screen.getByRole("button", { name: adminNewsletterCopy.exportAction }),
     ).toBeDisabled();
-    expect(
-      screen.getByText(adminNewsletterCopy.metricTotal),
-    ).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(
+        screen.getByText(adminNewsletterCopy.metricTotal),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getAllByText(adminNewsletterCopy.metricSubscribed).length,
     ).toBeGreaterThan(0);
     expect(
       screen.getAllByText(adminNewsletterCopy.metricUnsubscribed).length,
     ).toBeGreaterThan(0);
-    await waitFor((): void => {
-      expect(
-        screen.getByText(adminNewsletterCopy.emptyTitle),
-      ).toBeInTheDocument();
-    });
+    expect(
+      screen.getByText(adminNewsletterCopy.emptyTitle),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(adminNewsletterCopy.emptyDescription),
     ).toBeInTheDocument();

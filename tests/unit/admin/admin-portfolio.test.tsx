@@ -45,6 +45,22 @@ vi.mock("@/lib/admin/use-admin-list-state", () => ({
   }),
 }));
 
+vi.mock("@/lib/admin/portfolio", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/portfolio")>();
+
+  return {
+    ...actual,
+    listAdminPortfolioProjects: vi.fn().mockResolvedValue({
+      data: {
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+        projects: [],
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
+
 const TEST_PROJECT: AdminPortfolioProject = {
   category: "RESIDENTIAL",
   createdAt: "2026-08-30T09:00:00.000Z",
@@ -99,9 +115,11 @@ describe("Admin portfolio page", (): void => {
     expect(
       screen.getByRole("button", { name: adminPortfolioCopy.createAction }),
     ).toBeDisabled();
-    expect(
-      screen.getByText(adminPortfolioCopy.metricTotal),
-    ).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(
+        screen.getByText(adminPortfolioCopy.metricTotal),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getAllByText(adminPortfolioCopy.metricPublished).length,
     ).toBeGreaterThan(0);
@@ -111,11 +129,7 @@ describe("Admin portfolio page", (): void => {
     expect(
       screen.getAllByText(adminPortfolioCopy.metricFeatured).length,
     ).toBeGreaterThan(0);
-    await waitFor((): void => {
-      expect(
-        screen.getByText(adminPortfolioCopy.emptyTitle),
-      ).toBeInTheDocument();
-    });
+    expect(screen.getByText(adminPortfolioCopy.emptyTitle)).toBeInTheDocument();
     expect(
       screen.getByText(adminPortfolioCopy.emptyDescription),
     ).toBeInTheDocument();

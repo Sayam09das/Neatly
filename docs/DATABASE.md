@@ -749,9 +749,14 @@ For the MVP, lightweight auditability is maintained directly within lead records
 
 ### 29.1 Development Seed Script (`prisma/seed.ts`)
 * **Default Admin User:** Creates standard dev admin (`admin@neatly.local`) with securely hashed dummy password.
-* **Sample Services:** Seeds 4 core cleaning services (Residential, Deep, Move-In/Out, Commercial).
-* **Sample Site Settings:** Seeds singleton `SiteSettings` row with initial fallback business details.
-* **Sample Categories:** Seeds default Blog categories ("Home Care", "Cleaning Tips").
+* **Sample Services:** Seeds the five PRD default categories (Residential, Deep, Move-In/Out, Commercial, Recurring) with matching local cover stills. Existing non-seeded catalog rows are left in place.
+* **Sample Site Settings:** Seeds singleton `SiteSettings` row (`id=1`) with `[Development Placeholder]` phone, email, and address. Never run this in production.
+* **Sample Media:** Upserts 14 local `MediaAsset` rows (`seed/cms/*` keys) pointing at `/images/...` stills for blog covers, portfolio frames, and inactive review avatars.
+* **Sample Blog Categories:** Upserts 10 development categories (`dev-home-care` … `dev-seasonal`).
+* **Sample Blog Posts:** Upserts 10 journal posts (6 `PUBLISHED`, 3 `DRAFT`, 1 `ARCHIVED`) tagged `development-placeholder`.
+* **Sample Newsletter Subscribers:** Upserts 10 `dev-subscriber-NN@example.test` rows (8 `SUBSCRIBED`, 2 `UNSUBSCRIBED`).
+* **Sample Portfolio:** Upserts 10 `dev-*` projects (3 featured) and two `PortfolioImage` rows each (BEFORE + AFTER).
+* **Sample Testimonials:** Upserts 10 `[Development Placeholder]` reviews with `isActive: true` so labeled development quotes can appear on `/` and `/testimonials`. Names stay prefixed; they are not invented as real customers.
 
 *Constraint: The development seed script MUST NEVER be executed in production environments.*
 

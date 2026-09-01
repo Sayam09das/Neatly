@@ -41,7 +41,7 @@ export function ServiceDetails({ service }: ServiceDetailsProps): ReactElement {
           </li>
         </ol>
       </nav>
-      <div className="mt-8">
+      <div className="mt-10">
         <ServiceDetailHero service={service} />
       </div>
       <ServiceDetailSections service={service} />

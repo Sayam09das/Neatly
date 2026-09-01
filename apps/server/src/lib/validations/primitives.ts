@@ -1,8 +1,10 @@
 import { z } from "@neatly/config/zod";
 import {
+  BlogStatus,
   BookingStatus,
   CleanerStatus,
   CustomerStatus,
+  NewsletterStatus,
   QuoteServiceType,
   QuoteStatus,
   ServiceCategory,
@@ -102,6 +104,14 @@ export const quoteServiceTypeSchema = z.nativeEnum(QuoteServiceType, {
 });
 
 export const serviceCategorySchema = z.nativeEnum(ServiceCategory, {
+  error: "This value is not allowed.",
+});
+
+export const blogStatusSchema = z.nativeEnum(BlogStatus, {
+  error: "This value is not allowed.",
+});
+
+export const newsletterStatusSchema = z.nativeEnum(NewsletterStatus, {
   error: "This value is not allowed.",
 });
 

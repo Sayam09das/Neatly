@@ -45,6 +45,22 @@ vi.mock("@/lib/admin/use-admin-list-state", () => ({
   }),
 }));
 
+vi.mock("@/lib/admin/blog", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/admin/blog")>();
+
+  return {
+    ...actual,
+    listAdminBlogPosts: vi.fn().mockResolvedValue({
+      data: {
+        pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
+        posts: [],
+      },
+      ok: true,
+      status: 200,
+    }),
+  };
+});
+
 const TEST_POST: AdminBlogPost = {
   authorId: "admin_test",
   categoryId: null,
@@ -91,7 +107,9 @@ describe("Admin blog page", (): void => {
     expect(
       screen.getByRole("button", { name: adminBlogCopy.createAction }),
     ).toBeDisabled();
-    expect(screen.getByText(adminBlogCopy.metricTotal)).toBeInTheDocument();
+    await waitFor((): void => {
+      expect(screen.getByText(adminBlogCopy.metricTotal)).toBeInTheDocument();
+    });
     expect(
       screen.getAllByText(adminBlogCopy.metricDraft).length,
     ).toBeGreaterThan(0);
@@ -101,9 +119,7 @@ describe("Admin blog page", (): void => {
     expect(
       screen.getAllByText(adminBlogCopy.metricArchived).length,
     ).toBeGreaterThan(0);
-    await waitFor((): void => {
-      expect(screen.getByText(adminBlogCopy.emptyTitle)).toBeInTheDocument();
-    });
+    expect(screen.getByText(adminBlogCopy.emptyTitle)).toBeInTheDocument();
     expect(
       screen.getByText(adminBlogCopy.emptyDescription),
     ).toBeInTheDocument();

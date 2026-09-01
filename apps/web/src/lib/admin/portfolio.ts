@@ -1,9 +1,25 @@
-import { ADMIN_LIST_PAGE_SIZE } from "@/config/admin-api";
+import {
+  ADMIN_API_PATHS,
+  ADMIN_LIST_PAGE_SIZE,
+  withAdminApiId,
+} from "@/config/admin-api";
 import {
   adminPortfolioCategoryLabels,
   adminPortfolioCopy,
   adminPortfolioDateRangeLabels,
 } from "@/config/admin-portfolio";
+import { mapAdminResult } from "@/lib/admin/parse-result";
+import {
+  isRecord,
+  mapAdminPagination,
+  readBoolean,
+  readIsoDate,
+  readNullableString,
+  readNumber,
+  readString,
+  withAdminQuery,
+} from "@/lib/admin/query";
+import { type AdminApiResult, adminRequest } from "@/lib/api/admin-request";
 import {
   ADMIN_PORTFOLIO_DATE_RANGE_ALL,
   ADMIN_PORTFOLIO_VISIBILITY_ALL,
@@ -194,6 +210,135 @@ export function paginatePortfolioProjects(
       totalPages: total === 0 ? 0 : totalPages,
     },
     projects: projects.slice(start, start + pageSize),
+  };
+}
+
+export interface AdminPortfolioList {
+  pagination: AdminPortfolioPagination;
+  projects: readonly AdminPortfolioProject[];
+}
+
+export interface AdminPortfolioListQuery extends AdminPortfolioFilters {
+  page: number;
+}
+
+export async function listAdminPortfolioProjects(
+  query: AdminPortfolioListQuery,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminPortfolioList>> {
+  const bounds = resolvePortfolioDateBounds(query);
+
+  const result = await adminRequest<unknown>(
+    withAdminQuery(ADMIN_API_PATHS.portfolio, {
+      filters: {
+        category: query.category === "" ? undefined : query.category,
+        createdFrom: bounds?.start.toISOString(),
+        createdTo: bounds?.end.toISOString(),
+        published:
+          query.visibility === "published"
+            ? true
+            : query.visibility === "unpublished"
+              ? false
+              : undefined,
+      },
+      limit: ADMIN_LIST_PAGE_SIZE,
+      page: query.page,
+      search: query.query,
+    }),
+    init,
+  );
+  return mapAdminResult(result, mapPortfolioList);
+}
+
+export async function getAdminPortfolioProject(
+  id: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<AdminPortfolioProject>> {
+  const result = await adminRequest<unknown>(
+    withAdminApiId(ADMIN_API_PATHS.portfolioProject, id),
+    init,
+  );
+  return mapAdminResult(result, mapPortfolioPayload);
+}
+
+function mapPortfolioPayload(value: unknown): AdminPortfolioProject | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  return mapPortfolioProject(value.project ?? value);
+}
+
+function mapPortfolioList(value: unknown): AdminPortfolioList | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  const pagination = mapAdminPagination(value.pagination, ADMIN_LIST_PAGE_SIZE);
+
+  if (pagination === null) {
+    return null;
+  }
+
+  const projects: AdminPortfolioProject[] = [];
+
+  for (const item of value.items) {
+    const project = mapPortfolioProject(item);
+
+    if (project === null) {
+      return null;
+    }
+
+    projects.push(project);
+  }
+
+  return { pagination, projects };
+}
+
+function mapPortfolioProject(value: unknown): AdminPortfolioProject | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = readString(value.id);
+  const category = readString(value.category);
+  const description = readString(value.description);
+  const slug = readString(value.slug);
+  const title = readString(value.title);
+  const createdAt = readIsoDate(value.createdAt);
+  const updatedAt = readIsoDate(value.updatedAt);
+  const isFeatured = readBoolean(value.isFeatured);
+  const isPublished = readBoolean(value.isPublished);
+  const sortOrder = readNumber(value.sortOrder);
+
+  if (
+    id === null ||
+    category === null ||
+    description === null ||
+    slug === null ||
+    title === null ||
+    createdAt === null ||
+    updatedAt === null ||
+    isFeatured === null ||
+    isPublished === null ||
+    sortOrder === null ||
+    !isAdminPortfolioCategory(category)
+  ) {
+    return null;
+  }
+
+  return {
+    category,
+    createdAt,
+    description,
+    id,
+    isFeatured,
+    isPublished,
+    location: readNullableString(value.location),
+    slug,
+    sortOrder,
+    title,
+    updatedAt,
   };
 }
 

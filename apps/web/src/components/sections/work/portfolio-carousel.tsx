@@ -37,8 +37,54 @@ import "swiper/css";
 
 type WorkTileItem = (typeof landingFeaturedWork.tiles)[number];
 
+interface SwiperAutoplayApi {
+  pause: () => void;
+  resume: () => void;
+  start: () => boolean;
+  stop: () => boolean;
+}
+
+interface SwiperAutoplayHost {
+  autoplay?: SwiperAutoplayApi;
+  destroyed?: boolean;
+}
+
 interface PortfolioCarouselProps {
   tiles: ReadonlyArray<WorkTileItem>;
+}
+
+export function getSwiperAutoplay(
+  instance: SwiperAutoplayHost | null,
+): SwiperAutoplayApi | undefined {
+  if (instance === null || instance.destroyed === true) {
+    return undefined;
+  }
+
+  const autoplay = instance.autoplay;
+
+  if (autoplay === undefined || typeof autoplay.start !== "function") {
+    return undefined;
+  }
+
+  return autoplay;
+}
+
+export function syncSwiperAutoplay(
+  instance: SwiperAutoplayHost | null,
+  shouldPlay: boolean,
+): void {
+  const autoplay = getSwiperAutoplay(instance);
+
+  if (autoplay === undefined) {
+    return;
+  }
+
+  if (shouldPlay) {
+    autoplay.start();
+    return;
+  }
+
+  autoplay.stop();
 }
 
 export function PortfolioCarousel({
@@ -55,20 +101,12 @@ export function PortfolioCarousel({
   }, []);
 
   const pauseAutoplay = useCallback((): void => {
-    if (!enableAutoplay) {
-      return;
-    }
-
-    swiper?.autoplay.pause();
-  }, [enableAutoplay, swiper]);
+    getSwiperAutoplay(swiper)?.pause();
+  }, [swiper]);
 
   const resumeAutoplay = useCallback((): void => {
-    if (!enableAutoplay) {
-      return;
-    }
-
-    swiper?.autoplay.resume();
-  }, [enableAutoplay, swiper]);
+    getSwiperAutoplay(swiper)?.resume();
+  }, [swiper]);
 
   useEffect((): (() => void) => {
     const nav = navRef.current;
@@ -101,16 +139,7 @@ export function PortfolioCarousel({
   }, [pauseAutoplay, resumeAutoplay]);
 
   useEffect((): void => {
-    if (swiper === null) {
-      return;
-    }
-
-    if (enableAutoplay) {
-      swiper.autoplay.start();
-      return;
-    }
-
-    swiper.autoplay.stop();
+    syncSwiperAutoplay(swiper, enableAutoplay);
   }, [enableAutoplay, swiper]);
 
   const position = `${String(activeIndex + 1).padStart(2, "0")} / ${String(tiles.length).padStart(2, "0")}`;

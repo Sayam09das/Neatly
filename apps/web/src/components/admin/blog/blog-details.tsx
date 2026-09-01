@@ -16,10 +16,13 @@ import { adminBlogCopy } from "@/config/admin-blog";
 import { ADMIN_PATHS } from "@/config/admin-nav";
 import {
   formatBlogInstant,
+  getAdminBlogPost,
   getBlogCategoryLabel,
   getBlogTagsLabel,
   getBlogTitle,
 } from "@/lib/admin/blog";
+import { useAdminQuery } from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
 import type {
   AdminBlogDetailsPresentation,
   AdminBlogPost,
@@ -34,10 +37,42 @@ export function AdminBlogDetails({
   postId,
   presentation,
 }: AdminBlogDetailsProps): ReactElement {
+  if (presentation !== undefined) {
+    return <BlogDetails postId={postId} presentation={presentation} />;
+  }
+
+  return <AdminBlogDetailsLive postId={postId} />;
+}
+
+function AdminBlogDetailsLive({ postId }: { postId: string }): ReactElement {
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) => getAdminBlogPost(postId, { signal }),
+    requestKey: `blog-${postId}`,
+  });
+  useAdminRefresh("blog", query.retry);
+
+  if (query.status === "loading") {
+    return <BlogDetails presentation={{ status: "loading" }} postId={postId} />;
+  }
+
+  if (query.status === "error") {
+    return (
+      <BlogDetails
+        presentation={{ onRetry: query.retry, status: "error" }}
+        postId={postId}
+      />
+    );
+  }
+
+  if (query.data === null) {
+    return <BlogDetails presentation={{ status: "empty" }} postId={postId} />;
+  }
+
   return (
     <BlogDetails
+      presentation={{ post: query.data, status: "ready" }}
       postId={postId}
-      presentation={presentation ?? { status: "empty" }}
     />
   );
 }

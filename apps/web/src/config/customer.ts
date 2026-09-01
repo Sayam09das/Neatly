@@ -52,6 +52,10 @@ export const CUSTOMER_API_PATHS = {
   reviews: `${CUSTOMER_API_PREFIX}/reviews`,
   service: `${CUSTOMER_API_PREFIX}/services/:slug`,
   services: `${CUSTOMER_API_PREFIX}/services`,
+  blog: `${CUSTOMER_API_PREFIX}/blog`,
+  blogPost: `${CUSTOMER_API_PREFIX}/blog/:slug`,
+  newsletter: `${CUSTOMER_API_PREFIX}/newsletter`,
+  testimonials: `${CUSTOMER_API_PREFIX}/testimonials`,
 } as const;
 
 export const CUSTOMER_BOOKINGS_SEARCH_PARAM = "q";
@@ -72,6 +76,9 @@ export const CUSTOMER_BOOKING_QUOTE_PARAM = "quoteId";
 export const CUSTOMER_SERVICES_SEARCH_MAX_LENGTH = 120;
 export const CUSTOMER_SERVICES_SEARCH_INPUT_ID = "customer-services-search";
 export const CUSTOMER_CATALOG_REQUEST_TIMEOUT_MS = 8_000;
+export const CUSTOMER_TESTIMONIALS_REQUEST_TIMEOUT_MS = 8_000;
+export const CUSTOMER_BLOG_REQUEST_TIMEOUT_MS = 8_000;
+export const CUSTOMER_NEWSLETTER_REQUEST_TIMEOUT_MS = 8_000;
 
 export const FORBIDDEN_CUSTOMER_AUTH_QUERY_KEYS = [
   "customerId",
@@ -120,6 +127,12 @@ export const customerErrorCopy = {
   heading: "Something went wrong",
 } as const;
 
+export const customerCatalogErrorCopy = {
+  action: "Try Again",
+  description: "Please try again in a moment.",
+  heading: "We couldn't load our services right now.",
+} as const;
+
 export const customerNotFoundCopy = {
   action: "Back to your account",
   description: "This page is not available.",
@@ -157,8 +170,8 @@ export const customerEmptyCopy = {
     title: "No reviews yet",
   },
   services: {
-    description: "Published cleaning services will appear here.",
-    title: "No services are currently available.",
+    description: `Check back soon to explore ${APP_NAME}'s cleaning services.`,
+    title: "Services are being prepared.",
   },
   serviceSearch: {
     description: "Try a different search, or browse all published services.",
@@ -227,7 +240,7 @@ export const customerSurfaceCopy = {
   },
   services: {
     description:
-      "Browse published cleaning services and open a service to learn more.",
+      "Choose the service that fits your home or workplace. Every service starts with a clear scope and a straightforward quote process.",
     heading: "Services",
     title: "Services",
   },
@@ -244,20 +257,20 @@ export const customerSurfaceCopy = {
 } as const;
 
 export const customerServicesCopy = {
-  apply: "Request a service",
-  availableLabel: "Available",
+  apply: "Request a Quote",
   backToServices: "Back to services",
   browseAll: "Browse all services",
+  featuredLabel: "Featured",
   imageUnavailable: "No image available",
   paginationLabel: "Services pages",
   paginationNext: "Next",
   paginationPrevious: "Previous",
-  requestQuote: "Request a quote",
+  requestQuote: "Request a Quote",
   searchClear: "Clear search",
   searchLabel: "Search services",
   searchPlaceholder: "Search by name or description",
   searchSubmit: "Search",
-  viewDetails: "View details",
+  viewDetails: "View Service",
 } as const;
 
 export const customerServiceDetailCopy = {
@@ -273,7 +286,7 @@ export const customerServiceDetailCopy = {
   nextStepsBody:
     "Request a quote with your property details. We will review the request and follow up — this does not create a booking.",
   nextStepsHeading: "What happens next",
-  quoteCta: "Request a service",
+  quoteCta: "Request a Quote",
 } as const;
 
 export const customerQuoteCopy = {
@@ -793,8 +806,12 @@ export function customerPublicServiceApiPath(slug: string): string {
   return `${CUSTOMER_API_PATHS.services}/${encodeURIComponent(slug)}`;
 }
 
+export function customerPublicBlogApiPath(slug: string): string {
+  return `${CUSTOMER_API_PATHS.blog}/${encodeURIComponent(slug)}`;
+}
+
 export function customerQuoteLabel(name: string): string {
-  return `Request a service for ${name}`;
+  return `Request a quote for ${name}`;
 }
 
 export function customerServiceApplyLabel(name: string): string {

@@ -40,7 +40,7 @@ export function DesktopNav({
         aria-label="Primary"
         className="hidden flex-1 justify-center lg:flex"
       >
-        <ul className="flex items-center justify-center gap-6">
+        <ul className="flex items-center justify-center gap-3 xl:gap-5 2xl:gap-6">
           {landingNavLinks.map((item) => {
             const isActive = isNavItemActive(pathname, item.href);
 
@@ -49,7 +49,7 @@ export function DesktopNav({
                 <Link
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "inline-flex min-h-touch items-center text-body-small font-medium transition-colors duration-normal ease-standard",
+                    "inline-flex min-h-touch items-center whitespace-nowrap text-body-small font-medium transition-colors duration-normal ease-standard",
                     "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary",
                     isActive
                       ? "text-primary underline decoration-primary underline-offset-8"

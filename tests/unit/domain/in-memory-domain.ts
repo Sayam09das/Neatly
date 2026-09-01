@@ -13,6 +13,7 @@ import type {
 } from "../../../apps/server/src/repositories/booking.repository.ts";
 import type { CatalogRepository } from "../../../apps/server/src/repositories/catalog.repository.ts";
 import type { CleanerRepository } from "../../../apps/server/src/repositories/cleaner.repository.ts";
+import type { CmsRepository } from "../../../apps/server/src/repositories/cms.repository.ts";
 import type { CustomerRepository } from "../../../apps/server/src/repositories/customer.repository.ts";
 import type { MediaRepository } from "../../../apps/server/src/repositories/media.repository.ts";
 import type { NotificationRepository } from "../../../apps/server/src/repositories/notification.repository.ts";
@@ -49,6 +50,13 @@ import type {
   UpdateCleanerInput,
 } from "../../../apps/server/src/services/cleaners/cleaner.types.ts";
 import { toCleanerRecord } from "../../../apps/server/src/services/cleaners/cleaner.types.ts";
+import { CmsService } from "../../../apps/server/src/services/cms/cms.service.ts";
+import type {
+  BlogPostRecord,
+  NewsletterSubscriberRecord,
+  PortfolioProjectRecord,
+  PublicBlogPostDetail,
+} from "../../../apps/server/src/services/cms/cms.types.ts";
 import { CustomerService } from "../../../apps/server/src/services/customers/customer.service.ts";
 import type {
   CreateCustomerInput,
@@ -291,11 +299,60 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+class InMemoryCmsRepository implements CmsRepository {
+  public async findBlogPostById(): Promise<BlogPostRecord | null> {
+    return null;
+  }
+
+  public async findNewsletterSubscriberById(): Promise<NewsletterSubscriberRecord | null> {
+    return null;
+  }
+
+  public async findPortfolioProjectById(): Promise<PortfolioProjectRecord | null> {
+    return null;
+  }
+
+  public async findPublishedBlogPostBySlug(): Promise<PublicBlogPostDetail | null> {
+    return null;
+  }
+
+  public async listBlogPosts(): Promise<{
+    items: BlogPostRecord[];
+    total: number;
+  }> {
+    return { items: [], total: 0 };
+  }
+
+  public async listNewsletterSubscribers(): Promise<{
+    items: NewsletterSubscriberRecord[];
+    total: number;
+  }> {
+    return { items: [], total: 0 };
+  }
+
+  public async listPortfolioProjects(): Promise<{
+    items: PortfolioProjectRecord[];
+    total: number;
+  }> {
+    return { items: [], total: 0 };
+  }
+
+  public async listPublishedBlogPosts(): Promise<{
+    items: PublicBlogPostDetail[];
+    total: number;
+  }> {
+    return { items: [], total: 0 };
+  }
+
+  public async upsertNewsletterSubscription(): Promise<void> {}
+}
+
 export interface DomainHarness {
   admin: AdminService;
   bookings: BookingService;
   catalog: CatalogService;
   cleaners: CleanerService;
+  cms: CmsService;
   customers: CustomerService;
   dashboard: DashboardService;
   invitations: CleanerInvitationGateway;
@@ -333,6 +390,7 @@ export function createDomainHarness(
   );
   const media = new MediaService(new InMemoryMediaRepository(store), null);
   const catalog = new CatalogService(catalogRepo, media);
+  const cms = new CmsService(new InMemoryCmsRepository());
   const quotes = new QuoteService(quoteRepo, catalogRepo);
   const bookings = new BookingService(
     bookingRepo,
@@ -366,6 +424,7 @@ export function createDomainHarness(
     bookings,
     catalog,
     cleaners,
+    cms,
     customers,
     dashboard,
     invitations: invitationGateway,

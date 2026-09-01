@@ -6,7 +6,7 @@ import { ServicesSection } from "@/components/sections/services";
 import { landingCtas, landingServices } from "@/config/landing";
 
 describe("ServicesSection", (): void => {
-  it("renders the editorial heading, three service cards, and explore CTA", (): void => {
+  it("renders the editorial heading, five service cards, and explore CTA", (): void => {
     const { container } = render(<ServicesSection />);
 
     expect(
@@ -34,6 +34,10 @@ describe("ServicesSection", (): void => {
     expect(container.querySelectorAll("[data-service-card]")).toHaveLength(
       landingServices.items.length,
     );
+    expect(landingServices.items).toHaveLength(5);
+    expect(
+      new Set(landingServices.items.map((item) => item.image.src)).size,
+    ).toBe(5);
     expect(
       screen.getByRole("link", { name: landingCtas.secondary.label }),
     ).toHaveAttribute("href", landingCtas.secondary.href);

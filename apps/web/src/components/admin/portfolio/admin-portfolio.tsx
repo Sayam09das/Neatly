@@ -8,16 +8,25 @@ import {
 import { PortfolioMetrics } from "@/components/admin/portfolio/portfolio-metrics";
 import { PortfolioTable } from "@/components/admin/portfolio/portfolio-table";
 import { PortfolioToolbar } from "@/components/admin/portfolio/portfolio-toolbar";
+import { ADMIN_SEARCH_DEBOUNCE_MS } from "@/config/admin-api";
 import {
   adminPortfolioCopy,
   defaultAdminPortfolioFilters,
 } from "@/config/admin-portfolio";
 import {
+  type AdminPortfolioList,
   filterPortfolioProjects,
   hasActivePortfolioFilters,
+  listAdminPortfolioProjects,
   paginatePortfolioProjects,
 } from "@/lib/admin/portfolio";
 import { useAdminListState } from "@/lib/admin/use-admin-list-state";
+import {
+  type AdminQueryState,
+  useAdminQuery,
+} from "@/lib/admin/use-admin-query";
+import { useAdminRefresh } from "@/lib/admin/use-admin-refresh";
+import { useDebouncedValue } from "@/lib/admin/use-debounced-value";
 import type {
   AdminPortfolioFilters,
   AdminPortfolioPagination,
@@ -43,7 +52,33 @@ function AdminPortfolioLive(): ReactElement {
   const { filters, page, setFilters, setPage } = useAdminListState({
     defaults: defaultAdminPortfolioFilters,
   });
-  const hasActiveFilters = hasActivePortfolioFilters(filters);
+  const debouncedQuery = useDebouncedValue(
+    filters.query,
+    ADMIN_SEARCH_DEBOUNCE_MS,
+  );
+  const requestKey = JSON.stringify({
+    category: filters.category,
+    createdFrom: filters.createdFrom,
+    createdTo: filters.createdTo,
+    dateRange: filters.dateRange,
+    page,
+    query: debouncedQuery,
+    visibility: filters.visibility,
+  });
+  const query = useAdminQuery({
+    enabled: true,
+    request: (signal) =>
+      listAdminPortfolioProjects(
+        {
+          ...filters,
+          page,
+          query: debouncedQuery,
+        },
+        { signal },
+      ),
+    requestKey,
+  });
+  useAdminRefresh("portfolio", query.retry);
 
   return (
     <AdminPortfolioView
@@ -51,11 +86,10 @@ function AdminPortfolioLive(): ReactElement {
       onFiltersChange={setFilters}
       onPageChange={setPage}
       page={page}
-      presentation={
-        hasActiveFilters
-          ? { projects: [], status: "ready" }
-          : { status: "empty" }
-      }
+      presentation={toLivePortfolioPresentation(
+        query,
+        hasActivePortfolioFilters(filters),
+      )}
     />
   );
 }
@@ -187,5 +221,34 @@ function resolveVisibleProjects(
   return {
     pagination: paged.pagination,
     projects: paged.projects,
+  };
+}
+
+function toLivePortfolioPresentation(
+  query: AdminQueryState<AdminPortfolioList>,
+  hasActiveFilters: boolean,
+): AdminPortfolioPresentation {
+  if (query.status === "loading") {
+    return { status: "loading" };
+  }
+
+  if (query.status === "error") {
+    return { onRetry: query.retry, status: "error" };
+  }
+
+  if (query.data === null || query.data.projects.length === 0) {
+    return hasActiveFilters
+      ? {
+          pagination: query.data?.pagination,
+          projects: [],
+          status: "ready",
+        }
+      : { status: "empty" };
+  }
+
+  return {
+    pagination: query.data.pagination,
+    projects: query.data.projects,
+    status: "ready",
   };
 }

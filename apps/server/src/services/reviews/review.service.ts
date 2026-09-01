@@ -24,6 +24,10 @@ import {
   type CreateReviewInput,
   type CustomerReviewView,
   type CustomerReviewWorkspace,
+  PUBLIC_REVIEW_FETCH_LIMIT,
+  PUBLIC_REVIEW_LIMIT,
+  type PublicReview,
+  type PublicReviewList,
   REVIEW_SORT_FIELDS,
   type ReviewListQuery,
   type ReviewRecord,
@@ -86,6 +90,23 @@ export class ReviewService {
       sort,
     });
     return toListResult(result.items, result.total, pagination);
+  }
+
+  public async listPublic(): Promise<PublicReviewList> {
+    const result = await this.list({
+      pagination: {
+        limit: PUBLIC_REVIEW_FETCH_LIMIT,
+        page: 1,
+        skip: 0,
+      },
+      sort: { direction: "desc", field: "createdAt" },
+    });
+    const items = [...result.items]
+      .sort(comparePublicReviews)
+      .slice(0, PUBLIC_REVIEW_LIMIT)
+      .map(toPublicReview);
+
+    return { items };
   }
 
   public async update(
@@ -360,6 +381,31 @@ export class ReviewService {
       throw new AuthorizationError();
     }
   }
+}
+
+function toPublicReview(review: ReviewRecord): PublicReview {
+  return {
+    content: review.content,
+    createdAt: review.createdAt.toISOString(),
+    customerName: review.customerName,
+    customerRole: review.customerRole,
+    featured: review.isFeatured,
+    id: review.id,
+    rating: review.rating,
+    serviceCategory: review.serviceCategory,
+  };
+}
+
+function comparePublicReviews(left: ReviewRecord, right: ReviewRecord): number {
+  if (left.isFeatured !== right.isFeatured) {
+    return left.isFeatured ? -1 : 1;
+  }
+
+  if (left.sortOrder !== right.sortOrder) {
+    return left.sortOrder - right.sortOrder;
+  }
+
+  return right.createdAt.getTime() - left.createdAt.getTime();
 }
 
 function toCustomerReviewView(

@@ -5,21 +5,26 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Testimonials } from "@/components/sections/testimonials";
 import { TESTIMONIAL_FRAME_HOLD_MS } from "@/components/sections/testimonials/testimonial-animation";
+import { TestimonialsSkeleton } from "@/components/sections/testimonials/testimonials-skeleton";
 import type { LandingTestimonial } from "@/config/landing";
 import { landingTestimonials } from "@/config/landing";
 
 const fixtureStories = [
   {
+    date: "August 2026",
+    featured: true,
     id: "fixture-1",
     name: "Fixture reviewer one",
     quote: "Fixture quote one for architecture tests only.",
-    service: "Residential cleaning",
+    rating: 5,
+    service: "Residential",
   },
   {
     id: "fixture-2",
+    location: "Westside",
     name: "Fixture reviewer two",
     quote: "Fixture quote two for architecture tests only.",
-    location: "Westside",
+    rating: 4,
   },
 ] as const satisfies ReadonlyArray<LandingTestimonial>;
 
@@ -41,11 +46,17 @@ describe("Testimonials", (): void => {
     expect(screen.getByText(landingTestimonials.eyebrow)).toBeInTheDocument();
     expect(screen.getByText(landingTestimonials.intro)).toBeInTheDocument();
     expect(
+      screen.getByText(landingTestimonials.emptyHeading),
+    ).toBeInTheDocument();
+    expect(
       screen.getByText(landingTestimonials.emptyMessage),
     ).toBeInTheDocument();
     expect(
       screen.getByText(landingTestimonials.emptyAttribution),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: landingTestimonials.emptyCta.label }),
+    ).toHaveAttribute("href", landingTestimonials.emptyCta.href);
     expect(container.querySelectorAll("img")).toHaveLength(
       landingTestimonials.emptySlots.length,
     );
@@ -80,6 +91,23 @@ describe("Testimonials", (): void => {
     expect(screen.queryByText("%")).not.toBeInTheDocument();
     expect(screen.queryByText(/stars?/i)).not.toBeInTheDocument();
     expect(landingTestimonials.items).toHaveLength(0);
+  });
+
+  it("can render the section heading as the page h1", (): void => {
+    render(<Testimonials headingLevel="h1" />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: landingTestimonials.heading,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        level: 2,
+        name: landingTestimonials.heading,
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("crossfades reserved photographs from the 01 02 03 controls", async (): Promise<void> => {
@@ -128,47 +156,73 @@ describe("Testimonials", (): void => {
     }
   });
 
-  it("renders a featured story and only the fields that exist", (): void => {
+  it("renders a featured review from real fields without reserved portraits", (): void => {
     const featured = fixtureStories[0];
 
     render(<Testimonials testimonials={[featured]} />);
 
     expect(screen.getByText(featured.quote)).toBeInTheDocument();
     expect(screen.getByText(featured.name)).toBeInTheDocument();
-    expect(screen.getByText("Residential cleaning")).toBeInTheDocument();
+    expect(screen.getByText("Residential")).toBeInTheDocument();
+    expect(screen.getByText("August 2026")).toBeInTheDocument();
+    expect(screen.getByText("5 out of 5 stars")).toBeInTheDocument();
     expect(screen.queryByText("Westside")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: firstSlot?.alt }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("FO")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Previous testimonial" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Show photograph 01 of 03" }),
     ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-slot="featured-review"]'),
+    ).not.toBeNull();
   });
 
-  it("moves between published stories with keyboard-accessible controls", async (): Promise<void> => {
-    const user = userEvent.setup();
+  it("shows published reviews in a static grid without inventing a featured card", (): void => {
     const first = fixtureStories[0];
     const second = fixtureStories[1];
 
-    render(<Testimonials testimonials={fixtureStories} />);
-
-    expect(screen.getByText(first.quote)).toBeInTheDocument();
-    expect(screen.queryByText(second.quote)).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Next testimonial" }));
-
-    expect(screen.getByText(second.quote)).toBeInTheDocument();
-    expect(screen.getByText(second.name)).toBeInTheDocument();
-    expect(screen.getByText("Westside")).toBeInTheDocument();
-    expect(screen.queryByText("Residential cleaning")).not.toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole("button", { name: "Show story 01 of 02" }),
+    render(
+      <Testimonials testimonials={[{ ...first, featured: false }, second]} />,
     );
 
     expect(screen.getByText(first.quote)).toBeInTheDocument();
+    expect(screen.getByText(second.quote)).toBeInTheDocument();
+    expect(screen.getByText(second.name)).toBeInTheDocument();
+    expect(screen.getByText("Westside")).toBeInTheDocument();
+    expect(screen.getByText("4 out of 5 stars")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Next testimonial" }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('[data-slot="featured-review"]')).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: landingTestimonials.emptyCta.label }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a calm fallback when public reviews cannot be loaded", (): void => {
+    render(<Testimonials status="error" />);
+
+    expect(
+      screen.getByText(landingTestimonials.errorMessage),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/api error/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/500/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: landingTestimonials.emptyCta.label }),
+    ).toHaveAttribute("href", landingTestimonials.emptyCta.href);
+  });
+
+  it("keeps the loading skeleton layout-stable and unlabeled as an error", (): void => {
+    render(<TestimonialsSkeleton />);
+
+    expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(
+      screen.getByText(landingTestimonials.loadingLabel),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/api error/i)).not.toBeInTheDocument();
   });
 });

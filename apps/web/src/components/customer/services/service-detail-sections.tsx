@@ -1,6 +1,8 @@
+import { Button } from "@neatly/ui";
 import Link from "next/link";
-import type { ReactElement } from "react";
+import type { ReactElement, SVGProps } from "react";
 import {
+  customerQuoteLabel,
   customerServiceApplyPath,
   customerServiceDetailCopy,
 } from "@/config/customer";
@@ -18,9 +20,10 @@ export function ServiceDetailSections({
   const hasIncluded = service.includedTasks.length > 0;
   const hasExcluded = service.excludedTasks.length > 0;
   const hasFaqs = service.faqs.length > 0;
+  const quoteHref = customerServiceApplyPath(service.slug);
 
   return (
-    <div className="mt-16 flex flex-col gap-16">
+    <div className="mt-16 flex flex-col gap-16 lg:mt-24">
       {hasDescription ? (
         <section
           aria-labelledby="service-description-heading"
@@ -42,6 +45,7 @@ export function ServiceDetailSections({
           heading={customerServiceDetailCopy.benefitsHeading}
           headingId="service-benefits-heading"
           items={service.benefits}
+          marker="check"
         />
       ) : null}
       {hasIncluded ? (
@@ -49,6 +53,7 @@ export function ServiceDetailSections({
           heading={customerServiceDetailCopy.includedHeading}
           headingId="service-included-heading"
           items={service.includedTasks}
+          marker="check"
         />
       ) : null}
       {hasExcluded ? (
@@ -56,6 +61,7 @@ export function ServiceDetailSections({
           heading={customerServiceDetailCopy.excludedHeading}
           headingId="service-excluded-heading"
           items={service.excludedTasks}
+          marker="dash"
         />
       ) : null}
       {hasFaqs ? (
@@ -80,23 +86,28 @@ export function ServiceDetailSections({
           </dl>
         </section>
       ) : null}
-      <section aria-labelledby="service-next-heading" className="max-w-prose">
+      <section
+        aria-labelledby="service-next-heading"
+        className="rounded-xl border border-border bg-muted/60 p-8 sm:p-10"
+      >
         <h2
           className="text-h2 text-foreground tracking-tight"
           id="service-next-heading"
         >
           {customerServiceDetailCopy.nextStepsHeading}
         </h2>
-        <p className="mt-4 text-body text-muted-foreground">
+        <p className="mt-4 max-w-prose text-body text-muted-foreground">
           {customerServiceDetailCopy.nextStepsBody}
         </p>
-        <p className="mt-6">
-          <Link
-            className="inline-flex min-h-touch items-center text-button text-primary underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            href={customerServiceApplyPath(service.slug)}
-          >
-            {customerServiceDetailCopy.quoteCta}
-          </Link>
+        <p className="mt-8">
+          <Button asChild>
+            <Link
+              aria-label={customerQuoteLabel(service.name)}
+              href={quoteHref}
+            >
+              {customerServiceDetailCopy.quoteCta}
+            </Link>
+          </Button>
         </p>
       </section>
     </div>
@@ -107,23 +118,71 @@ interface ListSectionProps {
   heading: string;
   headingId: string;
   items: readonly string[];
+  marker: "check" | "dash";
 }
 
 function ListSection({
   heading,
   headingId,
   items,
+  marker,
 }: ListSectionProps): ReactElement {
   return (
     <section aria-labelledby={headingId} className="max-w-prose">
       <h2 className="text-h2 text-foreground tracking-tight" id={headingId}>
         {heading}
       </h2>
-      <ul className="mt-4 list-disc space-y-2 pl-5 text-body text-muted-foreground">
+      <ul className="mt-6 space-y-3">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <li className="flex gap-3 text-body text-muted-foreground" key={item}>
+            <span className="mt-0.5 text-primary">
+              {marker === "check" ? <CheckIcon /> : <DashIcon />}
+            </span>
+            <span>{item}</span>
+          </li>
         ))}
       </ul>
     </section>
+  );
+}
+
+function CheckIcon(props: SVGProps<SVGSVGElement>): ReactElement {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-5"
+      fill="none"
+      viewBox="0 0 20 20"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M4.5 10.5 8 14l7.5-8"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.75"
+      />
+    </svg>
+  );
+}
+
+function DashIcon(props: SVGProps<SVGSVGElement>): ReactElement {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-5"
+      fill="none"
+      viewBox="0 0 20 20"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M5 10h10"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.75"
+      />
+    </svg>
   );
 }

@@ -55,9 +55,47 @@ describe("BlogHighlights", (): void => {
     ).toHaveLength(landingBlogHighlights.reservedCount);
     expect(
       screen.queryByRole("link", { name: landingCtas.readJournal.label }),
-    ).not.toBeInTheDocument();
-    expect(document.querySelector('a[href="/blog"]')).toBeNull();
+    ).toHaveAttribute("href", "/blog");
+    expect(document.querySelector('a[href="/blog"]')).not.toBeNull();
     expect(screen.queryByText(/ultimate/i)).not.toBeInTheDocument();
     expect(screen.queryByText("%")).not.toBeInTheDocument();
+  });
+
+  it("renders published journal titles instead of reserved placeholders", (): void => {
+    render(
+      <BlogHighlights
+        posts={[
+          {
+            categoryName: "Home Care",
+            coverAlt: landingBlogHighlights.featuredImage.alt,
+            coverSrc: landingBlogHighlights.featuredImage.src,
+            date: "September 2026",
+            excerpt: "Sample excerpt for architecture tests only.",
+            href: "/blog/dev-sample",
+            id: "post-1",
+            slug: "dev-sample",
+            title: "How to keep a kitchen ready between visits",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        level: 3,
+        name: "How to keep a kitchen ready between visits",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /How to keep a kitchen ready between visits/i,
+      }),
+    ).toHaveAttribute("href", "/blog/dev-sample");
+    expect(
+      screen.queryByRole("heading", {
+        level: 3,
+        name: landingBlogHighlights.emptyMessage,
+      }),
+    ).not.toBeInTheDocument();
   });
 });

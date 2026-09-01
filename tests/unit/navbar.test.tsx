@@ -53,6 +53,13 @@ describe("Navbar", (): void => {
     expect(
       screen.getAllByRole("link", { name: customerNavbarCopy.loginLabel })[0],
     ).toHaveAttribute("href", CUSTOMER_LOGIN_PATH);
+    expect(
+      screen.getAllByRole("link", { name: "How It Works" })[0],
+    ).toHaveAttribute("href", "/process");
+    expect(screen.getAllByRole("link", { name: "Reviews" })[0]).toHaveAttribute(
+      "href",
+      "/testimonials",
+    );
     expect(screen.queryByText("+123 456 789 0")).not.toBeInTheDocument();
     expect(screen.queryByText("3")).not.toBeInTheDocument();
   });
@@ -103,10 +110,35 @@ describe("Navbar", (): void => {
     render(<Navbar />);
 
     const services = screen.getAllByRole("link", { name: "Services" })[0];
-    const about = screen.getAllByRole("link", { name: "About" })[0];
+    const about = screen.getAllByRole("link", { name: "About Us" })[0];
 
     expect(services).toHaveAttribute("aria-current", "page");
     expect(about).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks How It Works as the current page on /process", (): void => {
+    useActivePathname.mockReturnValue("/process");
+    render(<Navbar />);
+
+    expect(
+      screen.getAllByRole("link", { name: "How It Works" })[0],
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getAllByRole("link", { name: "Reviews" })[0],
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks Reviews as the current page on /testimonials", (): void => {
+    useActivePathname.mockReturnValue("/testimonials");
+    render(<Navbar />);
+
+    expect(screen.getAllByRole("link", { name: "Reviews" })[0]).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      screen.getAllByRole("link", { name: "How It Works" })[0],
+    ).not.toHaveAttribute("aria-current");
   });
 
   it("does not mark Home-only paths as nested destinations", (): void => {

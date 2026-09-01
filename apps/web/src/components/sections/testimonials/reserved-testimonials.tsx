@@ -115,7 +115,7 @@ export function ReservedTestimonials(): ReactElement {
   };
 
   return (
-    <div className="grid gap-12">
+    <div className="grid gap-12" data-reveal>
       <article className="grid items-center gap-10 lg:grid-cols-12 lg:gap-16">
         <div className="w-full lg:col-span-7">
           <motion.figure
@@ -168,6 +168,9 @@ export function ReservedTestimonials(): ReactElement {
         </div>
         <div className="lg:col-span-5">
           <p className="max-w-prose text-h3 tracking-tight">
+            {landingTestimonials.emptyHeading}
+          </p>
+          <p className="mt-4 max-w-prose text-body text-muted-foreground">
             {landingTestimonials.emptyMessage}
           </p>
           <p className="mt-8 text-label text-primary uppercase">

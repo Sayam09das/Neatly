@@ -1,5 +1,4 @@
 import { Button } from "@neatly/ui";
-import { cn } from "@neatly/utils";
 import Link from "next/link";
 import type { ReactElement } from "react";
 import { CustomerEmptyState } from "@/components/customer/customer-states";
@@ -10,8 +9,8 @@ import {
   CUSTOMER_PATHS,
   CUSTOMER_SERVICES_PAGE_PARAM,
   CUSTOMER_SERVICES_SEARCH_PARAM,
+  customerCatalogErrorCopy,
   customerEmptyCopy,
-  customerErrorCopy,
   customerServicesCopy,
   customerSurfaceCopy,
 } from "@/config/customer";
@@ -72,10 +71,10 @@ function ServicesDiscoveryError({
   return (
     <div className="mt-10 max-w-prose" data-slot="customer-error" role="alert">
       <h2 className="text-h3 text-foreground tracking-tight">
-        {customerErrorCopy.heading}
+        {customerCatalogErrorCopy.heading}
       </h2>
       <p className="mt-2 text-body text-muted-foreground">
-        {customerErrorCopy.description}
+        {customerCatalogErrorCopy.description}
       </p>
       <form action={catalogHref} className="mt-8" method="get">
         {query.q === "" ? null : (
@@ -93,7 +92,7 @@ function ServicesDiscoveryError({
           />
         ) : null}
         <Button type="submit" variant="link">
-          {customerErrorCopy.action}
+          {customerCatalogErrorCopy.action}
         </Button>
       </form>
     </div>
@@ -119,10 +118,7 @@ function ServicesDiscoveryResults({
     <>
       <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {list.services.map((service, index) => (
-          <li
-            className={cn(service.isFeatured && "md:col-span-2")}
-            key={service.id}
-          >
+          <li key={service.id}>
             <ServicesDiscoveryCard priority={index === 0} service={service} />
           </li>
         ))}

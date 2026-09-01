@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { SmoothScroll } from "@/animations/lenis/smooth-scroll";
 import { Toaster } from "@/components/feedback/toaster";
+import { CookieConsentBanner } from "@/components/legal/cookie-consent-banner";
 import { ThemeProvider } from "./theme-provider";
 
 interface ProvidersProps {
@@ -12,6 +13,7 @@ export function Providers({ children }: ProvidersProps): ReactElement {
     <ThemeProvider>
       <SmoothScroll>
         {children}
+        <CookieConsentBanner />
         <Toaster />
       </SmoothScroll>
     </ThemeProvider>

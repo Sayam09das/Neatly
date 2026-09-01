@@ -7,6 +7,11 @@ import { QUOTE_AMOUNT_MAX, QUOTE_AMOUNT_MIN } from "../../config/quotes.ts";
 import { BOOKING_SORT_FIELDS } from "../../services/bookings/booking.types.ts";
 import { CATALOG_SORT_FIELDS } from "../../services/catalog/catalog.types.ts";
 import { CLEANER_SORT_FIELDS } from "../../services/cleaners/cleaner.types.ts";
+import {
+  BLOG_SORT_FIELDS,
+  NEWSLETTER_SORT_FIELDS,
+  PORTFOLIO_SORT_FIELDS,
+} from "../../services/cms/cms.types.ts";
 import { CUSTOMER_SORT_FIELDS } from "../../services/customers/customer.types.ts";
 import { NOTIFICATION_SORT_FIELDS } from "../../services/notifications/notification.types.ts";
 import { QUOTE_SORT_FIELDS } from "../../services/quotes/quote.types.ts";
@@ -18,6 +23,7 @@ import {
   optionalIdQuerySchema,
 } from "./admin-query.ts";
 import {
+  blogStatusSchema,
   bookingStatusSchema,
   booleanQuerySchema,
   cleanerAccountStateSchema,
@@ -25,6 +31,7 @@ import {
   customerStatusSchema,
   emailSchema,
   idSchema,
+  newsletterStatusSchema,
   quoteServiceTypeSchema,
   quoteStatusSchema,
   serviceCategorySchema,
@@ -229,6 +236,34 @@ export const reviewListQuerySchema = createAdminListQuerySchema(
   },
 );
 
+export const blogListQuerySchema = createAdminListQuerySchema(
+  BLOG_SORT_FIELDS,
+  {
+    createdFrom: dateQuerySchema.optional(),
+    createdTo: dateQueryEndSchema.optional(),
+    status: blogStatusSchema.optional(),
+  },
+);
+
+export const portfolioListQuerySchema = createAdminListQuerySchema(
+  PORTFOLIO_SORT_FIELDS,
+  {
+    category: serviceCategorySchema.optional(),
+    createdFrom: dateQuerySchema.optional(),
+    createdTo: dateQueryEndSchema.optional(),
+    published: booleanQuerySchema.optional(),
+  },
+);
+
+export const newsletterListQuerySchema = createAdminListQuerySchema(
+  NEWSLETTER_SORT_FIELDS,
+  {
+    status: newsletterStatusSchema.optional(),
+    subscribedFrom: dateQuerySchema.optional(),
+    subscribedTo: dateQueryEndSchema.optional(),
+  },
+);
+
 export const updateReviewBodySchema = z.strictObject({
   content: longText.optional(),
   customerName: shortText.optional(),
@@ -292,6 +327,11 @@ export type BookingListQueryInput = z.infer<typeof bookingListQuerySchema>;
 export type QuoteListQueryInput = z.infer<typeof quoteListQuerySchema>;
 export type UpdateQuoteBody = z.infer<typeof updateQuoteBodySchema>;
 export type ReviewListQueryInput = z.infer<typeof reviewListQuerySchema>;
+export type BlogListQueryInput = z.infer<typeof blogListQuerySchema>;
+export type PortfolioListQueryInput = z.infer<typeof portfolioListQuerySchema>;
+export type NewsletterListQueryInput = z.infer<
+  typeof newsletterListQuerySchema
+>;
 export type NotificationListQueryInput = z.infer<
   typeof notificationListQuerySchema
 >;

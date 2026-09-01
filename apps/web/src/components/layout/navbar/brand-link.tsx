@@ -42,13 +42,10 @@ export function BrandMark(): ReactElement {
       viewBox="0 0 32 32"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle className="fill-primary" cx="16" cy="16" r="16" />
+      <rect className="fill-foreground" height="32" rx="8" width="32" />
       <path
-        className="stroke-primary-foreground"
-        d="M10 16.5 14 20.5 22 11.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.25"
+        className="fill-background"
+        d="M10 8h3.2l5.1 8.4V8H22v16h-3.2L13.7 15.6V24H10V8Z"
       />
     </svg>
   );
