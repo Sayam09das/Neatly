@@ -264,36 +264,45 @@ Production Postgres remains the existing provider. Do not point compose at produ
 
 ## CI
 
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on push to `main` and on pull requests. It does not use production secrets or the production database.
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs on pull requests, merge groups, and pushes to `main`. Production verification reuses the same workflow. It does not use production secrets or the production database.
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm format:check`
-3. `pnpm lint`
-4. `pnpm typecheck`
-5. `pnpm test`
-6. Next.js production build
-7. API production build (`pnpm build:api`)
+Jobs run in parallel after a frozen-lockfile install:
+
+| Job | Command |
+| :--- | :--- |
+| Lint | `pnpm format:check`, `pnpm lint` |
+| Typecheck | `pnpm db:validate`, `pnpm typecheck` |
+| Test | `pnpm test` |
+| Build | Next.js production build, `pnpm build:api` |
+| Docker | Web and API images, SHA tags, no push |
+| CI | Aggregator. Require this check in branch protection |
+
+`pnpm db:validate` checks the Prisma schema only. It does not connect to a database and does not run `prisma migrate deploy`.
+
+Playwright lives under `tests/e2e`. There are no specs yet, so CI does not start browsers. Use `pnpm test:e2e` when specs exist.
+
+Setup is shared in [`.github/actions/setup-node`](../.github/actions/setup-node/action.yml). GitHub Actions updates are grouped weekly by Dependabot.
 
 ## Docker CI
 
-After quality gates pass, CI builds the web and API images with Buildx and tags them `neatly-web:<sha>` / `neatly-api:<sha>`. Images are not pushed. No registry credentials are required.
+After quality and application builds pass, CI builds the web and API images in parallel with Buildx. Tags are `neatly-web:<sha>` / `neatly-api:<sha>`. Layers cache on GitHub Actions except for pull requests from forks. Images are not pushed. No registry credentials are required.
 
 ## Production Deployment
 
-[`.github/workflows/production.yml`](../.github/workflows/production.yml) is a controlled, manual workflow (`workflow_dispatch`) that uses the GitHub `production` environment.
+[`.github/workflows/production.yml`](../.github/workflows/production.yml) is a controlled, manual workflow (`workflow_dispatch`).
 
 ```text
-CI
-→ Tests
-→ Application builds
-→ Docker builds (SHA tags)
-→ Production approval
+CI (same gates as pull requests)
+→ GitHub `production` environment approval
+→ Verified SHA recorded
 → Deploy (not configured)
 ```
 
-It does **not** auto-deploy on branch push, does **not** push images, and does **not** run `pnpm db:migrate:deploy` against a live database. Enable environment protection rules in GitHub when you are ready to require approval. Add registry and host rollout only after those credentials exist.
+It does **not** auto-deploy on branch push, does **not** push images, and does **not** run `pnpm db:migrate:deploy` against a live database. Enable environment protection rules on the GitHub `production` environment when you are ready to require approval. Add registry and host rollout only after those credentials exist.
 
 CI validates the application. Hosting platforms perform the actual production rollout.
+
+Required status check for `main`: **CI**.
 
 ---
 

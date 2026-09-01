@@ -3,68 +3,49 @@ name: Production
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+
 concurrency:
   group: production-deploy
   cancel-in-progress: false
 
+env:
+  CI: true
+  HUSKY: "0"
+  NEXT_TELEMETRY_DISABLED: "1"
+
 jobs:
-  build:
+  verify:
+    name: Verify
+    uses: ./.github/workflows/ci.yml
+
+  gate:
+    name: Production gate
+    needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.13.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
-      - name: Quality gates
-        run: pnpm typecheck && pnpm lint && pnpm test
-
-      - name: Production builds
-        run: pnpm build && pnpm build:api
+      - name: Record verified SHA
         env:
-          NEXT_PUBLIC_SITE_URL: http://localhost:3000
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build web image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: false
-          tags: |
-            neatly-web:${{ github.sha }}
-            neatly-web:latest
-          build-args: |
-            NEXT_PUBLIC_SITE_URL=http://localhost:3000
-
-      - name: Build API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/server/Dockerfile
-          push: false
-          tags: |
-            neatly-api:${{ github.sha }}
-            neatly-api:latest
-
-      - name: Deployment
+          RELEASE_SHA: ${{ github.sha }}
         run: |
-          echo "Images built as neatly-web:${GITHUB_SHA} and neatly-api:${GITHUB_SHA}."
-          echo "Registry push, migrate deploy, and host rollout are not configured."
-          echo "Run pnpm db:migrate:deploy only as a controlled API release step."
-          echo "Do not run prisma migrate reset or pnpm db:seed in production."
+          {
+            echo "## Production verification"
+            echo
+            echo "- Commit: \`${RELEASE_SHA}\`"
+            echo "- Images verified: \`neatly-web:${RELEASE_SHA}\` / \`neatly-api:${RELEASE_SHA}\`"
+            echo "- Registry push: not configured"
+            echo "- Host rollout: not configured"
+            echo
+            echo "Apply schema changes only as a controlled API release:"
+            echo
+            echo "\`\`\`bash"
+            echo "pnpm db:migrate:deploy"
+            echo "\`\`\`"
+            echo
+            echo "Do not run \`prisma migrate reset\` or \`pnpm db:seed\` in production."
+            echo "Keep web and API on the same git SHA."
+          } >> "$GITHUB_STEP_SUMMARY"

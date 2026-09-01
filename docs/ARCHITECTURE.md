@@ -847,20 +847,28 @@ Testing Pyramid
 ## 30. DEPLOYMENT & CI/CD PIPELINE
 
 ```text
-GitHub Repo (main branch)
-       │  (Git Push / PR Merge)
-       ▼
-CI Pipeline Execution (Lint, Typecheck, Unit Tests)
-       │
-       ▼  (Build Check Passes)
-Automated Database Migration Check (`prisma migrate deploy`)
+GitHub pull request / merge group / push to main
        │
        ▼
-Production Build & Deployment (Vercel / Managed Next.js Host)
+CI (parallel): Lint, Typecheck + prisma validate, Unit tests, Production builds
        │
        ▼
-Live Production Site + Automated Smoke Test Verification
+Docker image builds (neatly-web:<sha>, neatly-api:<sha>, not pushed)
+       │
+       ▼
+Required check: CI
+       │
+       ▼  (manual workflow_dispatch + GitHub production environment)
+Production verification of the same SHA
+       │
+       ▼
+Host rollout (not configured in this repository)
+       │
+       ▼
+Controlled API release: `pnpm db:migrate:deploy` on the API host only
 ```
+
+CI never connects to production PostgreSQL. `prisma validate` checks the schema file. `prisma migrate deploy` stays a controlled API-host step. See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ---
 

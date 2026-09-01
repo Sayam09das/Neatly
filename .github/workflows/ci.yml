@@ -4,31 +4,36 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: write
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'merge_group' }}
+
+env:
+  CI: true
+  HUSKY: "0"
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
 jobs:
-  quality:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
         with:
-          version: 11.13.1
+          persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node
 
       - name: Biome format
         run: pnpm format:check
@@ -36,48 +41,121 @@ jobs:
       - name: Biome lint
         run: pnpm lint
 
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node
+
+      - name: Prisma schema
+        run: pnpm db:validate
+
       - name: TypeScript
         run: pnpm typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node
 
       - name: Vitest
         run: pnpm test
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node
+
       - name: Next.js production build
         run: pnpm --filter @neatly/web build
-        env:
-          NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
       - name: API production build
         run: pnpm build:api
 
   docker:
-    needs: quality
+    name: Docker
+    needs: [lint, typecheck, test, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: web
+            file: apps/web/Dockerfile
+            image: neatly-web
+            build_args: NEXT_PUBLIC_SITE_URL=http://localhost:3000
+          - name: api
+            file: apps/server/Dockerfile
+            image: neatly-api
+            build_args: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build web image
+      - name: Build ${{ matrix.name }} image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/web/Dockerfile
+          file: ${{ matrix.file }}
           push: false
+          provenance: false
+          sbom: false
           tags: |
-            neatly-web:${{ github.sha }}
-            neatly-web:latest
-          build-args: |
-            NEXT_PUBLIC_SITE_URL=http://localhost:3000
+            ${{ matrix.image }}:${{ github.sha }}
+            ${{ matrix.image }}:latest
+          build-args: ${{ matrix.build_args }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: ${{ !github.event.pull_request.head.repo.fork && format('type=gha,mode=max,scope={0}', matrix.name) || '' }}
 
-      - name: Build API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/server/Dockerfile
-          push: false
-          tags: |
-            neatly-api:${{ github.sha }}
-            neatly-api:latest
+  ci:
+    name: CI
+    if: always()
+    needs: [lint, typecheck, test, build, docker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm required jobs
+        env:
+          LINT: ${{ needs.lint.result }}
+          TYPECHECK: ${{ needs.typecheck.result }}
+          TEST: ${{ needs.test.result }}
+          BUILD: ${{ needs.build.result }}
+          DOCKER: ${{ needs.docker.result }}
+        run: |
+          for result in "$LINT" "$TYPECHECK" "$TEST" "$BUILD" "$DOCKER"; do
+            if [ "$result" != "success" ]; then
+              echo "A required CI job did not succeed."
+              echo "lint=$LINT typecheck=$TYPECHECK test=$TEST build=$BUILD docker=$DOCKER"
+              exit 1
+            fi
+          done
+          echo "All required CI jobs succeeded."
