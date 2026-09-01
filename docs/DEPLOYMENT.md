@@ -277,7 +277,7 @@ Jobs run in parallel after a frozen-lockfile install:
 | Docker | Web and API images, SHA tags, no push |
 | CI | Aggregator. Require this check in branch protection |
 
-`pnpm db:validate` checks the Prisma schema only. It does not connect to a database and does not run `prisma migrate deploy`.
+`pnpm db:validate` checks the Prisma schema only. CI supplies placeholder `DATABASE_URL` and `DIRECT_URL` values so Prisma can load the datasource. Those placeholders are not credentials, are not reachable, and are not production. The job does not connect to a database and does not run `prisma migrate deploy`.
 
 Playwright lives under `tests/e2e`. There are no specs yet, so CI does not start browsers. Use `pnpm test:e2e` when specs exist.
 
