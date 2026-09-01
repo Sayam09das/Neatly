@@ -46,7 +46,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   agentRules: false,
-  output: "standalone",
+  // Docker copies `.next/standalone`. Vercel sets VERCEL=1 and cannot use
+  // standalone: Next 16.3 + the Vercel adapter omit next-server.js.nft.json.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   outputFileTracingRoot: workspaceRoot,
   transpilePackages: ["@neatly/config", "@neatly/ui", "@neatly/utils"],
   async headers(): Promise<

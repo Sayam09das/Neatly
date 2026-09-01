@@ -118,6 +118,14 @@ pnpm start
 
 The web host must reach `NEATLY_API_URL` over HTTPS. Session cookies are issued by the Next.js BFF and require the site to be served on HTTPS in production (`Secure`, `HttpOnly`, `SameSite=strict`).
 
+### Vercel
+
+Host **only** `apps/web` on Vercel. Root Directory is `apps/web`. Keep “Include files outside the root directory in the Build Step” enabled so the pnpm workspace and `packages/` install. Framework preset is Next.js.
+
+Vercel sets `VERCEL=1`. [`apps/web/next.config.ts`](../apps/web/next.config.ts) omits `output: "standalone"` in that case so the platform builder can finish. Docker builds still emit standalone.
+
+Set on this project: `NEATLY_API_URL` (HTTPS API origin) and `NEXT_PUBLIC_SITE_URL` (this site origin). Do not set `DATABASE_URL`, `SESSION_SECRET`, SMTP, or Supabase secrets on the web project. Do not invent a production domain in this repository.
+
 ---
 
 ## API Deployment
