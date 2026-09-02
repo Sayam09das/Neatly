@@ -13,7 +13,11 @@ function notifyCookieConsentChange(): void {
     return;
   }
 
-  window.dispatchEvent(new Event(COOKIE_CONSENT_CHANGE_EVENT));
+  try {
+    window.dispatchEvent(new Event(COOKIE_CONSENT_CHANGE_EVENT));
+  } catch {
+    // Ignore event dispatch failures in restricted contexts
+  }
 }
 
 export function readCookieConsent(): CookieConsentValue | null {
@@ -21,14 +25,19 @@ export function readCookieConsent(): CookieConsentValue | null {
     return null;
   }
 
-  const stored = window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-  const parsed = cookieConsentSchema.safeParse(stored);
+  try {
+    const storage = window.localStorage;
+    if (typeof storage?.getItem !== "function") {
+      return null;
+    }
 
-  if (!parsed.success) {
+    const stored = storage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+    const parsed = cookieConsentSchema.safeParse(stored);
+
+    return parsed.success ? parsed.data : null;
+  } catch {
     return null;
   }
-
-  return parsed.data;
 }
 
 export function writeCookieConsent(value: CookieConsentValue): void {
@@ -36,7 +45,15 @@ export function writeCookieConsent(value: CookieConsentValue): void {
     return;
   }
 
-  window.localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, value);
+  try {
+    const storage = window.localStorage;
+    if (typeof storage?.setItem === "function") {
+      storage.setItem(COOKIE_CONSENT_STORAGE_KEY, value);
+    }
+  } catch {
+    // Storage access may fail if third-party cookies or storage are restricted
+  }
+
   notifyCookieConsentChange();
 }
 
@@ -45,6 +62,14 @@ export function clearCookieConsent(): void {
     return;
   }
 
-  window.localStorage.removeItem(COOKIE_CONSENT_STORAGE_KEY);
+  try {
+    const storage = window.localStorage;
+    if (typeof storage?.removeItem === "function") {
+      storage.removeItem(COOKIE_CONSENT_STORAGE_KEY);
+    }
+  } catch {
+    // Storage removal may fail if restricted
+  }
+
   notifyCookieConsentChange();
 }
