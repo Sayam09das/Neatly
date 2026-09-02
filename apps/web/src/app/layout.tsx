@@ -1,4 +1,5 @@
 import { APP_NAME } from "@neatly/config";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import type { ReactElement, ReactNode } from "react";
 import { geistMono, geistSans } from "@/app/fonts";
@@ -48,6 +49,7 @@ export default function RootLayout({
     >
       <body className="overflow-x-hidden bg-background font-sans text-foreground antialiased">
         <Providers>{children}</Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
